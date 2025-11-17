@@ -1,0 +1,33 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual env
+venv/
+.env/
+.venv/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# PyInstaller
+*.spec
+
+# Testing
+.coverage
+htmlcov/
+.cache/
+pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local settings
+*.env
+*.log
+
+# VSCode
+.vscode/
