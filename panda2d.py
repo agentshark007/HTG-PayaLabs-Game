@@ -111,6 +111,13 @@ class PandaApp:
         self._initial_aspect = float(self.width) / float(self.height) if self.height != 0 else 1.0
         self.resizable = resizable
 
+        self.mousex = 0
+        self.mousey = 0
+        self.mousedown = False
+        
+        self.deltatime = 0.0
+
+
         flags = 0
         # Map Resizable to pygame flags
         if self.resizable in (Resizable.BOTH, Resizable.WIDTH, Resizable.HEIGHT, Resizable.ASPECT):
@@ -352,7 +359,7 @@ class PandaApp:
         print('PandaApp: entering run loop')
         try:
             while self.running:
-                dt = self.clock.tick(fps) / 1000.0
+                self.deltatime = self.clock.tick(fps) / 1000.0
 
                 events = pygame.event.get()
                 # debug: print events length
@@ -400,7 +407,12 @@ class PandaApp:
                     print('PandaApp: ESC pressed, quitting')
                     self.running = False
 
-                self.update(dt)
+                mx, my = pygame.mouse.get_pos()
+                self.mousex, self.mousey = self.screen_to_center(mx, my)
+                self.mousedown = pygame.mouse.get_pressed()[0]  # True if left mouse button is pressed
+
+                
+                self.update()
 
                 self.clear()
                 self.draw()
