@@ -1,20 +1,21 @@
-# Byte-compiled
+# Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual env
+# Virtual environments
 venv/
 .env/
 .venv/
 
-# Packaging
+# PyInstaller
 build/
 dist/
-*.egg-info/
-
-# PyInstaller
 *.spec
+main.spec
+
+# Packaging
+*.egg-info/
 
 # Testing
 .coverage
@@ -25,9 +26,13 @@ pytest_cache/
 # Jupyter
 .ipynb_checkpoints/
 
-# Local settings
+# Environment & logs
 *.env
 *.log
 
-# VSCode
+# IDEs / Editors
 .vscode/
+
+# System files
+.DS_Store
+Thumbs.db
