@@ -138,7 +138,7 @@ class PandaApp:
         self.font = None  # Will be initialized on first text draw
 
         # drawing proxy: call shape drawing via self.draw.<method>
-        self.draw = DrawAPI(self)
+        self.draw_api = DrawAPI(self)
 
         self.initialize()
 
