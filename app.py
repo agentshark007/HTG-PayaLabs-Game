@@ -8,4 +8,5 @@ class App(panda2d.PandaApp):
         pass
     
     def draw(self):
-        pass
+        self.clear((50, 50, 50))  # gray background
+        self.fill_rect(-50, -50, 50, 50, (255, 0, 0))
