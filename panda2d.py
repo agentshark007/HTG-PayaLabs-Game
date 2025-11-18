@@ -3,7 +3,7 @@ print("panda2d package initialized")
 import pygame
 import sys
 from enum import Enum
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 
 class Align(Enum):
