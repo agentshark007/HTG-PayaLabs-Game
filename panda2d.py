@@ -3,6 +3,8 @@ print("panda2d package initialized")
 import pygame
 import sys
 from enum import Enum
+from typing import Optional, Tuple, Union
+
 
 class Align(Enum):
     TOP_LEFT = "top_left"
@@ -17,164 +19,115 @@ class Align(Enum):
 
 
 class Resizable(Enum):
-    """Window resize policies.
-
-    - False: not resizable
-    - Width: resizable only horizontally
-    - Height: resizable only vertically
-    - True: resizable on both axes
-    - Aspect: resizable but preserves original aspect ratio
-    """
     NONE = "none"
     WIDTH = "width"
     HEIGHT = "height"
     BOTH = "both"
     ASPECT = "aspect"
 
-class Image:
-    MAX_CACHE_SIZE = 10  # Maximum number of cached resized versions
 
-    def __init__(self, path):
+class Image:
+    MAX_CACHE_SIZE = 10
+
+    def __init__(self, path: str):
         try:
-            self.surface = pygame.image.load(path).convert_alpha()  # Add convert_alpha for better performance
+            self.surface = pygame.image.load(path).convert_alpha()
         except pygame.error as e:
             print(f"Error loading image '{path}': {e}")
-            # Create a small surface with an X to indicate error
             self.surface = pygame.Surface((32, 32), pygame.SRCALPHA)
             self.surface.fill((255, 0, 0))
             pygame.draw.line(self.surface, (0, 0, 0), (0, 0), (31, 31), 2)
             pygame.draw.line(self.surface, (0, 0, 0), (31, 0), (0, 31), 2)
         self.width = self.surface.get_width()
         self.height = self.surface.get_height()
-        self._resize_cache = {}
-    
-    def resize(self, width, height):
+        self._resize_cache: dict[Tuple[int, int], pygame.Surface] = {}
+
+    def resize(self, width: int, height: int):
         self.surface = pygame.transform.scale(self.surface, (width, height))
         self.width = width
         self.height = height
 
 
 class DrawAPI:
-    """A drawing proxy that exposes shape-drawing methods which operate
-    on a provided PandaApp instance. Use as `self.draw.fill_tri(...)`.
-    """
-    def __init__(self, app):
+    def __init__(self, app: "PandaApp"):
         self._app = app
 
-    def _cts(self, x, y):
+    def _cts(self, x: float, y: float) -> Tuple[int, int]:
         return self._app.center_to_screen(x, y)
 
     def fill_tri(self, ax, ay, bx, by, cx, cy, color):
-        p0 = self._cts(ax, ay)
-        p1 = self._cts(bx, by)
-        p2 = self._cts(cx, cy)
-        pygame.draw.polygon(self._app.screen, color, [p0, p1, p2])
+        pygame.draw.polygon(self._app.screen, color, [self._cts(ax, ay), self._cts(bx, by), self._cts(cx, cy)])
 
     def draw_tri(self, ax, ay, bx, by, cx, cy, color, thickness=1):
-        p0 = self._cts(ax, ay)
-        p1 = self._cts(bx, by)
-        p2 = self._cts(cx, cy)
-        pygame.draw.polygon(self._app.screen, color, [p0, p1, p2], thickness)
+        pygame.draw.polygon(self._app.screen, color, [self._cts(ax, ay), self._cts(bx, by), self._cts(cx, cy)], thickness)
 
     def draw_line(self, ax, ay, bx, by, color, thickness=1):
-        p0 = self._cts(ax, ay)
-        p1 = self._cts(bx, by)
-        pygame.draw.line(self._app.screen, color, p0, p1, thickness)
+        pygame.draw.line(self._app.screen, color, self._cts(ax, ay), self._cts(bx, by), thickness)
 
     def fill_circle(self, x, y, radius, color):
-        sx, sy = self._cts(x, y)
-        pygame.draw.circle(self._app.screen, color, (sx, sy), int(radius))
+        pygame.draw.circle(self._app.screen, color, self._cts(x, y), int(radius))
 
     def draw_circle(self, x, y, radius, color, thickness=1):
-        sx, sy = self._cts(x, y)
-        pygame.draw.circle(self._app.screen, color, (sx, sy), int(radius), thickness)
+        pygame.draw.circle(self._app.screen, color, self._cts(x, y), int(radius), thickness)
 
     def fill_ellipse(self, x, y, width, height, color):
         sx, sy = self._cts(x, y)
-        rect = pygame.Rect(int(sx - width / 2), int(sy - height / 2), int(width), int(height))
-        pygame.draw.ellipse(self._app.screen, color, rect)
+        pygame.draw.ellipse(self._app.screen, color, pygame.Rect(int(sx - width / 2), int(sy - height / 2), int(width), int(height)))
 
     def draw_ellipse(self, x, y, width, height, color, thickness=1):
         sx, sy = self._cts(x, y)
-        rect = pygame.Rect(int(sx - width / 2), int(sy - height / 2), int(width), int(height))
-        pygame.draw.ellipse(self._app.screen, color, rect, thickness)
+        pygame.draw.ellipse(self._app.screen, color, pygame.Rect(int(sx - width / 2), int(sy - height / 2), int(width), int(height)), thickness)
+
 
 class PandaApp:
-    def __init__(self, width=800, height=600, title="Panda2D", resizable: Resizable = Resizable.NONE):
+    def __init__(self, width: int = 800, height: int = 600, title: str = "Panda2D", resizable: Resizable = Resizable.NONE):
         print("PandaApp instance created")
-
         if not pygame.get_init():
             pygame.init()
 
-        self.width = int(width)
-        self.height = int(height)
-        self._initial_aspect = float(self.width) / float(self.height) if self.height != 0 else 1.0
+        self.width = width
+        self.height = height
+        self._initial_aspect = width / height if height else 1.0
         self.resizable = resizable
 
         self.mousex = 0
         self.mousey = 0
         self.mousedown = False
-        
         self.deltatime = 0.0
 
-
-        flags = 0
-        # Map Resizable to pygame flags
-        if self.resizable in (Resizable.BOTH, Resizable.WIDTH, Resizable.HEIGHT, Resizable.ASPECT):
-            flags |= pygame.RESIZABLE
-
+        flags = pygame.RESIZABLE if resizable in (Resizable.BOTH, Resizable.WIDTH, Resizable.HEIGHT, Resizable.ASPECT) else 0
         self.screen = pygame.display.set_mode((self.width, self.height), flags)
         pygame.display.set_caption(title)
-        # Flush any pending events created during initialization (prevents an immediate QUIT)
         try:
             pygame.event.get()
         except Exception:
             pass
+
         self.clock = pygame.time.Clock()
         self.running = True
 
-        # Input state
         self.keys = pygame.key.get_pressed()
         self.prev_keys = self.keys
 
-        # Initialize caches
-        self._text_cache = {}
-        # Cache loaded pygame Font objects: keys are (path_or_none, size)
-        # path_or_none is None for the default font
-        self._font_cache = {}
-        self.font = None  # Will be initialized on first text draw
+        self._text_cache: dict = {}
+        self._font_cache: dict[Tuple[Optional[str], int], pygame.font.Font] = {}
+        self.font: Optional[pygame.font.Font] = None
 
-        # drawing proxy: call shape drawing via self.draw.<method>
         self.draw_api = DrawAPI(self)
-
         self.initialize()
 
-    # Coordinate system helpers
-    def center_to_screen(self, x: float, y: float) -> tuple:
-        """Map centered coordinates (0,0 at center, +x right, +y up)
-        to pygame screen coordinates (0,0 at top-left, +y down).
+    def center_to_screen(self, x: float, y: float) -> Tuple[int, int]:
+        return int(x + self.width / 2), int(self.height / 2 - y)
 
-        With this mapping: centered (0,0) -> screen (width/2, height/2)
-        centered (width/2, height/2) -> screen (width, 0) (top-right)
-        """
-        sx = x + (self.width / 2)
-        sy = (self.height / 2) - y
-        return int(sx), int(sy)
-
-    def screen_to_center(self, sx: float, sy: float) -> tuple:
-        """Map pygame screen coords back to centered coords."""
-        x = sx - (self.width / 2)
-        y = (self.height / 2) - sy
-        return int(x), int(y)
+    def screen_to_center(self, sx: float, sy: float) -> Tuple[int, int]:
+        return int(sx - self.width / 2), int(self.height / 2 - sy)
 
     def initialize(self):
         pass
 
     def __del__(self):
-        # Cleanup when the object is destroyed
         try:
-            if hasattr(self, '_text_cache'):
-                self._text_cache.clear()
+            self._text_cache.clear()
         except Exception:
             pass
         try:
@@ -183,7 +136,7 @@ class PandaApp:
         except Exception:
             pass
 
-    def update(self, dt):
+    def update(self, dt=None):
         pass
 
     def draw(self):
@@ -196,7 +149,6 @@ class PandaApp:
         return bool(self.keys[key]) and not bool(self.prev_keys[key])
 
     def fill_rect(self, ax, ay, bx, by, color):
-        # Convert centered coordinates to screen coordinates
         sx0, sy0 = self.center_to_screen(ax, ay)
         sx1, sy1 = self.center_to_screen(bx, by)
         left, right = min(sx0, sx1), max(sx0, sx1)
@@ -211,91 +163,40 @@ class PandaApp:
         pygame.draw.rect(self.screen, color, (left, top, right - left, bottom - top), thickness)
 
     def draw_text(self, x, y, text, color, align=Align.TOP_LEFT, font=None, size=None):
-        """
-        Draw text at centered coordinates (x, y).
-
-        Parameters:
-        - x, y: centered coordinates
-        - text: string to render
-        - color: (R, G, B) tuple (0-255 ints) or pygame.Color
-        - align: Align enum value
-        - font: optional pygame.font.Font instance or path to a font file or tuple(font_path, size)
-
-        If font is None, the app's default font (created as pygame.font.Font(None, 36)) is used.
-        The text cache key now includes the font identity so different fonts/sizes don't conflict.
-        """
-
-        # Resolve the font to a pygame.font.Font instance.
-        # Priority:
-        # 1) If a pygame.font.Font instance is passed in `font`, use it.
-        # 2) If `font` is a tuple (path, size) or `font` is a str path, load it (use provided `size` if given).
-        # 3) If `font` is None but `size` is provided, use default font face at that size.
-        # 4) Otherwise use the cached default font (None, 36).
-
-        resolved_font = None
-
-        # If caller provided a Font instance
+        # Resolve font
+        resolved_font: Optional[pygame.font.Font] = None
         if isinstance(font, pygame.font.Font):
             resolved_font = font
-
-        # If caller provided a path or tuple
-        if resolved_font is None and font is not None and not isinstance(font, pygame.font.Font):
+        elif font is not None:
             try:
-                if isinstance(font, tuple) and len(font) == 2:
-                    path, fsize = font
-                    key = (path, int(fsize))
-                elif isinstance(font, str):
-                    key = (font, int(size) if size is not None else 36)
-                else:
-                    key = (None, int(size) if size is not None else 36)
-
+                key = (font[0], int(font[1])) if isinstance(font, tuple) else (font, int(size) if size else 36)
                 if key not in self._font_cache:
-                    path_key, size_key = key
-                    self._font_cache[key] = pygame.font.Font(path_key, size_key)
+                    self._font_cache[key] = pygame.font.Font(*key)
                 resolved_font = self._font_cache[key]
             except Exception:
                 resolved_font = None
 
-        # If still none, consider size-only request for default font
-        if resolved_font is None and font is None and size is not None:
+        if resolved_font is None and size is not None:
             key = (None, int(size))
             if key not in self._font_cache:
                 self._font_cache[key] = pygame.font.Font(None, int(size))
             resolved_font = self._font_cache[key]
 
-        # Ensure a default font exists
         if resolved_font is None:
-            # default font stored under (None, 36)
             key = (None, 36)
             if key not in self._font_cache:
                 self._font_cache[key] = pygame.font.Font(None, 36)
             resolved_font = self._font_cache[key]
 
-        # Include font identity in cache key. Use (text, color, font_key) where font_key is the (path_or_none,size)
-        # to keep cache deterministic across runs.
-        # Note: color should be a hashable type (tuple) already.
-        # Use str(text) to ensure non-string types renderable as well.
-        font_key = None
-        # Find the font_key in cache by searching for the resolved_font reference
-        for k, fobj in self._font_cache.items():
-            if fobj is resolved_font:
-                font_key = k
-                break
-        if font_key is None:
-            # fallback to default key
-            font_key = (None, 36)
-
+        # Use cached rendered text
+        font_key = next((k for k, f in self._font_cache.items() if f is resolved_font), (None, 36))
         cache_key = (str(text), color, font_key)
         if cache_key not in self._text_cache:
             self._text_cache[cache_key] = resolved_font.render(text, True, color)
-
         text_surface = self._text_cache[cache_key]
         text_rect = text_surface.get_rect()
 
-        # Convert centered coords to screen coords for alignment
         sx, sy = self.center_to_screen(x, y)
-
-        # Horizontal alignment
         if align in [Align.TOP_LEFT, Align.CENTER_LEFT, Align.BOTTOM_LEFT]:
             text_rect.left = sx
         elif align in [Align.TOP_CENTER, Align.CENTER, Align.BOTTOM_CENTER]:
@@ -303,7 +204,6 @@ class PandaApp:
         else:
             text_rect.right = sx
 
-        # Vertical alignment
         if align in [Align.TOP_LEFT, Align.TOP_CENTER, Align.TOP_RIGHT]:
             text_rect.top = sy
         elif align in [Align.CENTER_LEFT, Align.CENTER, Align.CENTER_RIGHT]:
@@ -313,44 +213,34 @@ class PandaApp:
 
         self.screen.blit(text_surface, text_rect)
 
-    def draw_image(self, image, x, y, width=None, height=None, align=Align.TOP_LEFT):
-        surface_to_draw = image.surface
-
+    def draw_image(self, image: Image, x, y, width=None, height=None, align=Align.TOP_LEFT):
+        surface = image.surface
         if width is not None or height is not None:
-            if width is None:
-                width = int(image.width * (height / image.height))
-            if height is None:
-                height = int(image.height * (width / image.width))
-            width, height = int(width), int(height)
+            width = int(width if width else image.width * (height / image.height))
+            height = int(height if height else image.height * (width / image.width))
+            key = (width, height)
+            if key not in image._resize_cache:
+                image._resize_cache[key] = pygame.transform.scale(image.surface, (width, height))
+            surface = image._resize_cache[key]
 
-            cache_key = (width, height)
-            if not hasattr(image, '_resize_cache'):
-                image._resize_cache = {}
-
-            if cache_key not in image._resize_cache:
-                image._resize_cache[cache_key] = pygame.transform.scale(image.surface, (width, height))
-            surface_to_draw = image._resize_cache[cache_key]
-
-        image_rect = surface_to_draw.get_rect()
-
-        # Convert centered coords to screen coords
+        rect = surface.get_rect()
         sx, sy = self.center_to_screen(x, y)
 
         if align in [Align.TOP_LEFT, Align.CENTER_LEFT, Align.BOTTOM_LEFT]:
-            image_rect.left = sx
+            rect.left = sx
         elif align in [Align.TOP_CENTER, Align.CENTER, Align.BOTTOM_CENTER]:
-            image_rect.centerx = sx
+            rect.centerx = sx
         else:
-            image_rect.right = sx
+            rect.right = sx
 
         if align in [Align.TOP_LEFT, Align.TOP_CENTER, Align.TOP_RIGHT]:
-            image_rect.top = sy
+            rect.top = sy
         elif align in [Align.CENTER_LEFT, Align.CENTER, Align.CENTER_RIGHT]:
-            image_rect.centery = sy
+            rect.centery = sy
         else:
-            image_rect.bottom = sy
+            rect.bottom = sy
 
-        self.screen.blit(surface_to_draw, image_rect)
+        self.screen.blit(surface, rect)
 
     def clear(self, color=(0, 0, 0)):
         self.screen.fill(color)
@@ -360,65 +250,43 @@ class PandaApp:
         try:
             while self.running:
                 self.deltatime = self.clock.tick(fps) / 1000.0
-
-                events = pygame.event.get()
-                # debug: print events length
-                # print('events:', len(events))
-                for event in events:
+                for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         print('PandaApp: received QUIT event')
                         self.running = False
-                    # Handle window resize events
-                    if event.type == pygame.VIDEORESIZE:
-                        new_w, new_h = event.w, event.h
-                        # Enforce resizable policy
+                    elif event.type == pygame.VIDEORESIZE:
+                        w, h = event.w, event.h
                         if self.resizable == Resizable.NONE:
-                            # ignore resize
                             continue
-
-                        if self.resizable == Resizable.WIDTH:
-                            new_h = self.height
+                        elif self.resizable == Resizable.WIDTH:
+                            h = self.height
                         elif self.resizable == Resizable.HEIGHT:
-                            new_w = self.width
+                            w = self.width
                         elif self.resizable == Resizable.ASPECT:
-                            # keep original aspect ratio
-                            if new_h == 0:
-                                new_h = 1
-                            desired_aspect = self._initial_aspect
-                            # adjust one axis to preserve aspect
-                            if (new_w / new_h) > desired_aspect:
-                                # width too large, clamp width
-                                new_w = int(new_h * desired_aspect)
+                            if h == 0: h = 1
+                            aspect = self._initial_aspect
+                            if (w / h) > aspect:
+                                w = int(h * aspect)
                             else:
-                                # height too large, clamp height
-                                new_h = int(new_w / desired_aspect)
+                                h = int(w / aspect)
+                        self.width, self.height = int(w), int(h)
+                        self.screen = pygame.display.set_mode((self.width, self.height), self.screen.get_flags())
 
-                        # Apply the new size and recreate the screen surface
-                        self.width = int(new_w)
-                        self.height = int(new_h)
-                        flags = self.screen.get_flags()
-                        self.screen = pygame.display.set_mode((self.width, self.height), flags)
-
-                self.prev_keys = self.keys if self.keys is not None else pygame.key.get_pressed()
+                self.prev_keys = self.keys
                 self.keys = pygame.key.get_pressed()
-
-                # debug: print key state for ESC to allow quitting
                 if self.is_key_pressed(pygame.K_ESCAPE):
                     print('PandaApp: ESC pressed, quitting')
                     self.running = False
 
                 mx, my = pygame.mouse.get_pos()
                 self.mousex, self.mousey = self.screen_to_center(mx, my)
-                self.mousedown = pygame.mouse.get_pressed()[0]  # True if left mouse button is pressed
+                self.mousedown = pygame.mouse.get_pressed()[0]
 
-                
                 self.update()
-
                 self.clear()
                 self.draw()
                 pygame.display.flip()
         finally:
-            # Make sure to process any remaining events before quitting
             pygame.event.get()
             pygame.quit()
             print('PandaApp: exiting')
