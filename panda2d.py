@@ -187,61 +187,78 @@ class PandaApp:
         top, bottom = min(sy0, sy1), max(sy0, sy1)
         pygame.draw.rect(self.screen, color, (left, top, right - left, bottom - top), thickness)
 
-    def draw_text(self, x, y, text, color, align=Align.TOP_LEFT, font=None, size=None):
+    def draw_text(self, x, y, text, color, align=Align.TOP_LEFT, font: Optional[str] = None, size: int = 36, newline_spacing: Optional[int] = None):
         # Resolve font
         resolved_font: Optional[pygame.font.Font] = None
-        if isinstance(font, pygame.font.Font):
-            resolved_font = font
-        elif font is not None:
+        key = (font, size)
+
+        if key not in self._font_cache:
             try:
-                key = (font[0], int(font[1])) if isinstance(font, tuple) else (font, int(size) if size else 36)
-                if key not in self._font_cache:
-                    self._font_cache[key] = pygame.font.Font(*key)
-                resolved_font = self._font_cache[key]
-            except Exception:
-                resolved_font = None
-
-        if resolved_font is None and size is not None:
-            key = (None, int(size))
-            if key not in self._font_cache:
-                self._font_cache[key] = pygame.font.Font(None, int(size))
+                resolved_font = pygame.font.Font(font, size)
+                self._font_cache[key] = resolved_font
+            except Exception as e:
+                print(f"Failed to load font '{font}': {e}")
+                resolved_font = pygame.font.Font(None, size)
+                self._font_cache[(None, size)] = resolved_font
+        else:
             resolved_font = self._font_cache[key]
 
-        if resolved_font is None:
-            key = (None, 36)
-            if key not in self._font_cache:
-                self._font_cache[key] = pygame.font.Font(None, 36)
-            resolved_font = self._font_cache[key]
-
+        # Scale font if using Resizable.SCALE
         if self.resizable == Resizable.SCALE:
-            # scale font size
             scale = min(self.width / self._initial_width, self.height / self._initial_height)
-            size = int(resolved_font.get_height() * scale)
-            resolved_font = pygame.font.Font(resolved_font.get_name(), size)
+            scaled_size = max(1, int(size * scale))
+            key_scaled = (font, scaled_size)
+            if key_scaled not in self._font_cache:
+                resolved_font = pygame.font.Font(font, scaled_size)
+                self._font_cache[key_scaled] = resolved_font
+            else:
+                resolved_font = self._font_cache[key_scaled]
 
-        font_key = next((k for k, f in self._font_cache.items() if f is resolved_font), (None, 36))
-        cache_key = (str(text), color, font_key)
-        if cache_key not in self._text_cache:
-            self._text_cache[cache_key] = resolved_font.render(text, True, color)
-        text_surface = self._text_cache[cache_key]
-        text_rect = text_surface.get_rect()
+            # Adjust newline spacing with scale
+            if newline_spacing is not None:
+                newline_spacing = max(1, int(newline_spacing * scale))
 
+        # Split text into lines
+        lines = text.split("\n")
+        rendered_lines = [resolved_font.render(line, True, color) for line in lines]
+
+        # Determine line spacing
+        line_height = newline_spacing if newline_spacing is not None else resolved_font.get_linesize()
+
+        # Compute total height
+        total_height = line_height * len(lines)
+
+        # Determine starting Y based on vertical alignment
         sx, sy = self.center_to_screen(x, y)
-        if align in [Align.TOP_LEFT, Align.CENTER_LEFT, Align.BOTTOM_LEFT]:
-            text_rect.left = sx
-        elif align in [Align.TOP_CENTER, Align.CENTER, Align.BOTTOM_CENTER]:
-            text_rect.centerx = sx
-        else:
-            text_rect.right = sx
-
         if align in [Align.TOP_LEFT, Align.TOP_CENTER, Align.TOP_RIGHT]:
-            text_rect.top = sy
+            start_y = sy
         elif align in [Align.CENTER_LEFT, Align.CENTER, Align.CENTER_RIGHT]:
-            text_rect.centery = sy
-        else:
-            text_rect.bottom = sy
+            start_y = sy - total_height // 2
+        else:  # BOTTOM
+            start_y = sy - total_height
 
-        self.screen.blit(text_surface, text_rect)
+        # Draw each line
+        for i, line_surface in enumerate(rendered_lines):
+            text_rect = line_surface.get_rect()
+            line_y = start_y + i * line_height
+
+            # Horizontal alignment
+            if align in [Align.TOP_LEFT, Align.CENTER_LEFT, Align.BOTTOM_LEFT]:
+                text_rect.left = sx
+            elif align in [Align.TOP_CENTER, Align.CENTER, Align.BOTTOM_CENTER]:
+                text_rect.centerx = sx
+            else:
+                text_rect.right = sx
+
+            # Vertical alignment for this line
+            if align in [Align.TOP_LEFT, Align.TOP_CENTER, Align.TOP_RIGHT]:
+                text_rect.top = line_y
+            elif align in [Align.CENTER_LEFT, Align.CENTER, Align.CENTER_RIGHT]:
+                text_rect.centery = line_y + line_height // 2
+            else:  # BOTTOM
+                text_rect.bottom = line_y + line_height
+
+            self.screen.blit(line_surface, text_rect)
 
     def draw_image(self, image: Image, x, y, width=None, height=None,
                    align=Align.TOP_LEFT, anti_aliasing=True):
