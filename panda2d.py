@@ -213,14 +213,24 @@ class PandaApp:
 
         self.screen.blit(text_surface, text_rect)
 
-    def draw_image(self, image: Image, x, y, width=None, height=None, align=Align.TOP_LEFT):
+    def draw_image(self, image: Image, x, y, width=None, height=None,
+                align=Align.TOP_LEFT, anti_aliasing=True):
+
         surface = image.surface
+
         if width is not None or height is not None:
             width = int(width if width else image.width * (height / image.height))
             height = int(height if height else image.height * (width / image.width))
-            key = (width, height)
+
+            key = (width, height, anti_aliasing)
+
             if key not in image._resize_cache:
-                image._resize_cache[key] = pygame.transform.scale(image.surface, (width, height))
+                if anti_aliasing:
+                    scaled = pygame.transform.smoothscale(image.surface, (width, height))
+                else:
+                    scaled = pygame.transform.scale(image.surface, (width, height))
+                image._resize_cache[key] = scaled
+
             surface = image._resize_cache[key]
 
         rect = surface.get_rect()
@@ -241,6 +251,7 @@ class PandaApp:
             rect.bottom = sy
 
         self.screen.blit(surface, rect)
+
 
     def clear(self, color=(0, 0, 0)):
         self.screen.fill(color)
