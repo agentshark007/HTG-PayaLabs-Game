@@ -24,6 +24,7 @@ class Resizable(Enum):
     HEIGHT = "height"
     BOTH = "both"
     ASPECT = "aspect"
+    SCALE = "scale"  # scales everything while preserving original aspect
 
 
 class Image:
@@ -55,6 +56,14 @@ class DrawAPI:
     def _cts(self, x: float, y: float) -> Tuple[int, int]:
         return self._app.center_to_screen(x, y)
 
+    def _scale_value(self, value):
+        if self._app.resizable == Resizable.SCALE:
+            scale_x = self._app.width / self._app._initial_width
+            scale_y = self._app.height / self._app._initial_height
+            scale = (scale_x + scale_y) / 2
+            return int(value * scale)
+        return int(value)
+
     def fill_tri(self, ax, ay, bx, by, cx, cy, color):
         pygame.draw.polygon(self._app.screen, color, [self._cts(ax, ay), self._cts(bx, by), self._cts(cx, cy)])
 
@@ -62,21 +71,25 @@ class DrawAPI:
         pygame.draw.polygon(self._app.screen, color, [self._cts(ax, ay), self._cts(bx, by), self._cts(cx, cy)], thickness)
 
     def draw_line(self, ax, ay, bx, by, color, thickness=1):
-        pygame.draw.line(self._app.screen, color, self._cts(ax, ay), self._cts(bx, by), thickness)
+        pygame.draw.line(self._app.screen, color, self._cts(ax, ay), self._cts(bx, by), self._scale_value(thickness))
 
     def fill_circle(self, x, y, radius, color):
-        pygame.draw.circle(self._app.screen, color, self._cts(x, y), int(radius))
+        pygame.draw.circle(self._app.screen, color, self._cts(x, y), self._scale_value(radius))
 
     def draw_circle(self, x, y, radius, color, thickness=1):
-        pygame.draw.circle(self._app.screen, color, self._cts(x, y), int(radius), thickness)
+        pygame.draw.circle(self._app.screen, color, self._cts(x, y), self._scale_value(radius), self._scale_value(thickness))
 
     def fill_ellipse(self, x, y, width, height, color):
         sx, sy = self._cts(x, y)
-        pygame.draw.ellipse(self._app.screen, color, pygame.Rect(int(sx - width / 2), int(sy - height / 2), int(width), int(height)))
+        width = self._scale_value(width)
+        height = self._scale_value(height)
+        pygame.draw.ellipse(self._app.screen, color, pygame.Rect(int(sx - width / 2), int(sy - height / 2), width, height))
 
     def draw_ellipse(self, x, y, width, height, color, thickness=1):
         sx, sy = self._cts(x, y)
-        pygame.draw.ellipse(self._app.screen, color, pygame.Rect(int(sx - width / 2), int(sy - height / 2), int(width), int(height)), thickness)
+        width = self._scale_value(width)
+        height = self._scale_value(height)
+        pygame.draw.ellipse(self._app.screen, color, pygame.Rect(int(sx - width / 2), int(sy - height / 2), width, height), self._scale_value(thickness))
 
 
 class PandaApp:
@@ -87,6 +100,8 @@ class PandaApp:
 
         self.width = width
         self.height = height
+        self._initial_width = width
+        self._initial_height = height
         self._initial_aspect = width / height if height else 1.0
         self.resizable = resizable
 
@@ -95,7 +110,7 @@ class PandaApp:
         self.mousedown = False
         self.deltatime = 0.0
 
-        flags = pygame.RESIZABLE if resizable in (Resizable.BOTH, Resizable.WIDTH, Resizable.HEIGHT, Resizable.ASPECT) else 0
+        flags = pygame.RESIZABLE if resizable in (Resizable.BOTH, Resizable.WIDTH, Resizable.HEIGHT, Resizable.ASPECT, Resizable.SCALE) else 0
         self.screen = pygame.display.set_mode((self.width, self.height), flags)
         pygame.display.set_caption(title)
         try:
@@ -117,9 +132,19 @@ class PandaApp:
         self.initialize()
 
     def center_to_screen(self, x: float, y: float) -> Tuple[int, int]:
+        if self.resizable in (Resizable.SCALE,):
+            scale = min(self.width / self._initial_width, self.height / self._initial_height)
+            sx = int(x * scale + self.width / 2)
+            sy = int(self.height / 2 - y * scale)
+            return sx, sy
         return int(x + self.width / 2), int(self.height / 2 - y)
 
     def screen_to_center(self, sx: float, sy: float) -> Tuple[int, int]:
+        if self.resizable in (Resizable.SCALE,):
+            scale = min(self.width / self._initial_width, self.height / self._initial_height)
+            x = (sx - self.width / 2) / scale
+            y = (self.height / 2 - sy) / scale
+            return int(x), int(y)
         return int(sx - self.width / 2), int(self.height / 2 - sy)
 
     def initialize(self):
@@ -188,7 +213,12 @@ class PandaApp:
                 self._font_cache[key] = pygame.font.Font(None, 36)
             resolved_font = self._font_cache[key]
 
-        # Use cached rendered text
+        if self.resizable == Resizable.SCALE:
+            # scale font size
+            scale = min(self.width / self._initial_width, self.height / self._initial_height)
+            size = int(resolved_font.get_height() * scale)
+            resolved_font = pygame.font.Font(resolved_font.get_name(), size)
+
         font_key = next((k for k, f in self._font_cache.items() if f is resolved_font), (None, 36))
         cache_key = (str(text), color, font_key)
         if cache_key not in self._text_cache:
@@ -214,24 +244,21 @@ class PandaApp:
         self.screen.blit(text_surface, text_rect)
 
     def draw_image(self, image: Image, x, y, width=None, height=None,
-                align=Align.TOP_LEFT, anti_aliasing=True):
+                   align=Align.TOP_LEFT, anti_aliasing=True):
 
-        surface = image.surface
+        # Calculate scaled width/height
+        scale = min(self.width / self._initial_width, self.height / self._initial_height) if self.resizable == Resizable.SCALE else 1
+        width = int((width if width else image.width) * scale)
+        height = int((height if height else image.height) * scale)
 
-        if width is not None or height is not None:
-            width = int(width if width else image.width * (height / image.height))
-            height = int(height if height else image.height * (width / image.width))
-
-            key = (width, height, anti_aliasing)
-
-            if key not in image._resize_cache:
-                if anti_aliasing:
-                    scaled = pygame.transform.smoothscale(image.surface, (width, height))
-                else:
-                    scaled = pygame.transform.scale(image.surface, (width, height))
-                image._resize_cache[key] = scaled
-
-            surface = image._resize_cache[key]
+        key = (width, height, anti_aliasing)
+        if key not in image._resize_cache:
+            if anti_aliasing:
+                scaled = pygame.transform.smoothscale(image.surface, (width, height))
+            else:
+                scaled = pygame.transform.scale(image.surface, (width, height))
+            image._resize_cache[key] = scaled
+        surface = image._resize_cache[key]
 
         rect = surface.get_rect()
         sx, sy = self.center_to_screen(x, y)
@@ -251,7 +278,6 @@ class PandaApp:
             rect.bottom = sy
 
         self.screen.blit(surface, rect)
-
 
     def clear(self, color=(0, 0, 0)):
         self.screen.fill(color)
@@ -273,7 +299,7 @@ class PandaApp:
                             h = self.height
                         elif self.resizable == Resizable.HEIGHT:
                             w = self.width
-                        elif self.resizable == Resizable.ASPECT:
+                        elif self.resizable in (Resizable.ASPECT, Resizable.SCALE):
                             if h == 0: h = 1
                             aspect = self._initial_aspect
                             if (w / h) > aspect:

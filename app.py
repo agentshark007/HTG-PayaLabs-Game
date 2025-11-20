@@ -16,10 +16,10 @@ class App(panda2d.PandaApp):
 
 def main():
     application = App(
-        width=800,
-        height=600,
+        width=480,
+        height=360,
         title="HTG PayaLabs Game",
-        resizable=panda2d.Resizable.NONE
+        resizable=panda2d.Resizable.SCALE
     )
     
     application.run()
