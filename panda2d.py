@@ -187,7 +187,7 @@ class PandaApp:
         top, bottom = min(sy0, sy1), max(sy0, sy1)
         pygame.draw.rect(self.screen, color, (left, top, right - left, bottom - top), thickness)
 
-    def draw_text(self, x, y, text, color, align=Align.TOP_LEFT, font: Optional[str] = None, size: int = 36, newline_spacing: Optional[int] = None):
+    def draw_text(self, x, y, text, color, align=Align.TOP_LEFT, font: Optional[str] = None, size: int = 36, newline_spacing: Optional[int] = None, max_width: Optional[int] = None):
         # Resolve font
         resolved_font: Optional[pygame.font.Font] = None
         key = (font, size)
@@ -218,8 +218,27 @@ class PandaApp:
             if newline_spacing is not None:
                 newline_spacing = max(1, int(newline_spacing * scale))
 
-        # Split text into lines
-        lines = text.split("\n")
+        # Word wrap logic
+        def wrap_text(text, font, max_width):
+            if max_width is None:
+                return text.split("\n")
+            lines = []
+            for raw_line in text.split("\n"):
+                words = raw_line.split(' ')
+                current_line = ''
+                for word in words:
+                    test_line = word if not current_line else current_line + ' ' + word
+                    if font.size(test_line)[0] <= max_width:
+                        current_line = test_line
+                    else:
+                        if current_line:
+                            lines.append(current_line)
+                        current_line = word
+                if current_line:
+                    lines.append(current_line)
+            return lines
+
+        lines = wrap_text(text, resolved_font, max_width)
         rendered_lines = [resolved_font.render(line, True, color) for line in lines]
 
         # Determine line spacing
