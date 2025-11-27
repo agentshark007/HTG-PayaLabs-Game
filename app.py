@@ -20,7 +20,7 @@ class App(panda2d.PandaApp):
         self.draw_image(self.test_scene, 240, 180, align=panda2d.Align.TOP_RIGHT, anti_aliasing=False)
 
         # Heading text
-        self.draw_text(-230, 40, "Heading", (255, 255, 255),
+        self.draw_text(-230, 40, "Heading text", (255, 255, 255),
                align=panda2d.Align.TOP_LEFT,
                font=self.heading_font,
                size=24, 
@@ -28,12 +28,15 @@ class App(panda2d.PandaApp):
                )
         
         # Main text
-        self.draw_text(-230, 10, "Text. The quick brown fox jumps over the lazy dog.", (255, 255, 255),
+        self.draw_text(-230, 10, "Main text. The quick brown fox jumps over the lazy dog.", (255, 255, 255),
                align=panda2d.Align.TOP_LEFT,
                font=self.main_font,
                size=24, 
-               newline_spacing=20
+               newline_spacing=20,
+               max_width=self.width / 2 - -230
                )
+        
+        print(self.mousex)
 
 def main():
     application = App(
