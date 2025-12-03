@@ -1,14 +1,20 @@
 import panda2d
+import os
+
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+def asset(path):
+    return os.path.join(BASE_PATH, "assets", path)
+
 
 
 class App(panda2d.PandaApp):
     def initialize(self):
-        self.ares_image = panda2d.Image("assets/ares.png")
-        self.test_scene = panda2d.Image("assets/test-scene.png")
+        self.ares_image = panda2d.Image(asset("ares.png"))
+        self.test_scene = panda2d.Image(asset("test-scene.png"))
         
-        self.test_font = "assets/Khmer MN.ttc"
-        self.heading_font = "assets/Silkscreen-Regular.ttf"
-        self.main_font = "assets/VT323-Regular.ttf"
+        self.test_font = asset("Khmer MN.ttc")
+        self.heading_font = asset("Silkscreen-Regular.ttf")
+        self.main_font = asset("VT323-Regular.ttf")
     
     def update(self):
         pass
