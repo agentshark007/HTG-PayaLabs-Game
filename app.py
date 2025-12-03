@@ -35,8 +35,6 @@ class App(panda2d.PandaApp):
                newline_spacing=20,
                max_width=self.width / 2 - -230
                )
-        
-        print(self.mousex)
 
 def main():
     application = App(
