@@ -8,12 +8,13 @@ When you run the game, it opens a window and displays a test scene image, sample
 
 **Project Structure**
 
-* `panda2d.py` – Custom graphics and input module (built on Pygame).
-* `app.py` – Main game class (`App`), sets up images, fonts, and handles drawing logic.
-* `main.py` – Entry point, runs the game loop.
-* `assets/` – Contains images and fonts used for rendering (e.g., `ares.png`, `test-scene.png`, `Khmer MN.ttc`, `Silkscreen-Regular.ttf`, `VT323-Regular.ttf`).
-
----
+* `main.py` – Entry point, runs the game loop by calling the main function in `app.py`.
+* `app.py` – Main game class (`App`), sets up images (`ares.png`, `test-scene.png`), custom fonts (`Khmer MN.ttc`, `Silkscreen-Regular.ttf`, `VT323-Regular.ttf`), and handles drawing logic. Assets are loaded using the `asset()` helper function.
+* `panda2d.py` – Custom graphics and input module (built on Pygame), provides drawing and input APIs.
+* `assets/` – Contains images and fonts used for rendering:
+   * `ares.png`, `test-scene.png` – Scene and character images.
+   * `Khmer MN.ttc`, `Silkscreen-Regular.ttf`, `VT323-Regular.ttf` – Custom font files.
+* `__pycache__/` – Python bytecode cache (auto-generated).
 
 ## Current Features
 
@@ -23,8 +24,9 @@ When you run the game, it opens a window and displays a test scene image, sample
 * Keyboard and mouse input support (Escape key exits the game).
 * Centered coordinate system for game objects.
 * Assets and fonts loaded from the `assets/` folder.
+* Main game logic is handled in the `App` class in `app.py`, which loads images and fonts, and draws them each frame.
+* Asset loading is managed by the `asset()` helper function in `app.py` for consistent path resolution.
 
----
 
 ## Usage
 
@@ -41,6 +43,14 @@ When you run the game, it opens a window and displays a test scene image, sample
    ```
 
 3. Press Escape to exit the game window.
+
+---
+## How It Works
+
+* The game starts by running `main.py`, which calls the main function in `app.py`.
+* The `App` class (in `app.py`) initializes images and fonts from the `assets/` folder.
+* The window displays a test scene image, heading text, and main text using custom fonts.
+* All drawing and input handling is managed by the custom `panda2d.py` engine built on Pygame.
 
 ---
 
