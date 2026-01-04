@@ -1,56 +1,73 @@
-import panda2d
+import pgiud
 import os
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+
+
 def asset(path):
     return os.path.join(BASE_PATH, "assets", path)
 
 
+class App(pgiud.Window):
+    def __init__(self):
+        super().__init__(
+            width=480,
+            height=360,
+            title="HTG PayaLabs Game",
+            resizable=pgiud.Resizable.ASPECT,
+            origin=pgiud.Origin.CENTER,
+        )
 
-class App(panda2d.PandaApp):
     def initialize(self):
-        self.ares_image = panda2d.Image(asset("ares.png"))
-        self.test_scene = panda2d.Image(asset("test-scene.png"))
-        
-        self.test_font = asset("Khmer MN.ttc")
-        self.heading_font = asset("Silkscreen-Regular.ttf")
-        self.main_font = asset("VT323-Regular.ttf")
-    
+        self.ares_image = pgiud.Image(asset("ares.png"))
+        self.test_scene = pgiud.Image(asset("test-scene.png"))
+
+        self.test_font = pgiud.Font(asset("Khmer MN.ttc"))
+        self.heading_font = pgiud.Font(asset("Silkscreen-Regular.ttf"))
+        self.main_font = pgiud.Font(asset("VT323-Regular.ttf"))
+
     def update(self):
-        pass
-    
+        scalex = self.width / self._original_width
+        scaley = self.height / self._original_height
+        self.scale = (scalex + scaley) / 2.0
+
     def draw(self):
-        self.clear((0, 0, 0))  # Black background
+        self.clear(pgiud.Color(0, 0, 0))  # Black background
 
         # Context image
-        self.draw_image(self.test_scene, 240, 180, align=panda2d.Align.TOP_RIGHT, anti_aliasing=False)
+        self.draw_image(
+            self.test_scene,
+            0 * self.scale,
+            110 * self.scale,
+            origin=pgiud.Origin.CENTER,
+            scalex=self.scale,
+            scaley=self.scale,
+            antialiasing=False,
+        )
 
         # Heading text
-        self.draw_text(-230, 40, "Heading text", (255, 255, 255),
-               align=panda2d.Align.TOP_LEFT,
-               font=self.heading_font,
-               size=24, 
-               newline_spacing=20
-               )
-        
+        self.draw_text(
+            "Heading text",
+            -230 * self.scale,
+            40 * self.scale,
+            self.heading_font.new_size(self.heading_font.size * self.scale),
+            pgiud.Color(255, 255, 255),
+            pgiud.Origin.TOPLEFT,
+        )
+
         # Main text
-        self.draw_text(-230, 10, "Main text. The quick brown fox jumps over the lazy dog.", (255, 255, 255),
-               align=panda2d.Align.TOP_LEFT,
-               font=self.main_font,
-               size=24, 
-               newline_spacing=20,
-               max_width=self.width / 2 - -230
-               )
+        self.draw_text(
+            "Main text. The quick brown fox jumps over the lazy dog.",
+            -230 * self.scale,
+            10 * self.scale,
+            self.main_font.new_size(self.main_font.size * self.scale),
+            pgiud.Color(255, 255, 255),
+            pgiud.Origin.TOPLEFT,
+        )
+
 
 def main():
-    application = App(
-        width=480,
-        height=360,
-        title="HTG PayaLabs Game",
-        resizable=panda2d.Resizable.SCALE
-    )
-    
-    application.run()
+    App().start()
 
 
 if __name__ == "__main__":

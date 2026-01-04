@@ -35,48 +35,60 @@ When you run the game, it opens a window and displays a test scene image, sample
    ```bash
    pip install pygame
    ```
+# PayaLabs Game
 
-2. Run the game:
+Description
+-----------
+PayaLabs Game is an early prototype and technical demo inspired by Greek mythology. It uses a small, custom graphics/input module built on top of Pygame and currently renders a static test scene with sample text and custom fonts.
 
-   ```bash
-   python main.py
-   ```
+Quick Start
+-----------
+Prerequisites:
 
-3. Press Escape to exit the game window.
+- Python 3.8 or newer
+- Pygame
 
----
-## How It Works
+Install Pygame:
 
-* The game starts by running `main.py`, which calls the main function in `app.py`.
-* The `App` class (in `app.py`) initializes images and fonts from the `assets/` folder.
-* The window displays a test scene image, heading text, and main text using custom fonts.
-* All drawing and input handling is managed by the custom `panda2d.py` engine built on Pygame.
+```bash
+pip install pygame
+```
 
----
+Run the game:
 
-## Contribution
+```bash
+python main.py
+```
 
-Contributions are welcome! You can submit pull requests for bug fixes, improvements, or new features. Please note the game is in a prototype stage and only displays a static scene and text for now.
+Press Escape to close the window.
 
----
+Project layout
+--------------
 
-## License
+- `main.py` — Entry point that creates and runs the application.
+- `app.py` — The `App` class (game loop, assets, and draw/update logic).
+- `pgiud.py` — Custom graphics/input module included in the repository (used for drawing and input helpers).
+- `assets/` — Images and font files used by the demo.
 
-**PayaLabs Non-Commercial Open Source License v1.0**
+Notes
+-----
+- The repository includes a lightweight engine in `pgiud.py`. `app.py` uses that module to perform drawing and input handling.
+- The included `pgiud.py` corresponds to commit `83fb8b4`.
+- The codebase is regularly formatted with Black. To format the repository locally, run:
 
-1. **Permission:** Use, modify, and distribute this software **for non-commercial purposes only**.
-2. **Attribution:** Any use, distribution, or derivative work must give **credit to PayaLabs**.
-3. **No Commercial Use:** You may **not sell, license, or profit** from this software or derivatives.
-4. **Disclaimer:** Provided “as-is” without warranty. PayaLabs is not liable for any damages resulting from its use.
+```bash
+black .
+```
+- If you prefer a requirements file, you can create `requirements.txt` with a single line: `pygame`.
 
-By using or distributing this software, you agree to these terms.
+Contributing
+------------
+Contributions are welcome. Open an issue or submit a pull request for fixes, improvements, or new features. This project is a prototype; expect the code and APIs to change.
 
----
+License
+-------
+This project is provided under a non-commercial license by PayaLabs. See the repository or contact the authors for full terms.
 
-## Contact
-
-For questions or collaboration inquiries, contact **PayaLabs**.
-
-**Note:** The game is in early development. Currently, it displays a window with a test scene image and sample text. Story, art, music, and gameplay mechanics will be added in future updates.
-
-This project remains open-source and non-commercial, with proper attribution to PayaLabs required.
+Contact
+-------
+For questions or collaboration inquiries, contact PayaLabs.
