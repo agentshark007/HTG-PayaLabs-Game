@@ -1,5 +1,6 @@
-import pygame
 from enum import Enum
+
+import pygame
 
 
 class Key(Enum):
@@ -259,12 +260,12 @@ class Resizable(Enum):
 
 class Window:
     def __init__(
-        self,
-        width: int = 800,
-        height: int = 600,
-        title: str = "PGIUD Window",
-        resizable: Resizable = Resizable.NONE,
-        origin: Origin = Origin.BOTTOMLEFT,
+            self,
+            width: int = 800,
+            height: int = 600,
+            title: str = "PGIUD Window",
+            resizable: Resizable = Resizable.NONE,
+            origin: Origin = Origin.BOTTOMLEFT,
     ):
         pygame.init()
         try:
@@ -503,14 +504,14 @@ class Window:
         self._screen.fill(color.rgb_tuple() if color.a == 255 else color.to_tuple())
 
     def fill_rect(
-        self,
-        ax: int,
-        ay: int,
-        bx: int,
-        by: int,
-        color: "Color",
-        outline_thickness: int = 0,
-        outline_color: "Color" = None,
+            self,
+            ax: int,
+            ay: int,
+            bx: int,
+            by: int,
+            color: "Color",
+            outline_thickness: int = 0,
+            outline_color: "Color" = None,
     ):
         """Draw a filled rectangle from (ax, ay) to (bx, by) in IUD coordinates."""
         ax, ay = self._iud_to_pg(ax, ay)
@@ -541,7 +542,7 @@ class Window:
             pygame.draw.rect(self._screen, col, rect, outline_thickness)
 
     def draw_line(
-        self, ax: int, ay: int, bx: int, by: int, color: "Color", width: int = 1
+            self, ax: int, ay: int, bx: int, by: int, color: "Color", width: int = 1
     ):
         """Draw a line from (ax, ay) to (bx, by) in IUD coordinates."""
         ax, ay = self._iud_to_pg(ax, ay)
@@ -588,15 +589,15 @@ class Window:
             self._screen.blit(temp, (min_x, min_y))
 
     def draw_image(
-        self,
-        image: "Image",
-        x: int,
-        y: int,
-        origin: Origin = Origin.BOTTOMLEFT,
-        filter: "Color" = Color(255, 255, 255, 255),
-        scalex: float = 1.0,
-        scaley: float = 1.0,
-        antialiasing: bool = True,
+            self,
+            image: "Image",
+            x: int,
+            y: int,
+            origin: Origin = Origin.BOTTOMLEFT,
+            filter: "Color" = Color(255, 255, 255, 255),
+            scalex: float = 1.0,
+            scaley: float = 1.0,
+            antialiasing: bool = True,
     ):
         """Draw an image at (x, y) in IUD coordinates.
 
@@ -655,13 +656,13 @@ class Window:
         self._screen.blit(surf, (px, py))
 
     def draw_text(
-        self,
-        text: str,
-        x: int,
-        y: int,
-        font: "Font",
-        color: "Color",
-        origin: Origin = Origin.BOTTOMLEFT,
+            self,
+            text: str,
+            x: int,
+            y: int,
+            font: "Font",
+            color: "Color",
+            origin: Origin = Origin.BOTTOMLEFT,
     ):
         """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor."""
         surf = font.font.render(text, True, color.rgb_tuple())

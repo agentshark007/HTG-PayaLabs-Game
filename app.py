@@ -1,5 +1,6 @@
-import pgiud
 import os
+
+import pgiud
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 

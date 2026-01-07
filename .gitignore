@@ -32,6 +32,7 @@ pytest_cache/
 
 # IDEs / Editors
 .vscode/
+.idea/
 
 # System files
 .DS_Store
