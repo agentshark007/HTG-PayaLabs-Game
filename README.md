@@ -73,7 +73,7 @@ Project layout
 Notes
 -----
 - The repository includes a lightweight engine in `pgiud.py`. `app.py` uses that module to perform drawing and input handling.
-- The included `pgiud.py` corresponds to commit `83fb8b4`.
+- The included `pgiud.py` corresponds to commit `9e7575f`.
 - The codebase is regularly formatted with Black. To format the repository locally, run:
 
 ```bash
