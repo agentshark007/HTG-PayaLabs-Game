@@ -2,31 +2,16 @@
 # PayaLabs Game
 
 **Description**
-PayaLabs Game is an open-source project in early development. The current version is a technical demo for a future game about Greek gods, built with a custom graphics/input engine (`panda2d.py`) on top of Pygame.
+PayaLabs Game is an open-source project in early development. The current version is a technical demo for a future game about Greek gods, built with a custom graphics/input engine (`pgiud.py`) on top of Pygame.
 
 When you run the game, it opens a window and displays a test scene image, sample heading and main text, and uses custom fonts. The game currently does not have gameplay, story, or interactive mechanics yet.
 
 **Project Structure**
 
-* `main.py` – Entry point, runs the game loop by calling the main function in `app.py`.
-* `app.py` – Main game class (`App`), sets up images (`ares.png`, `test-scene.png`), custom fonts (`Khmer MN.ttc`, `Silkscreen-Regular.ttf`, `VT323-Regular.ttf`), and handles drawing logic. Assets are loaded using the `asset()` helper function.
-* `panda2d.py` – Custom graphics and input module (built on Pygame), provides drawing and input APIs.
-* `assets/` – Contains images and fonts used for rendering:
-   * `ares.png`, `test-scene.png` – Scene and character images.
-   * `Khmer MN.ttc`, `Silkscreen-Regular.ttf`, `VT323-Regular.ttf` – Custom font files.
-* `__pycache__/` – Python bytecode cache (auto-generated).
-
-## Current Features
-
-* Windowed game with black background.
-* Renders a test scene image and sample text using custom fonts.
-* Drawing API supports rectangles, circles, ellipses, triangles, lines, images, and text.
-* Keyboard and mouse input support (Escape key exits the game).
-* Centered coordinate system for game objects.
-* Assets and fonts loaded from the `assets/` folder.
-* Main game logic is handled in the `App` class in `app.py`, which loads images and fonts, and draws them each frame.
-* Asset loading is managed by the `asset()` helper function in `app.py` for consistent path resolution.
-
+* `main.py` – Entry point for game.
+* `app.py` – Main game class.
+* `pgiud.py` – Graphics engine.
+* `assets/` – Assets folder containing images, fonts, sounds, and other resources.
 
 ## Usage
 
@@ -83,12 +68,8 @@ black .
 
 Contributing
 ------------
-Contributions are welcome. Open an issue or submit a pull request for fixes, improvements, or new features. This project is a prototype; expect the code and APIs to change.
+Contributions are not welcome. This is a private project by PayaLabs and is not open for external contributions at this time.
 
 License
 -------
-This project is provided under a non-commercial license by PayaLabs. See the repository or contact the authors for full terms.
-
-Contact
--------
-For questions or collaboration inquiries, contact PayaLabs.
+This project is provided under a non-commercial license by PayaLabs. See [andrucupala.com/payalabs](https://andrucupala.com/payalabs/home.html) for more information.
