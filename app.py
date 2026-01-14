@@ -20,12 +20,10 @@ class App(pgiud.Window):
         )
 
     def initialize(self):
-        self.ares_image = pgiud.Image(asset("ares.png"))
-        self.test_scene = pgiud.Image(asset("test-scene.png"))
+        self.test_scene = pgiud.Image(asset("images/test/test-scene.png"))
 
-        self.test_font = pgiud.Font(asset("Khmer MN.ttc"))
-        self.heading_font = pgiud.Font(asset("Silkscreen-Regular.ttf"))
-        self.main_font = pgiud.Font(asset("VT323-Regular.ttf"))
+        self.heading_font = pgiud.Font(asset("fonts/Silkscreen-Regular.ttf"))
+        self.main_font = pgiud.Font(asset("fonts/VT323-Regular.ttf"))
 
     def update(self):
         scalex = self.width / self._original_width
