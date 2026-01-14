@@ -260,8 +260,14 @@ class Resizable(Enum):
 
 
 class Window:
-    def __init__(self, width: int = 800, height: int = 600, title: str = "PGIUD Window",
-                 resizable: Resizable = Resizable.NONE, origin: Origin = Origin.BOTTOMLEFT, ):
+    def __init__(
+        self,
+        width: int = 800,
+        height: int = 600,
+        title: str = "PGIUD Window",
+        resizable: Resizable = Resizable.NONE,
+        origin: Origin = Origin.BOTTOMLEFT,
+    ):
         pygame.init()
         try:
             pygame.mixer.init()
@@ -421,7 +427,11 @@ class Window:
         elif self._resizable == Resizable.HEIGHT:
             w = self.width
         elif self._resizable == Resizable.ASPECT:
-            ratio = (self._original_width / self._original_height if self._original_height != 0 else 1)
+            ratio = (
+                self._original_width / self._original_height
+                if self._original_height != 0
+                else 1
+            )
             if w / h > ratio:
                 w = int(h * ratio)
             else:
@@ -494,8 +504,16 @@ class Window:
         """Clear the screen to the given color."""
         self._screen.fill(color.rgb_tuple() if color.a == 255 else color.to_tuple())
 
-    def fill_rect(self, ax: int, ay: int, bx: int, by: int, color: "Color", outline_thickness: int = 0,
-                  outline_color: "Color" = None, ):
+    def fill_rect(
+        self,
+        ax: int,
+        ay: int,
+        bx: int,
+        by: int,
+        color: "Color",
+        outline_thickness: int = 0,
+        outline_color: "Color" = None,
+    ):
         """Draw a filled rectangle from (ax, ay) to (bx, by) in IUD coordinates."""
         outline_thickness = int(outline_thickness)
 
@@ -519,12 +537,28 @@ class Window:
             temp.fill(color.to_tuple())
             self._screen.blit(temp, (x, y))
         if outline_thickness > 0 and outline_color:
-            col = (outline_color.rgb_tuple() if outline_color.a == 255 else outline_color.to_tuple())
+            col = (
+                outline_color.rgb_tuple()
+                if outline_color.a == 255
+                else outline_color.to_tuple()
+            )
             pygame.draw.rect(self._screen, col, rect, outline_thickness)
 
-    def fill_rounded_rect(self, x1, y1, x2, y2, color: Color, outline_thickness=0, outline_color: Color = None,
-                          topleft_roundness: float = 0.0, topright_roundness: float = 0.0,
-                          bottomleft_roundness: float = 0.0, bottomright_roundness: float = 0.0, steps: int = 10, ):
+    def fill_rounded_rect(
+        self,
+        x1,
+        y1,
+        x2,
+        y2,
+        color: Color,
+        outline_thickness=0,
+        outline_color: Color = None,
+        topleft_roundness: float = 0.0,
+        topright_roundness: float = 0.0,
+        bottomleft_roundness: float = 0.0,
+        bottomright_roundness: float = 0.0,
+        steps: int = 10,
+    ):
         """Draw a filled rounded rectangle with optional outline."""
 
         left, right = min(x1, x2), max(x1, x2)
@@ -547,7 +581,9 @@ class Window:
             arc_points = []
             for i in range(steps + 1):
                 theta = math.pi / 2 + (math.pi / 2) * (i / steps)
-                arc_points.append((cx + tl * math.cos(theta), cy + tl * math.sin(theta)))
+                arc_points.append(
+                    (cx + tl * math.cos(theta), cy + tl * math.sin(theta))
+                )
             points.extend(reversed(arc_points))
         else:
             points.append((left, top))
@@ -560,7 +596,9 @@ class Window:
             arc_points = []
             for i in range(steps + 1):
                 theta = 0 + (math.pi / 2) * (i / steps)
-                arc_points.append((cx + tr * math.cos(theta), cy + tr * math.sin(theta)))
+                arc_points.append(
+                    (cx + tr * math.cos(theta), cy + tr * math.sin(theta))
+                )
             points.extend(reversed(arc_points[1:]))
         else:
             points.append((right, top))
@@ -571,7 +609,9 @@ class Window:
             arc_points = []
             for i in range(steps + 1):
                 theta = math.pi / 2 + math.pi + (math.pi / 2) * (i / steps)
-                arc_points.append((cx + br * math.cos(theta), cy + br * math.sin(theta)))
+                arc_points.append(
+                    (cx + br * math.cos(theta), cy + br * math.sin(theta))
+                )
             points.extend(reversed(arc_points))
         else:
             points.append((right, bottom))
@@ -582,7 +622,9 @@ class Window:
             arc_points = []
             for i in range(steps + 1):
                 theta = math.pi + (math.pi / 2) * (i / steps)
-                arc_points.append((cx + bl * math.cos(theta), cy + bl * math.sin(theta)))
+                arc_points.append(
+                    (cx + bl * math.cos(theta), cy + bl * math.sin(theta))
+                )
             points.extend(reversed(arc_points))
         else:
             points.append((left, bottom))
@@ -596,7 +638,9 @@ class Window:
 
         self.fill_polygon(xlist, ylist, color, outline_thickness, outline_color)
 
-    def draw_line(self, ax: int, ay: int, bx: int, by: int, color: "Color", width: int = 1):
+    def draw_line(
+        self, ax: int, ay: int, bx: int, by: int, color: "Color", width: int = 1
+    ):
         """Draw a line from (ax, ay) to (bx, by) in IUD coordinates."""
         ax, ay = self._iud_to_pg(ax, ay)
         bx, by = self._iud_to_pg(bx, by)
@@ -616,7 +660,14 @@ class Window:
             pygame.draw.line(temp, color.to_tuple(), (sx1, sy1), (sx2, sy2), width)
             self._screen.blit(temp, (min_x, min_y))
 
-    def fill_polygon(self, xlist: list, ylist: list, color: "Color", outline_thickness=0, outline_color=None):
+    def fill_polygon(
+        self,
+        xlist: list,
+        ylist: list,
+        color: "Color",
+        outline_thickness=0,
+        outline_color=None,
+    ):
         """Draw a filled polygon. Points should be provided as separate x and y coordinate lists."""
         # Combine xlist and ylist into points
         if len(xlist) != len(ylist):
@@ -636,7 +687,8 @@ class Window:
             height = max_y - min_y
 
             if width <= 0 or height <= 0:
-                # Fallback: draw directly (alpha will be ignored), but avoid crash
+                # Fallback: draw directly (alpha will be ignored), but avoid
+                # crash
                 try:
                     pygame.draw.polygon(self._screen, color.rgb_tuple(), pg_points)
                 except Exception:
@@ -650,11 +702,22 @@ class Window:
 
         # Draw the outline if specified
         if outline_thickness > 0 and outline_color is not None:
-            pygame.draw.polygon(self._screen, outline_color.rgb_tuple(), pg_points, outline_thickness)
+            pygame.draw.polygon(
+                self._screen, outline_color.rgb_tuple(), pg_points, outline_thickness
+            )
 
-    def draw_image(self, image: "Image", x: int, y: int, origin: Origin = Origin.BOTTOMLEFT,
-                   filter: "Color" = Color(255, 255, 255, 255), scalex: float = 1.0, scaley: float = 1.0,
-                   rotation: int = 0, antialiasing: bool = True):
+    def draw_image(
+        self,
+        image: "Image",
+        x: int,
+        y: int,
+        origin: Origin = Origin.BOTTOMLEFT,
+        filter: "Color" = Color(255, 255, 255, 255),
+        scalex: float = 1.0,
+        scaley: float = 1.0,
+        rotation: int = 0,
+        antialiasing: bool = True,
+    ):
         """Draw an image at (x, y) in IUD coordinates.
 
         Optional:
@@ -694,7 +757,9 @@ class Window:
 
         # Rotation
         if rotation != 0:
-            surf = pygame.transform.rotate(surf, -rotation)  # Negative for clockwise rotation
+            surf = pygame.transform.rotate(
+                surf, -rotation
+            )  # Negative for clockwise rotation
 
         # Color filter / tint (multiply)
         if filter is not None:
@@ -710,16 +775,26 @@ class Window:
         px -= surf.get_width() // 2
         py -= surf.get_height() // 2
 
-        # Custom anchor (ox: -1 left, 0 center, 1 right; oy inverted to match screen space)
+        # Custom anchor (ox: -1 left, 0 center, 1 right; oy inverted to match
+        # screen space)
         px -= ox * surf.get_width() // 2
         py -= oy * surf.get_height() // 2
 
         self._screen.blit(surf, (px, py))
 
-    def draw_text(self, text: str, x: int, y: int, font: "Font", color: "Color", origin: Origin = Origin.BOTTOMLEFT, ):
+    def draw_text(
+        self,
+        text: str,
+        x: int,
+        y: int,
+        font: "Font",
+        color: "Color",
+        origin: Origin = Origin.BOTTOMLEFT,
+    ):
         """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor."""
         surf = font.font.render(text, True, color.rgb_tuple())
-        # Ensure the surface supports per-pixel alpha so per-surface alpha works
+        # Ensure the surface supports per-pixel alpha so per-surface alpha
+        # works
         try:
             surf = surf.convert_alpha()
         except Exception:
@@ -744,7 +819,8 @@ class Window:
         py -= oy * surf.get_height() // 2
 
         # Alpha
-        # If color has alpha (<255), set surface alpha (per-surface) so blit respects it.
+        # If color has alpha (<255), set surface alpha (per-surface) so blit
+        # respects it.
         if color.a != 255:
             try:
                 surf.set_alpha(color.a)
