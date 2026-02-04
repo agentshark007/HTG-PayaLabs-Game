@@ -32,7 +32,7 @@ class App(pgiud.Window):
         )
 
     def initialize(self):
-        self.test_scene = pgiud.Image(asset("images/test/test-scene.png"))
+        self.test_scene = pgiud.Image(asset("images/scene/trees.png"))
 
         self.heading_font = pgiud.Font(asset("fonts/Silkscreen-Regular.ttf"))
         self.main_font = pgiud.Font(asset("fonts/VT323-Regular.ttf"))
