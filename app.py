@@ -60,15 +60,6 @@ class App(pgiud.Window):
             pass
 
         elif self.state == State.PLAYING:
-            pass
-
-        elif self.state == State.LOAD_GAME_PLAYING:
-            pass
-
-        elif self.state == State.CREDITS:
-            pass
-
-        elif self.state == State.PLAYING:
             self.clear(pgiud.Color(0, 0, 0))  # Black background
 
             # Context image
@@ -101,6 +92,12 @@ class App(pgiud.Window):
                 pgiud.Color(255, 255, 255),
                 pgiud.Origin.TOPLEFT,
             )
+
+        elif self.state == State.LOAD_GAME_PLAYING:
+            pass
+
+        elif self.state == State.CREDITS:
+            pass
 
 
 def main():

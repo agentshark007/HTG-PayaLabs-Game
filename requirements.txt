@@ -1,0 +1,9 @@
+black==26.1.0
+click==8.3.1
+mypy_extensions==1.1.0
+packaging==26.0
+pathspec==1.0.4
+pillow==12.1.0
+platformdirs==4.5.1
+pygame==2.6.1
+pytokens==0.4.1
