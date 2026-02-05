@@ -1,13 +1,12 @@
 import os
 from enum import Enum
-
-import pgiud
+from pgiud import *
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 def asset(path):
-    return os.path.join(BASE_PATH, "assets", path)
+    return str(os.path.join(BASE_PATH, "assets", path))
 
 
 class State(Enum):
@@ -21,30 +20,30 @@ class State(Enum):
     CREDITS = 8
 
 
-class App(pgiud.Window):
+class App(Window):
     def __init__(self):
         super().__init__(
             width=480,
             height=360,
             title="HTG PayaLabs Game",
-            resizable=pgiud.Resizable.ASPECT,
-            origin=pgiud.Origin.CENTER,
+            resizable=Resizable.ASPECT,
+            origin=Origin.CENTER,
         )
 
     def initialize(self):
-        self.test_scene = pgiud.Image(asset("images/scene/trees.png"))
+        self.test_scene = Image(asset("images/scene/trees.png"))
 
-        self.heading_font = pgiud.Font(asset("fonts/Silkscreen-Regular.ttf"))
-        self.main_font = pgiud.Font(asset("fonts/VT323-Regular.ttf"))
+        self.heading_font = Font(asset("fonts/Silkscreen-Regular.ttf"))
+        self.main_font = Font(asset("fonts/VT323-Regular.ttf"))
 
         self.scale = 1.0
 
         self.state = State.PLAYING
 
     def update(self):
-        scalex = self.width / self._original_width
-        scaley = self.height / self._original_height
-        self.scale = (scalex + scaley) / 2.0
+        scale_x = self.width / self._original_width
+        scale_y = self.height / self._original_height
+        self.scale = (scale_x + scale_y) / 2.0
 
     def draw(self):
         if self.state == State.INTRO:
@@ -60,37 +59,36 @@ class App(pgiud.Window):
             pass
 
         elif self.state == State.PLAYING:
-            self.clear(pgiud.Color(0, 0, 0))  # Black background
+            self.clear(Color(0, 0, 0))  # Black background
 
             # Context image
             self.draw_image(
                 self.test_scene,
-                0 * self.scale,
-                110 * self.scale,
-                origin=pgiud.Origin.CENTER,
-                scalex=self.scale,
-                scaley=self.scale,
+                V(0 * self.scale, 110 * self.scale),
+                origin=Origin.CENTER,
+                scale_x=self.scale,
+                scale_y=self.scale,
                 antialiasing=False,
             )
 
             # Heading text
             self.draw_text(
                 "Heading text",
-                -230 * self.scale,
-                40 * self.scale,
-                self.heading_font.new_size(self.heading_font.size * self.scale),
-                pgiud.Color(255, 255, 255),
-                pgiud.Origin.TOPLEFT,
+                V(-230 * self.scale, 40 * self.scale),
+                font=self.heading_font.new_size(
+                    int(self.heading_font.size * self.scale)
+                ),
+                color=Color(255, 255, 255),
+                origin=Origin.TOPLEFT,
             )
 
             # Main text
             self.draw_text(
                 "Main text. The quick brown fox jumps over the lazy dog.",
-                -230 * self.scale,
-                10 * self.scale,
-                self.main_font.new_size(self.main_font.size * self.scale),
-                pgiud.Color(255, 255, 255),
-                pgiud.Origin.TOPLEFT,
+                V(-230 * self.scale, 10 * self.scale),
+                self.main_font.new_size(int(self.main_font.size * self.scale)),
+                Color(255, 255, 255),
+                Origin.TOPLEFT,
             )
 
         elif self.state == State.LOAD_GAME_PLAYING:

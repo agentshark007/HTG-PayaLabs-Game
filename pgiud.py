@@ -1,11 +1,88 @@
+from __future__ import annotations
 import math
 from enum import Enum
-
+from typing import Iterable, Optional, Tuple
 import pygame
+
+__version__ = "1.1.0"
+__all__ = [
+    "V",
+    "Key",
+    "Font",
+    "Color",
+    "Image",
+    "Sound",
+    "Origin",
+    "Resizable",
+    "Window",
+    "__version__",
+]
+
+
+class V:
+
+    def __init__(self, x: float, y: float):
+        self.x: float = float(x)
+        self.y: float = float(y)
+
+    def __add__(self, other: V) -> V:
+        return V(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other: V) -> V:
+        return V(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar: float) -> V:
+        return V(self.x * scalar, self.y * scalar)
+
+    def __truediv__(self, scalar: float) -> V:
+        if scalar == 0:
+            raise ZeroDivisionError("division by zero")
+        return V(self.x / scalar, self.y / scalar)
+
+    def __rmul__(self, scalar: float) -> V:
+        return self.__mul__(scalar)
+
+    def length(self) -> float:
+        return (self.x * self.x + self.y * self.y) ** 0.5
+
+    def normalized(self) -> V:
+        length = self.length()
+        if length == 0:
+            return V(0, 0)
+        return self / length
+
+    def dot_to(self, other: V) -> float:
+        return self.x * other.x + self.y * other.y
+
+    @staticmethod
+    def dot(a: V, b: V) -> float:
+        return a.dot_to(b)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, V):
+            return False
+        try:
+            return math.isclose(
+                self.x, other.x, rel_tol=1e-09, abs_tol=1e-09
+            ) and math.isclose(self.y, other.y, rel_tol=1e-09, abs_tol=1e-09)
+        except Exception:
+            return self.x == other.x and self.y == other.y
+
+    def __repr__(self) -> str:
+        return f"V({self.x}, {self.y})"
+
+    def distance_to(self, other: V) -> float:
+        return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
+
+    def to_tuple(self) -> Tuple[float, float]:
+        return (self.x, self.y)
+
+    @staticmethod
+    def distance(a: V, b: V) -> float:
+        return a.distance_to(b)
 
 
 class Key(Enum):
-    # Letters
     A = pygame.K_a
     B = pygame.K_b
     C = pygame.K_c
@@ -32,8 +109,6 @@ class Key(Enum):
     X = pygame.K_x
     Y = pygame.K_y
     Z = pygame.K_z
-
-    # Numbers
     NUM_0 = pygame.K_0
     NUM_1 = pygame.K_1
     NUM_2 = pygame.K_2
@@ -44,8 +119,6 @@ class Key(Enum):
     NUM_7 = pygame.K_7
     NUM_8 = pygame.K_8
     NUM_9 = pygame.K_9
-
-    # Function keys
     F1 = pygame.K_F1
     F2 = pygame.K_F2
     F3 = pygame.K_F3
@@ -58,14 +131,10 @@ class Key(Enum):
     F10 = pygame.K_F10
     F11 = pygame.K_F11
     F12 = pygame.K_F12
-
-    # Arrows
     LEFT = pygame.K_LEFT
     RIGHT = pygame.K_RIGHT
     UP = pygame.K_UP
     DOWN = pygame.K_DOWN
-
-    # Modifiers
     LSHIFT = pygame.K_LSHIFT
     RSHIFT = pygame.K_RSHIFT
     LCTRL = pygame.K_LCTRL
@@ -74,8 +143,6 @@ class Key(Enum):
     RALT = pygame.K_RALT
     LSUPER = pygame.K_LSUPER
     RSUPER = pygame.K_RSUPER
-
-    # Common keys
     SPACE = pygame.K_SPACE
     RETURN = pygame.K_RETURN
     ENTER = pygame.K_RETURN
@@ -89,8 +156,6 @@ class Key(Enum):
     END = pygame.K_END
     PAGEUP = pygame.K_PAGEUP
     PAGEDOWN = pygame.K_PAGEDOWN
-
-    # Symbols
     MINUS = pygame.K_MINUS
     EQUALS = pygame.K_EQUALS
     LEFTBRACKET = pygame.K_LEFTBRACKET
@@ -102,8 +167,6 @@ class Key(Enum):
     COMMA = pygame.K_COMMA
     PERIOD = pygame.K_PERIOD
     SLASH = pygame.K_SLASH
-
-    # Keypad
     KP0 = pygame.K_KP0
     KP1 = pygame.K_KP1
     KP2 = pygame.K_KP2
@@ -124,6 +187,7 @@ class Key(Enum):
 
 
 class Font:
+
     def __init__(self, file: str = None, size: int = 24):
         pygame.font.init()
         self.size = size
@@ -148,9 +212,8 @@ class Font:
 
 
 class Color:
+
     def __init__(self, r: int, g: int, b: int, a: int = 255):
-        # Note: all values must range from 0-255. Greater/lesser values will be
-        # clamped.
         self.r = max(0, min(255, int(r)))
         self.g = max(0, min(255, int(g)))
         self.b = max(0, min(255, int(b)))
@@ -164,14 +227,28 @@ class Color:
 
     def mix(self, other: "Color", factor: float = 0.5):
         factor = max(0.0, min(1.0, factor))
-        r = int(self.r * (1 - factor) + other.r * factor)
-        g = int(self.g * (1 - factor) + other.g * factor)
-        b = int(self.b * (1 - factor) + other.b * factor)
-        a = int(self.a * (1 - factor) + other.a * factor)
+        r = int(round(self.r * (1 - factor) + other.r * factor))
+        g = int(round(self.g * (1 - factor) + other.g * factor))
+        b = int(round(self.b * (1 - factor) + other.b * factor))
+        a = int(round(self.a * (1 - factor) + other.a * factor))
         return Color(r, g, b, a)
+
+    def __repr__(self) -> str:
+        return f"Color({self.r}, {self.g}, {self.b}, {self.a})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Color):
+            return False
+        return (
+            self.r == other.r
+            and self.g == other.g
+            and (self.b == other.b)
+            and (self.a == other.a)
+        )
 
 
 class Image:
+
     def __init__(self, path: str):
         try:
             loaded = pygame.image.load(path)
@@ -191,6 +268,7 @@ class Image:
 
 
 class Sound:
+
     def __init__(self, path: str):
         try:
             if not pygame.mixer.get_init():
@@ -240,15 +318,15 @@ class Sound:
 
 
 class Origin(Enum):
-    CENTER = "center"
-    TOP = "top"
-    BOTTOM = "bottom"
-    LEFT = "left"
-    RIGHT = "right"
-    TOPLEFT = "topleft"
-    TOPRIGHT = "topright"
-    BOTTOMLEFT = "bottomleft"
-    BOTTOMRIGHT = "bottomright"
+    CENTER = (0, 0)
+    TOP = (0, 1)
+    BOTTOM = (0, -1)
+    LEFT = (-1, 0)
+    RIGHT = (1, 0)
+    TOPLEFT = (-1, 1)
+    TOPRIGHT = (1, 1)
+    BOTTOMLEFT = (-1, -1)
+    BOTTOMRIGHT = (1, -1)
 
 
 class Resizable(Enum):
@@ -260,6 +338,7 @@ class Resizable(Enum):
 
 
 class Window:
+
     def __init__(
         self,
         width: int = 800,
@@ -273,29 +352,24 @@ class Window:
             pygame.mixer.init()
         except Exception:
             pass
-
-        self._width, self._height = width, height
+        self._width, self._height = (width, height)
         self._title = title
-
         self._flags = pygame.RESIZABLE if resizable != Resizable.NONE else 0
-
         self._screen = pygame.display.set_mode((width, height), self._flags)
         pygame.display.set_caption(title)
-
         self._origin = origin
         self._resizable = resizable
         self._original_width = width
         self._original_height = height
-
         self._clock = pygame.time.Clock()
         self._running = False
-        self._mousex = 0
-        self._mousey = 0
+        self._mouse_x = 0
+        self._mouse_y = 0
         self._deltatime = 0.0
         self._fonts = {}
-        self._mousedownprimary = False
-        self._mousedownmiddle = False
-        self._mousedownsecondary = False
+        self._mouse_down_primary = False
+        self._mouse_down_middle = False
+        self._mouse_down_secondary = False
 
     @property
     def width(self):
@@ -314,24 +388,20 @@ class Window:
         self._height = value
 
     @property
-    def mousex(self):
-        return self._mousex
+    def mouse_pos(self):
+        return V(self._mouse_x, self._mouse_y)
 
     @property
-    def mousey(self):
-        return self._mousey
+    def mouse_down_primary(self):
+        return self._mouse_down_primary
 
     @property
-    def mousedownprimary(self):
-        return self._mousedownprimary
+    def mouse_down_middle(self):
+        return self._mouse_down_middle
 
     @property
-    def mousedownmiddle(self):
-        return self._mousedownmiddle
-
-    @property
-    def mousedownsecondary(self):
-        return self._mousedownsecondary
+    def mouse_down_secondary(self):
+        return self._mouse_down_secondary
 
     @property
     def deltatime(self):
@@ -341,83 +411,52 @@ class Window:
         pressed = pygame.key.get_pressed()
         return bool(pressed[key.value])
 
-    def _get_origin_position(self, origin: Origin):
-        if origin == Origin.CENTER:
-            return 0, 0
-        elif origin == Origin.TOP:
-            return 0, 1
-        elif origin == Origin.BOTTOM:
-            return 0, -1
-        elif origin == Origin.LEFT:
-            return -1, 0
-        elif origin == Origin.RIGHT:
-            return 1, 0
-        elif origin == Origin.TOPLEFT:
-            return -1, 1
-        elif origin == Origin.TOPRIGHT:
-            return 1, 1
-        elif origin == Origin.BOTTOMLEFT:
-            return -1, -1
-        elif origin == Origin.BOTTOMRIGHT:
-            return 1, -1
-        else:
-            # Defensive default
-            return 0, 0
-
     def screen_position(self, origin: Origin):
-        # Return the IUD coordinates that correspond to the given `origin`
-
-        # Find pygame screen center
-        cx, cy = self._width // 2, self._height // 2
-
-        # Find the pygame position of the given origin
-        ox, oy = self._get_origin_position(origin)
-        px = cx + (ox * (self.width // 2))
-        py = cy - (oy * (self.height // 2))
-        # Convert to IUD coordinates and return
-        return self._pg_to_iud(px, py)
+        cx, cy = (self._width // 2, self._height // 2)
+        ox, oy = origin.value
+        px = cx + ox * (self.width // 2)
+        py = cy - oy * (self.height // 2)
+        return V(*self._pg_to_iud(px, py))
 
     @property
     def screen_center_x(self):
-        return self.screen_position(Origin.CENTER)[0]
+        return self.screen_position(Origin.CENTER).x
 
     @property
     def screen_center_y(self):
-        return self.screen_position(Origin.CENTER)[1]
+        return self.screen_position(Origin.CENTER).y
 
     @property
     def screen_top(self):
-        return self.screen_position(Origin.TOP)[1]
+        return self.screen_position(Origin.TOP).y
 
     @property
     def screen_bottom(self):
-        return self.screen_position(Origin.BOTTOM)[1]
+        return self.screen_position(Origin.BOTTOM).y
 
     @property
     def screen_left(self):
-        return self.screen_position(Origin.LEFT)[0]
+        return self.screen_position(Origin.LEFT).x
 
     @property
     def screen_right(self):
-        return self.screen_position(Origin.RIGHT)[0]
+        return self.screen_position(Origin.RIGHT).x
 
     def _pg_to_iud(self, x: int, y: int):
-        # Convert pygame (top-left origin) to IUD (custom origin)
-        ox, oy = self._get_origin_position(self._origin)
-        cx = self.width // 2 if ox == 0 else (0 if ox == -1 else self.width)
-        cy = self.height // 2 if oy == 0 else (0 if oy == -1 else self.height)
+        ox, oy = self._origin.value
+        cx = self.width // 2 if ox == 0 else 0 if ox == -1 else self.width
+        cy = self.height // 2 if oy == 0 else 0 if oy == -1 else self.height
         new_x = x - cx
-        new_y = (self.height - y) - cy
-        return new_x, new_y
+        new_y = self.height - y - cy
+        return (new_x, new_y)
 
     def _iud_to_pg(self, x: int, y: int):
-        # Convert IUD (custom origin) to pygame (top-left origin)
-        ox, oy = self._get_origin_position(self._origin)
-        cx = self.width // 2 if ox == 0 else (0 if ox == -1 else self.width)
-        cy = self.height // 2 if oy == 0 else (0 if oy == -1 else self.height)
+        ox, oy = self._origin.value
+        cx = self.width // 2 if ox == 0 else 0 if ox == -1 else self.width
+        cy = self.height // 2 if oy == 0 else 0 if oy == -1 else self.height
         new_x = x + cx
         new_y = self.height - (y + cy)
-        return new_x, new_y
+        return (new_x, new_y)
 
     def _handle_resize(self, w, h):
         if self._resizable == Resizable.NONE:
@@ -436,7 +475,7 @@ class Window:
                 w = int(h * ratio)
             else:
                 h = int(w / ratio)
-        self.width, self.height = w, h
+        self.width, self.height = (w, h)
         self._screen = pygame.display.set_mode((w, h), self._flags)
 
     def start(self):
@@ -444,34 +483,28 @@ class Window:
         self.initialize()
         while self._running:
             self._deltatime = self._clock.tick(60) / 1000.0
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.on_quit()
                     self._running = False
-
                 elif event.type == pygame.VIDEORESIZE:
                     self._handle_resize(event.w, event.h)
                     self.on_resize(event.w, event.h)
-
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        self._mousedownprimary = True
+                        self._mouse_down_primary = True
                     elif event.button == 2:
-                        self._mousedownmiddle = True
+                        self._mouse_down_middle = True
                     elif event.button == 3:
-                        self._mousedownsecondary = True
-
+                        self._mouse_down_secondary = True
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
-                        self._mousedownprimary = False
+                        self._mouse_down_primary = False
                     elif event.button == 2:
-                        self._mousedownmiddle = False
+                        self._mouse_down_middle = False
                     elif event.button == 3:
-                        self._mousedownsecondary = False
-
-            self._mousex, self._mousey = self._pg_to_iud(*pygame.mouse.get_pos())
-
+                        self._mouse_down_secondary = False
+            self._mouse_x, self._mouse_y = self._pg_to_iud(*pygame.mouse.get_pos())
             self.update()
             self.draw()
             pygame.display.flip()
@@ -506,19 +539,18 @@ class Window:
 
     def fill_rect(
         self,
-        ax: int,
-        ay: int,
-        bx: int,
-        by: int,
+        a: V,
+        b: V,
         color: "Color",
         outline_thickness: int = 0,
         outline_color: "Color" = None,
     ):
-        """Draw a filled rectangle from (ax, ay) to (bx, by) in IUD coordinates."""
+        """Draw a filled rectangle from a to b in IUD coordinates."""
         outline_thickness = int(outline_thickness)
-
-        ax, ay = self._iud_to_pg(ax, ay)
-        bx, by = self._iud_to_pg(bx, by)
+        ax, ay = a.to_tuple()
+        bx, by = b.to_tuple()
+        ax, ay = self._iud_to_pg(int(ax), int(ay))
+        bx, by = self._iud_to_pg(int(bx), int(by))
         width = bx - ax
         height = by - ay
         x = ax
@@ -546,108 +578,95 @@ class Window:
 
     def fill_rounded_rect(
         self,
-        x1,
-        y1,
-        x2,
-        y2,
+        a: V,
+        b: V,
         color: Color,
-        outline_thickness=0,
+        outline_thickness: int = 0,
         outline_color: Color = None,
-        topleft_roundness: float = 0.0,
-        topright_roundness: float = 0.0,
-        bottomleft_roundness: float = 0.0,
-        bottomright_roundness: float = 0.0,
+        top_left_roundness: float = 0.0,
+        top_right_roundness: float = 0.0,
+        bottom_left_roundness: float = 0.0,
+        bottom_right_roundness: float = 0.0,
         steps: int = 10,
     ):
         """Draw a filled rounded rectangle with optional outline."""
-
-        left, right = min(x1, x2), max(x1, x2)
-        bottom, top = min(y1, y2), max(y1, y2)
+        ax, ay = a.to_tuple()
+        bx, by = b.to_tuple()
+        left, right = (min(ax, bx), max(ax, bx))
+        bottom, top = (min(ay, by), max(ay, by))
         w = right - left
         h = top - bottom
-
         outline_thickness = int(outline_thickness)
-
-        tl = max(1, min(w, topleft_roundness))
-        tr = max(1, min(w, topright_roundness))
-        bl = max(1, min(w, bottomleft_roundness))
-        br = max(1, min(w, bottomright_roundness))
-
+        steps = max(1, int(steps))
+        max_radius = min(w, h) / 2 if w > 0 and h > 0 else 0
+        tl = int(max(0, min(max_radius, top_left_roundness)))
+        tr = int(max(0, min(max_radius, top_right_roundness)))
+        bl = int(max(0, min(max_radius, bottom_left_roundness)))
+        br = int(max(0, min(max_radius, bottom_right_roundness)))
         points = []
-
-        # Top-left
         if tl > 0:
-            cx, cy = left + tl, top - tl
+            cx, cy = (left + tl, top - tl)
             arc_points = []
             for i in range(steps + 1):
-                theta = math.pi / 2 + (math.pi / 2) * (i / steps)
+                theta = math.pi / 2 + math.pi / 2 * (i / steps)
                 arc_points.append(
                     (cx + tl * math.cos(theta), cy + tl * math.sin(theta))
                 )
             points.extend(reversed(arc_points))
         else:
             points.append((left, top))
-
         points.append((right - tr, top))
-
-        # Top-right
         if tr > 0:
-            cx, cy = right - tr, top - tr
+            cx, cy = (right - tr, top - tr)
             arc_points = []
             for i in range(steps + 1):
-                theta = 0 + (math.pi / 2) * (i / steps)
+                theta = 0 + math.pi / 2 * (i / steps)
                 arc_points.append(
                     (cx + tr * math.cos(theta), cy + tr * math.sin(theta))
                 )
             points.extend(reversed(arc_points[1:]))
         else:
             points.append((right, top))
-
-        # Bottom-right (fixed)
         if br > 0:
-            cx, cy = right - br, bottom + br
+            cx, cy = (right - br, bottom + br)
             arc_points = []
             for i in range(steps + 1):
-                theta = math.pi / 2 + math.pi + (math.pi / 2) * (i / steps)
+                theta = math.pi / 2 + math.pi + math.pi / 2 * (i / steps)
                 arc_points.append(
                     (cx + br * math.cos(theta), cy + br * math.sin(theta))
                 )
             points.extend(reversed(arc_points))
         else:
             points.append((right, bottom))
-
-        # Bottom-left
         if bl > 0:
-            cx, cy = left + bl, bottom + bl
+            cx, cy = (left + bl, bottom + bl)
             arc_points = []
             for i in range(steps + 1):
-                theta = math.pi + (math.pi / 2) * (i / steps)
+                theta = math.pi + math.pi / 2 * (i / steps)
                 arc_points.append(
                     (cx + bl * math.cos(theta), cy + bl * math.sin(theta))
                 )
             points.extend(reversed(arc_points))
         else:
             points.append((left, bottom))
+        x_list = [p[0] for p in points]
+        y_list = [p[1] for p in points]
+        x_list = x_list[:-1]
+        y_list = y_list[:-1]
+        points = list(zip(x_list, y_list))
+        if len(points) < 3:
+            return
+        self.fill_polygon(points, color, outline_thickness, outline_color)
 
-        xlist = [p[0] for p in points]
-        ylist = [p[1] for p in points]
-
-        # Remove the last item as requested
-        xlist = xlist[:-1]
-        ylist = ylist[:-1]
-
-        self.fill_polygon(xlist, ylist, color, outline_thickness, outline_color)
-
-    def draw_line(
-        self, ax: int, ay: int, bx: int, by: int, color: "Color", width: int = 1
-    ):
+    def draw_line(self, a: V, b: V, color: "Color", width: int = 1):
         """Draw a line from (ax, ay) to (bx, by) in IUD coordinates."""
-        ax, ay = self._iud_to_pg(ax, ay)
-        bx, by = self._iud_to_pg(bx, by)
+        ax, ay = a.to_tuple()
+        bx, by = b.to_tuple()
+        ax, ay = self._iud_to_pg(int(ax), int(ay))
+        bx, by = self._iud_to_pg(int(bx), int(by))
         if color.a == 255:
             pygame.draw.line(self._screen, color.rgb_tuple(), (ax, ay), (bx, by), width)
         else:
-            # Draw to a temporary surface so alpha is respected
             min_x = min(ax, bx) - width
             min_y = min(ay, by) - width
             max_x = max(ax, bx) + width
@@ -655,66 +674,64 @@ class Window:
             tw = max(1, max_x - min_x)
             th = max(1, max_y - min_y)
             temp = pygame.Surface((tw, th), pygame.SRCALPHA)
-            sx1, sy1 = ax - min_x, ay - min_y
-            sx2, sy2 = bx - min_x, by - min_y
-            pygame.draw.line(temp, color.to_tuple(), (sx1, sy1), (sx2, sy2), width)
+            sax, say = (ax - min_x, ay - min_y)
+            sbx, sby = (bx - min_x, by - min_y)
+            pygame.draw.line(temp, color.to_tuple(), (sax, say), (sbx, sby), width)
             self._screen.blit(temp, (min_x, min_y))
 
     def fill_polygon(
         self,
-        xlist: list,
-        ylist: list,
+        points: Iterable[Tuple[float, float]],
         color: "Color",
-        outline_thickness=0,
-        outline_color=None,
+        outline_thickness: int = 0,
+        outline_color: "Color" = None,
     ):
-        """Draw a filled polygon. Points should be provided as separate x and y coordinate lists."""
-        # Combine xlist and ylist into points
-        if len(xlist) != len(ylist):
-            raise ValueError("xlist and ylist must have the same length")
-        pg_points = [self._iud_to_pg(x, y) for x, y in zip(xlist, ylist)]
-
+        """Draw a filled polygon. Points should be an iterable of (x, y) pairs."""
+        pg_points = [self._iud_to_pg(int(round(x)), int(round(y))) for x, y in points]
         if color.a == 255:
-            # Draw the filled polygon directly
-            pygame.draw.polygon(self._screen, color.rgb_tuple(), pg_points)
+            try:
+                pygame.draw.polygon(self._screen, color.rgb_tuple(), pg_points)
+            except Exception:
+                return
         else:
-            # Create a surface for alpha blending. Guard against zero-size.
-            min_x = min(p[0] for p in pg_points)
-            min_y = min(p[1] for p in pg_points)
-            max_x = max(p[0] for p in pg_points)
-            max_y = max(p[1] for p in pg_points)
+            min_x = min((p[0] for p in pg_points))
+            min_y = min((p[1] for p in pg_points))
+            max_x = max((p[0] for p in pg_points))
+            max_y = max((p[1] for p in pg_points))
             width = max_x - min_x
             height = max_y - min_y
-
             if width <= 0 or height <= 0:
-                # Fallback: draw directly (alpha will be ignored), but avoid
-                # crash
-                try:
-                    pygame.draw.polygon(self._screen, color.rgb_tuple(), pg_points)
-                except Exception:
-                    pass
                 return
-
-            temp = pygame.Surface((width, height), pygame.SRCALPHA)
-            shifted = [(x - min_x, y - min_y) for x, y in pg_points]
-            pygame.draw.polygon(temp, color.to_tuple(), shifted)
-            self._screen.blit(temp, (min_x, min_y))
-
-        # Draw the outline if specified
+            tw = max(1, int(round(width)))
+            th = max(1, int(round(height)))
+            temp = pygame.Surface((tw, th), pygame.SRCALPHA)
+            shifted = [
+                (int(round(x - min_x)), int(round(y - min_y))) for x, y in pg_points
+            ]
+            try:
+                pygame.draw.polygon(temp, color.to_tuple(), shifted)
+                self._screen.blit(temp, (min_x, min_y))
+            except Exception:
+                return
         if outline_thickness > 0 and outline_color is not None:
-            pygame.draw.polygon(
-                self._screen, outline_color.rgb_tuple(), pg_points, outline_thickness
-            )
+            try:
+                pygame.draw.polygon(
+                    self._screen,
+                    outline_color.rgb_tuple(),
+                    pg_points,
+                    outline_thickness,
+                )
+            except Exception:
+                pass
 
     def draw_image(
         self,
         image: "Image",
-        x: int,
-        y: int,
+        pos: V,
         origin: Origin = Origin.BOTTOMLEFT,
-        filter: "Color" = Color(255, 255, 255, 255),
-        scalex: float = 1.0,
-        scaley: float = 1.0,
+        image_filter: Optional["Color"] = None,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
         rotation: int = 0,
         antialiasing: bool = True,
     ):
@@ -722,79 +739,56 @@ class Window:
 
         Optional:
           - filter: a `Color` to tint/multiply the image with (None = no tint)
-          - scalex, scaley: scaling factors (scaley defaults to scalex)
+          - scale_x, scale_y: scaling factors (scale_y defaults to scalex)
           - rotation: rotation angle in degrees (clockwise)
           - antialiasing: whether to use smooth scaling when available
         """
-        # Get pygame position
-        px, py = self._iud_to_pg(x, y)
-
-        # Get origin position and invert y for anchor calculations
-        ox, oy = self._get_origin_position(origin)
+        x, y = pos.to_tuple()
+        px, py = self._iud_to_pg(int(x), int(y))
+        ox, oy = origin.value
         oy *= -1
-
-        # Base surface
         surf = getattr(image, "surface", None)
         if surf is None:
             return
-
-        # Default scaley to scalex when not provided
-        if scaley is None:
-            scaley = scalex
-
-        # Scaling (with optional antialiasing)
+        if scale_y is None:
+            scale_y = scale_x
         try:
-            if scalex != 1.0 or scaley != 1.0:
-                new_w = max(1, int(round(image.get_width() * scalex)))
-                new_h = max(1, int(round(image.get_height() * scaley)))
+            if scale_x != 1.0 or scale_y != 1.0:
+                new_w = max(1, int(round(image.get_width() * scale_x)))
+                new_h = max(1, int(round(image.get_height() * scale_y)))
                 if antialiasing and hasattr(pygame.transform, "smoothscale"):
                     surf = pygame.transform.smoothscale(surf, (new_w, new_h))
                 else:
                     surf = pygame.transform.scale(surf, (new_w, new_h))
         except Exception:
-            # Fallback to original surface on any error
             surf = image.surface
-
-        # Rotation
         if rotation != 0:
-            surf = pygame.transform.rotate(
-                surf, -rotation
-            )  # Negative for clockwise rotation
-
-        # Color filter / tint (multiply)
-        if filter is not None:
+            surf = pygame.transform.rotate(surf, -rotation)
+        if image_filter is not None:
             try:
                 surf = surf.copy()
                 tint = pygame.Surface(surf.get_size(), pygame.SRCALPHA)
-                tint.fill(filter.to_tuple())
+                tint.fill(image_filter.to_tuple())
                 surf.blit(tint, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             except Exception:
                 pass
-
-        # Anchor center
         px -= surf.get_width() // 2
         py -= surf.get_height() // 2
-
-        # Custom anchor (ox: -1 left, 0 center, 1 right; oy inverted to match
-        # screen space)
         px -= ox * surf.get_width() // 2
         py -= oy * surf.get_height() // 2
-
         self._screen.blit(surf, (px, py))
 
     def draw_text(
         self,
         text: str,
-        x: int,
-        y: int,
+        pos: V,
         font: "Font",
         color: "Color",
         origin: Origin = Origin.BOTTOMLEFT,
     ):
         """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor."""
+        x, y = pos.to_tuple()
         surf = font.font.render(text, True, color.rgb_tuple())
-        # Ensure the surface supports per-pixel alpha so per-surface alpha
-        # works
         try:
             surf = surf.convert_alpha()
         except Exception:
@@ -802,29 +796,16 @@ class Window:
                 surf = surf.convert()
             except Exception:
                 pass
-
-        # Get pygame position
-        px, py = self._iud_to_pg(x, y)
-
-        # Get origin position and invert y position
-        ox, oy = self._get_origin_position(origin)
+        px, py = self._iud_to_pg(int(x), int(y))
+        ox, oy = origin.value
         oy *= -1
-
-        # Anchor center
         px -= surf.get_width() // 2
         py -= surf.get_height() // 2
-
-        # Custom anchor
         px -= ox * surf.get_width() // 2
         py -= oy * surf.get_height() // 2
-
-        # Alpha
-        # If color has alpha (<255), set surface alpha (per-surface) so blit
-        # respects it.
         if color.a != 255:
             try:
                 surf.set_alpha(color.a)
             except Exception:
                 pass
-
         self._screen.blit(surf, (px, py))
