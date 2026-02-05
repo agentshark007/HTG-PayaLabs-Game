@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 from pgiud import *
-import utilities as util
+
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -31,185 +31,138 @@ class App(Window):
             origin=Origin.CENTER,
         )
 
-    def initialize(self):
-        # --- assets ---
-        self.test_scene = Image(asset("images/scene/trees.png"))
+    def _load_assets(self):
+        # Scenes
+        self.trees_scene = Image(asset("images/scene/trees.png"))
 
+        # Fonts
         self.heading_font = Font(asset("fonts/Silkscreen-Regular.ttf"))
         self.main_font = Font(asset("fonts/VT323-Regular.ttf"))
 
+        # Intro logos and sound
         self.intro_payalabs_logo = Image(asset("images/intro/payalabs.png"))
         self.intro_pgiud_logo = Image(asset("images/intro/pgiud.png"))
         self.intro_pygame_logo = Image(asset("images/intro/pygame.png"))
-
-        # sound (optional)
         self.intro_boom_sound = Sound(asset("sounds/intro_boom.mp3"))
 
-        # --- intro sequence configuration ---
-        # Use a data-driven sequence: pre-delay, three logos, post-fade
-        self.intro_each_length = 1.0
+    def _initialize_intro(self):
         self.intro_pre_delay = 1.0
-        self.intro_post_delay = 2.0
+        self.intro_logo_time = 1.5
+        self.intro_post_delay = 1.0
 
-        # build a simple sequence list of segments
-        self._intro_sequence = [
-            {"type": "delay", "duration": self.intro_pre_delay},
-            {"type": "logo", "image": self.intro_payalabs_logo, "duration": self.intro_each_length},
-            {"type": "logo", "image": self.intro_pgiud_logo, "duration": self.intro_each_length},
-            {"type": "logo", "image": self.intro_pygame_logo, "duration": self.intro_each_length},
-            {"type": "post_fade", "image": self.intro_pygame_logo, "duration": self.intro_post_delay},
+        self.intro_current_logo_index = 0 # 0=pre-delay, 1=payalabs, 2=pgiud, 3=pygame, 4=post-delay
+        self.intro_current_logo_time = 0
+
+        self.intro_logos = [
+            self.intro_payalabs_logo,
+            self.intro_pgiud_logo,
+            self.intro_pygame_logo,
         ]
 
-        # runtime intro state
-        self._intro_index = 0
-        self._intro_segment_time = 0.0
-        self._intro_segment_started = False
-
-        # visual brightness spike/fade
-        self.intro_brightness = 0.0
-        # faster fade speed (brightness units per second)
-        self.intro_fade_speed = 400.0
-
-        # scale
+    def initialize(self):
         self.scale = 1.0
-
-        # starting state
         self.state = State.INTRO
 
-    # helper to advance intro to next segment
-    def _intro_advance(self):
-        self._intro_index += 1
-        self._intro_segment_time = 0.0
-        self._intro_segment_started = False
+        self._load_assets()
+        self._initialize_intro()
 
     def update(self):
-        # debug: space to restart intro (keeps prior behavior)
-        if self.keydown(Key.SPACE):
-            # restart the intro
-            self._intro_index = 0
-            self._intro_segment_time = 0.0
-            self._intro_segment_started = False
-            self.intro_brightness = 0.0
-            self.state = State.INTRO
-
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
 
         if self.state == State.INTRO:
-            # advance timers
-            dt = self.deltatime
-            self._intro_segment_time += dt
+            self.intro_current_logo_time += self.deltatime
+            num_logos = len(self.intro_logos)
 
-            # Apply brightness decay each frame
-            self.intro_brightness = max(0.0, self.intro_brightness - self.intro_fade_speed * dt)
-
-            # Bounds-check sequence index
-            if self._intro_index >= len(self._intro_sequence):
-                # sequence finished -> go to playing
-                self.state = State.PLAYING
-                return
-
-            seg = self._intro_sequence[self._intro_index]
-
-            # on-enter logic for segments
-            if not self._intro_segment_started:
-                self._intro_segment_started = True
-                if seg["type"] == "logo":
-                    # spike brightness and play sound
-                    self.intro_brightness = 255.0
+            # Pre-delay -> first logo
+            if self.intro_current_logo_index == 0:
+                if self.intro_current_logo_time > self.intro_pre_delay:
+                    self.intro_current_logo_index = 1
+                    self.intro_current_logo_time = 0
+                    # Play sound when first logo appears (safe-guarded)
                     try:
-                        self.intro_boom_sound.play()
+                        if self.intro_boom_sound:
+                            self.intro_boom_sound.play()
                     except Exception:
                         pass
 
-            # If current segment finished, advance
-            if self._intro_segment_time >= seg["duration"]:
-                self._intro_advance()
+            # While showing logos
+            elif 1 <= self.intro_current_logo_index <= num_logos:
+                if self.intro_current_logo_time > self.intro_logo_time:
+                    # Move to next phase (either next logo or post-delay)
+                    self.intro_current_logo_index += 1
+                    self.intro_current_logo_time = 0
+                    # If we moved to another logo, play the sound (guarded)
+                    if 1 <= self.intro_current_logo_index <= num_logos:
+                        try:
+                            if self.intro_boom_sound:
+                                self.intro_boom_sound.play()
+                        except Exception:
+                            pass
 
-        elif self.state == State.MAIN_MENU:
-            pass
+            # Post-delay -> start playing
+            elif self.intro_current_logo_index == num_logos + 1:
+                if self.intro_current_logo_time > self.intro_post_delay:
+                    self.state = State.PLAYING
 
-        elif self.state == State.LOAD_GAME_MENU:
-            pass
 
-        elif self.state == State.SETTINGS:
-            pass
 
         elif self.state == State.PLAYING:
-            pass
-
-        elif self.state == State.LOAD_GAME_PLAYING:
             pass
 
     def draw(self):
-        # Clear the screen according to the current intro brightness (clamped)
-        b = int(max(0.0, min(255.0, self.intro_brightness)))
-        self.clear(Color(b, b, b, 255))
+        self.clear(Color(0, 0, 0, 255))
 
         if self.state == State.INTRO:
-            # determine what to draw based on the current sequence index
-            t_rel = self._intro_segment_time
-            # compute scale easing for logos when visible
-            interp_t = 0.0
-            seg = None
-            if 0 <= self._intro_index < len(self._intro_sequence):
-                seg = self._intro_sequence[self._intro_index]
+            # Show the current intro logo (if any) with a fade-in/out effect.
+            num_logos = len(self.intro_logos)
+            idx = self.intro_current_logo_index
 
-            # base scale for logos
-            if seg and seg.get("type") in ("logo", "post_fade"):
-                if seg.get("type") == "logo":
-                    # local normalized time for easing inside a logo segment
-                    local_t = 0.0
-                    if seg["duration"] > 0:
-                        local_t = min(1.0, t_rel / seg["duration"])
-                    interp_t = util.inverse_lerp(local_t, 0.0, 1.0)
-                    logo_scale = self.scale * util.lerp(
-                        interp_t, 0.1, 0.15, util.InterpolationMethod.EASE_OUT
-                    )
+            if 1 <= idx <= num_logos:
+                # images are stored 0-based
+                img = self.intro_logos[idx - 1]
+
+                # Determine alpha with a short fade in/out
+                total = self.intro_logo_time
+                t = self.intro_current_logo_time
+                fade = min(0.3, total / 2.0)
+
+                if total <= 0 or t <= 0:
+                    alpha = 255
+                elif t < fade:
+                    alpha = int(255 * (t / fade))
+                elif t > total - fade:
+                    alpha = int(255 * ((total - t) / fade))
                 else:
-                    # For post_fade, keep the large size achieved by the last logo
-                    logo_scale = self.scale * 0.15
+                    alpha = 255
+
+                alpha = max(0, min(255, alpha))
+
+                logo_scale = self.scale * 0.15
+                try:
+                    self.draw_image(
+                        img,
+                        V(self.screen_center_x, self.screen_center_y),
+                        origin=Origin.CENTER,
+                        image_filter=Color(255, 255, 255, alpha),
+                        scale_x=logo_scale,
+                        scale_y=logo_scale,
+                        antialiasing=True,
+                    )
+                except Exception:
+                    # Drawing should not crash the app if something is wrong with the image
+                    pass
             else:
-                logo_scale = self.scale * 0.1
-
-            # Draw the current logo (logo segments) or handle post_fade
-            # For the post_fade segment, draw the final logo with decreasing alpha
-            if seg:
-                if seg["type"] == "logo":
-                    img = seg.get("image")
-                    if isinstance(img, Image):
-                        self.draw_image(
-                            img,
-                            V(self.screen_center_x, self.screen_center_y),
-                            origin=Origin.CENTER,
-                            scale_x=logo_scale,
-                            scale_y=logo_scale,
-                        )
-
-                elif seg["type"] == "post_fade":
-                    # draw the image with alpha fading out across the post_fade duration
-                    dur = seg["duration"] if seg["duration"] > 0 else 1.0
-                    fade_t = min(1.0, t_rel / dur)
-                    alpha = int(max(0.0, 1.0 - fade_t) * 255)
-                    img = seg.get("image")
-                    if isinstance(img, Image):
-                        self.draw_image(
-                            img,
-                            V(self.screen_center_x, self.screen_center_y),
-                            origin=Origin.CENTER,
-                            image_filter=Color(255, 255, 255, alpha),
-                            scale_x=logo_scale,
-                            scale_y=logo_scale,
-                        )
+                # index 0 = pre-delay, index num_logos+1 = post-delay: draw nothing
+                pass
 
         elif self.state == State.PLAYING:
-            # normal playing rendering
             self.clear(Color(0, 0, 0))  # Black background
 
             # Context image
             self.draw_image(
-                self.test_scene,
+                self.trees_scene,
                 V(0 * self.scale, 110 * self.scale),
                 origin=Origin.CENTER,
                 scale_x=self.scale,
@@ -237,13 +190,9 @@ class App(Window):
                 Origin.TOPLEFT,
             )
 
-        # other states unchanged
-
     def on_quit(self):
-        # ensure sound stops if playing
         try:
-            if hasattr(self, "intro_boom_sound") and self.intro_boom_sound:
-                self.intro_boom_sound.stop()
+            self.intro_boom_sound.stop()
         except Exception:
             pass
 
