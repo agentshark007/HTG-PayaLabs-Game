@@ -38,12 +38,35 @@ class App(Window):
 
         self.scale = 1.0
 
-        self.state = State.PLAYING
+        self.state = State.INTRO
 
     def update(self):
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
+
+        if self.state == State.INTRO:
+            self.intro_timer = self.intro_timer + self.deltatime if hasattr(self, "intro_timer") else 0.0
+            if self.intro_timer >= 3.0:  # After 3 seconds, switch to the main menu
+                self.state = State.PLAYING
+
+        elif self.state == State.MAIN_MENU:
+            pass
+
+        elif self.state == State.LOAD_GAME_MENU:
+            pass
+
+        elif self.state == State.SETTINGS:
+            pass
+
+        elif self.state == State.PLAYING:
+            pass
+
+        elif self.state == State.LOAD_GAME_PLAYING:
+            pass
+
+        elif self.state == State.CREDITS:
+            pass
 
     def draw(self):
         if self.state == State.INTRO:
