@@ -1,7 +1,7 @@
 import os
 from enum import Enum
-from pgiud import *
 
+from pgiud import *
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,7 +50,9 @@ class App(Window):
         self.intro_logo_time = 1.5
         self.intro_post_delay = 1.0
 
-        self.intro_current_logo_index = 0 # 0=pre-delay, 1=payalabs, 2=pgiud, 3=pygame, 4=post-delay
+        self.intro_current_logo_index = (
+            0  # 0=pre-delay, 1=payalabs, 2=pgiud, 3=pygame, 4=post-delay
+        )
         self.intro_current_logo_time = 0
 
         self.intro_logos = [
@@ -75,25 +77,20 @@ class App(Window):
             self.intro_current_logo_time += self.deltatime
             num_logos = len(self.intro_logos)
 
-            # Pre-delay -> first logo
             if self.intro_current_logo_index == 0:
                 if self.intro_current_logo_time > self.intro_pre_delay:
                     self.intro_current_logo_index = 1
                     self.intro_current_logo_time = 0
-                    # Play sound when first logo appears (safe-guarded)
                     try:
                         if self.intro_boom_sound:
                             self.intro_boom_sound.play()
                     except Exception:
                         pass
 
-            # While showing logos
             elif 1 <= self.intro_current_logo_index <= num_logos:
                 if self.intro_current_logo_time > self.intro_logo_time:
-                    # Move to next phase (either next logo or post-delay)
                     self.intro_current_logo_index += 1
                     self.intro_current_logo_time = 0
-                    # If we moved to another logo, play the sound (guarded)
                     if 1 <= self.intro_current_logo_index <= num_logos:
                         try:
                             if self.intro_boom_sound:
@@ -101,12 +98,9 @@ class App(Window):
                         except Exception:
                             pass
 
-            # Post-delay -> start playing
             elif self.intro_current_logo_index == num_logos + 1:
                 if self.intro_current_logo_time > self.intro_post_delay:
                     self.state = State.PLAYING
-
-
 
         elif self.state == State.PLAYING:
             pass
@@ -115,15 +109,12 @@ class App(Window):
         self.clear(Color(0, 0, 0, 255))
 
         if self.state == State.INTRO:
-            # Show the current intro logo (if any) with a fade-in/out effect.
             num_logos = len(self.intro_logos)
             idx = self.intro_current_logo_index
 
             if 1 <= idx <= num_logos:
-                # images are stored 0-based
                 img = self.intro_logos[idx - 1]
 
-                # Determine alpha with a short fade in/out
                 total = self.intro_logo_time
                 t = self.intro_current_logo_time
                 fade = min(0.3, total / 2.0)
@@ -151,14 +142,15 @@ class App(Window):
                         antialiasing=True,
                     )
                 except Exception:
-                    # Drawing should not crash the app if something is wrong with the image
                     pass
             else:
-                # index 0 = pre-delay, index num_logos+1 = post-delay: draw nothing
+                # index 0 = pre-delay, index num_logos+1 = post-delay: draw
+                # nothing
                 pass
 
         elif self.state == State.PLAYING:
-            self.clear(Color(0, 0, 0))  # Black background
+            # Black background
+            self.clear(Color(0, 0, 0))
 
             # Context image
             self.draw_image(
