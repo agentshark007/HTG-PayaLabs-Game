@@ -20,6 +20,9 @@ When you run the game, it opens a window and displays a test scene image, sample
    ```zsh
    pip install -r requirements.txt
    ```
+
+`pgiud` version `1.1` is included in the repository, so you do not need to install it separately.
+
 # PayaLabs Game
 
 ## Description
@@ -29,8 +32,7 @@ PayaLabs Game is an early prototype and technical demo inspired by Greek mytholo
 
 ## Notes
 
-- The included `pgiud.py` corresponds to commit `9e7575f`.
-- The codebase is regularly formatted with Black. To format the repository locally, run:
+- The codebase is regularly formatted with `format.sh`. Run it before making a commit.
 
 ## Contributing
 
