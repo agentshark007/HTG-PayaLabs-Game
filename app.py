@@ -46,9 +46,9 @@ class App(Window):
         self.intro_boom_sound = Sound(asset("sounds/intro_boom.mp3"))
 
     def _initialize_intro(self):
-        self.intro_pre_delay = 1.0
-        self.intro_logo_time = 1.5
-        self.intro_post_delay = 1.0
+        self.intro_pre_delay = 3.0
+        self.intro_logo_time = 1.0
+        self.intro_post_delay = 2.0
 
         self.intro_current_logo_index = (
             0  # 0=pre-delay, 1=payalabs, 2=pgiud, 3=pygame, 4=post-delay
