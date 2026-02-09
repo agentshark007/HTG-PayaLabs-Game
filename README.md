@@ -1,8 +1,8 @@
 
-# PayaLabs Game
+# Fate of the Gods
 
-**Description**
-PayaLabs Game is an open-source project in early development. The current version is a technical demo for a future game about Greek gods, built with a custom graphics/input engine (`pgiud.py`) on top of Pygame.
+## Description
+Fate of the Gods is an open-source project in early development. The current version is a technical demo for a future game about Greek gods, built with a custom graphics/input engine (`pgiud.py`) on top of PyGame.
 
 When you run the game, it opens a window and displays a test scene image, sample heading and main text, and uses custom fonts. The game currently does not have gameplay, story, or interactive mechanics yet.
 
@@ -22,13 +22,6 @@ When you run the game, it opens a window and displays a test scene image, sample
    ```
 
 `pgiud` version `1.1` is included in the repository, so you do not need to install it separately.
-
-# PayaLabs Game
-
-## Description
-
-PayaLabs Game is an early prototype and technical demo inspired by Greek mythology. It uses a small, custom graphics/input module built on top of Pygame and currently renders a static test scene with sample text and custom fonts.
-
 
 ## Notes
 
