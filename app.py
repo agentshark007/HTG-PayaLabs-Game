@@ -484,7 +484,10 @@ class App(Window):
                 Origin.TOPLEFT,
             )
 
+            # TODO: Implement god stats display (e.g., health, attack, defense)
+
             # God lore
+            # TODO: Implement text wrapping for god lore
             self.draw_text(
                 selected_god.info,
                 V(
@@ -495,6 +498,8 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
             )
+
+            # TODO: Implement "Start Game" button that transitions to State.PLAYING when clicked
 
         elif self.state == State.PLAYING:
             # Black background
