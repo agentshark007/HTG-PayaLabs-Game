@@ -28,6 +28,10 @@ def within(x, a, b):
         return False
 
 
+def within_button(mouse_pos, a, b):
+    return within(mouse_pos.x, a.x, b.x) and within(mouse_pos.y, a.y, b.y)
+
+
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -508,8 +512,37 @@ class App(Window):
                 * 2,
             )
 
-            # TODO: Implement "Start Game" button that transitions to
-            # State.PLAYING when clicked
+            # Start button
+            hover = within_button(
+                self.mouse_pos,
+                V(self.screen_right, self.screen_bottom),
+                V(
+                    self.screen_right - (130 * self.scale),
+                    self.screen_bottom + (40 * self.scale),
+                ),
+            )
+
+            self.fill_rect(
+                V(self.screen_right, self.screen_bottom),
+                V(
+                    self.screen_right - (130 * self.scale),
+                    self.screen_bottom + (40 * self.scale),
+                ),
+                Color(40, 40, 40) if hover else Color(30, 30, 30),
+                int(2 * self.scale),
+                Color(50, 50, 50),
+            )
+
+            self.draw_text(
+                "Start Game",
+                V(
+                    self.screen_right - (65 * self.scale),
+                    self.screen_bottom + (20 * self.scale),
+                ),
+                self.main_font.new_size(int(30 * self.scale)),
+                Color(255, 255, 255),
+                Origin.CENTER,
+            )
 
         elif self.state == State.PLAYING:
             # Black background
