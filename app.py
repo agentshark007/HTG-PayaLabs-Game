@@ -383,11 +383,38 @@ class App(Window):
 
             # Gods list
             for i, god in enumerate(self.gods):
+                hover = within(
+                    self.mouse_pos.x,
+                    self.screen_left + (1 * self.scale),
+                    self.screen_left + (149 * self.scale),
+                ) and within(
+                    self.mouse_pos.y,
+                    self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                    self.screen_top
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (25 * self.scale),
+                )
+                self.fill_rect(
+                    V(
+                        self.screen_left + (1 * self.scale),
+                        self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                    ),
+                    V(
+                        self.screen_left + (149 * self.scale),
+                        self.screen_top
+                        - (1 * self.scale)
+                        - (i * 25 * self.scale)
+                        - (25 * self.scale),
+                    ),
+                    Color(50, 50, 50) if hover else Color(40, 40, 40),
+                )
+
                 self.draw_text(
                     god.name,
                     V(
-                        self.screen_left + (55 * self.scale),
-                        self.screen_top - (25 * self.scale * i),
+                        self.screen_left + (55 * self.scale) - (3 * self.scale),
+                        self.screen_top - (25 * self.scale * i) + (3 * self.scale),
                     ),
                     self.main_font.new_size(int(30 * self.scale)),
                     Color(200, 255, 200),
