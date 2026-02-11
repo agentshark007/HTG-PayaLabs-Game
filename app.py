@@ -152,9 +152,9 @@ class App(Window):
                 pass
 
         elif self.state == State.MAIN_MENU:
-            button_top_offset = 0
+            button_top_offset = 10
             button_width = 200
-            button_height = 40
+            button_height = 60
             button_padding = 10
             button_color = Color(50, 50, 50)
             button_outline_thickness = 2 * self.scale
@@ -165,7 +165,10 @@ class App(Window):
                 x = 0
                 y = (
                     self.screen_top
-                    - (button_top_offset + (i * (button_width + button_padding)))
+                    - (
+                        (button_top_offset + button_height / 2)
+                        + (i * (button_height + button_padding))
+                    )
                     * self.scale
                 )
                 width = button_width * self.scale
