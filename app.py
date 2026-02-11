@@ -250,6 +250,20 @@ class App(Window):
                 if hover and self.mouse_down_primary:
                     self.new_game_selected_god = i
 
+            # Start button
+            hover = within_button(
+                self.mouse_pos,
+                V(self.screen_right, self.screen_bottom),
+                V(
+                    self.screen_right - (130 * self.scale),
+                    self.screen_bottom + (40 * self.scale),
+                    ),
+            )
+
+            if hover:
+                if self.mouse_down_primary:
+                    self.state = State.PLAYING
+
         elif self.state == State.PLAYING:
             pass
 
