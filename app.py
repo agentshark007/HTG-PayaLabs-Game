@@ -73,6 +73,17 @@ class App(Window):
         self.intro_pygame_logo = Image(asset("images/intro/pygame.png"))
         self.intro_boom_sound = Sound(asset("sounds/intro_boom.mp3"))
 
+    def _load_data(self):
+        gods_folder = asset("data/gods")
+
+        self.gods_text = []
+
+        for name in os.listdir(gods_folder):
+            path = os.path.join(gods_folder, name)
+            if os.path.isfile(path) and name.lower().endswith(".txt"):
+                with open(path, "r", encoding="utf-8") as f:
+                    self.gods_text.append(f.read())
+
     def _initialize_intro(self):
         self.intro_pre_delay = 3.0
         self.intro_logo_time = 1.0
@@ -109,6 +120,7 @@ class App(Window):
         self._load_assets()
         self._initialize_intro()
         self._initialize_main_menu()
+        self._load_data()
 
     def update(self):
         scale_x = self.width / self._original_width
