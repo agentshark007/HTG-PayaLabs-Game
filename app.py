@@ -232,9 +232,7 @@ class App(Window):
                 bx = x + width / 2
                 by = y + height / 2
 
-                hover = within(self.mouse_pos.x, ax, bx) and within(
-                    self.mouse_pos.y, ay, by
-                )
+                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
 
                 if hover and self.mouse_down_primary:
                     self.state = button
@@ -242,17 +240,12 @@ class App(Window):
         elif self.state == State.NEW_GAME:
             # God list selection
             for i, god in enumerate(self.gods):
-                hover = within(
-                    self.mouse_pos.x,
-                    self.screen_left + (1 * self.scale),
-                    self.screen_left + (149 * self.scale),
-                ) and within(
-                    self.mouse_pos.y,
-                    self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
-                    self.screen_top
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (25 * self.scale),
+                hover = within_button(
+                    self.mouse_pos,
+                    V(self.screen_left + (1 * self.scale),
+                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale)),
+                    V(self.screen_left + (149 * self.scale),
+                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale) - (25 * self.scale)),
                 )
                 if hover and self.mouse_down_primary:
                     self.new_game_selected_god = i
@@ -334,9 +327,7 @@ class App(Window):
                 bx = x + width / 2
                 by = y + height / 2
 
-                hover = within(self.mouse_pos.x, ax, bx) and within(
-                    self.mouse_pos.y, ay, by
-                )
+                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
 
                 self.fill_rounded_rect(
                     V(ax, ay),
@@ -407,17 +398,12 @@ class App(Window):
 
             # Gods list
             for i, god in enumerate(self.gods):
-                hover = within(
-                    self.mouse_pos.x,
-                    self.screen_left + (1 * self.scale),
-                    self.screen_left + (149 * self.scale),
-                ) and within(
-                    self.mouse_pos.y,
-                    self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
-                    self.screen_top
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (25 * self.scale),
+                hover = within_button(
+                    self.mouse_pos,
+                    V(self.screen_left + (1 * self.scale),
+                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale)),
+                    V(self.screen_left + (149 * self.scale),
+                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale) - (25 * self.scale)),
                 )
 
                 if hover and self.new_game_selected_god == i:
