@@ -3,6 +3,30 @@ from enum import Enum
 
 from pgiud import *
 
+
+def within(x, a, b):
+    if a == b:
+        if x == a:
+            return True
+        else:
+            return False
+
+    elif a > b:
+        if b < x < a:
+            return True
+        else:
+            return False
+
+    elif a < b:
+        if a < x < b:
+            return True
+        else:
+            return False
+
+    else:
+        return False
+
+
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -156,9 +180,14 @@ class App(Window):
             button_width = 200
             button_height = 60
             button_padding = 10
-            button_color = Color(50, 50, 50)
+            button_color = Color(50, 70, 50)
+            button_hover_color = Color(60, 80, 100)
             button_outline_thickness = 2 * self.scale
-            button_outline_color = Color(255, 255, 255)
+            button_outline_color = Color(0, 50, 0)
+            button_roundness = 10
+
+            button_text_font = self.main_font.new_size(int(40 * self.scale))
+            button_text_color = Color(255, 255, 255)
 
             buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
             for i, button in enumerate(buttons):
@@ -179,12 +208,24 @@ class App(Window):
                 bx = x + width / 2
                 by = y + height / 2
 
-                self.fill_rect(
+                hover = within(self.mouse_pos.x, ax, bx) and within(
+                    self.mouse_pos.y, ay, by
+                )
+
+                self.fill_rounded_rect(
                     V(ax, ay),
                     V(bx, by),
-                    button_color,
+                    button_hover_color if hover else button_color,
                     int(button_outline_thickness),
                     button_outline_color,
+                    button_roundness,
+                    button_roundness,
+                    button_roundness,
+                    button_roundness,
+                )
+
+                self.draw_text(
+                    button, V(x, y), button_text_font, button_text_color, Origin.CENTER
                 )
 
         elif self.state == State.PLAYING:
