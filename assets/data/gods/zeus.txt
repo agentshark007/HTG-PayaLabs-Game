@@ -1,0 +1,19 @@
+name=Zeus
+info=Command Zeus to win the Lightning Wars!
+image=zeus
+tree:::
+
+a1:
+You have just begun as the god Leus! What would you like to do?
+A: Fight a war: b1
+B: Go to sleep: b2
+C: Kill somebody: b3
+
+b1:
+You are fighting a war!
+
+b2:
+You are sleeping.
+
+b3:
+You have been assigned the judge to find the killer, which is you.

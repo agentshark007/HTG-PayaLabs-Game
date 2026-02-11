@@ -50,10 +50,28 @@ class State(Enum):
 
 
 class God:
-    def __init__(self, encoded):
-        self.name = "Ares"
-        self.info = "God of war!"
-        self.images = "images/god/ares"
+    def __init__(self, encoded: str):
+        lines = encoded.splitlines()
+
+        self.name = ""
+        self.info = ""
+        self.images = ""
+
+        for line in lines:
+            line = line.strip()
+
+            if line.startswith("name="):
+                self.name = line.split("=", 1)[1]
+
+            elif line.startswith("info="):
+                self.info = line.split("=", 1)[1]
+
+            elif line.startswith("image="):
+                image = line.split("=", 1)[1]
+                self.images = f"images/god/{image}"
+
+            elif line == "tree:::":
+                break
 
 
 class App(Window):
@@ -91,6 +109,8 @@ class App(Window):
                 with open(path, "r", encoding="utf-8") as f:
                     self.gods_text.append(f.read())
 
+        self.gods = [God(i) for i in self.gods_text]
+
     def _initialize_intro(self):
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
@@ -119,6 +139,9 @@ class App(Window):
         self.main_menu_button_roundness = 10
         self.main_menu_button_text_color = Color(255, 255, 255)
         self.main_menu_button_text_font = self.main_font
+
+    def _initialize_new_game(self):
+        self.new_game_selected_god = 0
 
     def initialize(self):
         self.scale = 1.0
@@ -357,6 +380,19 @@ class App(Window):
                 V(self.screen_right, self.screen_bottom),
                 Color(0, 0, 0),
             )
+
+            # Gods list
+            for i, god in enumerate(self.gods):
+                self.draw_text(
+                    god.name,
+                    V(
+                        self.screen_left + (55 * self.scale),
+                        self.screen_top - (25 * self.scale * i),
+                    ),
+                    self.main_font.new_size(int(30 * self.scale)),
+                    Color(200, 255, 200),
+                    Origin.TOPRIGHT,
+                )
 
         elif self.state == State.PLAYING:
             # Black background
