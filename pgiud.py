@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Iterable, Optional, Tuple
 import pygame
 
-__version__ = "1.1.0"
+__version__ = "1.2"
 __all__ = [
     "V",
     "Key",
@@ -240,10 +240,10 @@ class Color:
         if not isinstance(other, Color):
             return False
         return (
-            self.r == other.r
-            and self.g == other.g
-            and (self.b == other.b)
-            and (self.a == other.a)
+                self.r == other.r
+                and self.g == other.g
+                and (self.b == other.b)
+                and (self.a == other.a)
         )
 
 
@@ -340,12 +340,12 @@ class Resizable(Enum):
 class Window:
 
     def __init__(
-        self,
-        width: int = 800,
-        height: int = 600,
-        title: str = "PGIUD Window",
-        resizable: Resizable = Resizable.NONE,
-        origin: Origin = Origin.BOTTOMLEFT,
+            self,
+            width: int = 800,
+            height: int = 600,
+            title: str = "PGIUD Window",
+            resizable: Resizable = Resizable.NONE,
+            origin: Origin = Origin.BOTTOMLEFT,
     ):
         pygame.init()
         try:
@@ -538,12 +538,12 @@ class Window:
         self._screen.fill(color.rgb_tuple() if color.a == 255 else color.to_tuple())
 
     def fill_rect(
-        self,
-        a: V,
-        b: V,
-        color: "Color",
-        outline_thickness: int = 0,
-        outline_color: "Color" = None,
+            self,
+            a: V,
+            b: V,
+            color: "Color",
+            outline_thickness: int = 0,
+            outline_color: "Color" = None,
     ):
         """Draw a filled rectangle from a to b in IUD coordinates."""
         outline_thickness = int(outline_thickness)
@@ -577,17 +577,17 @@ class Window:
             pygame.draw.rect(self._screen, col, rect, outline_thickness)
 
     def fill_rounded_rect(
-        self,
-        a: V,
-        b: V,
-        color: Color,
-        outline_thickness: int = 0,
-        outline_color: Color = None,
-        top_left_roundness: float = 0.0,
-        top_right_roundness: float = 0.0,
-        bottom_left_roundness: float = 0.0,
-        bottom_right_roundness: float = 0.0,
-        steps: int = 10,
+            self,
+            a: V,
+            b: V,
+            color: Color,
+            outline_thickness: int = 0,
+            outline_color: Color = None,
+            top_left_roundness: float = 0.0,
+            top_right_roundness: float = 0.0,
+            bottom_left_roundness: float = 0.0,
+            bottom_right_roundness: float = 0.0,
+            steps: int = 10,
     ):
         """Draw a filled rounded rectangle with optional outline."""
         ax, ay = a.to_tuple()
@@ -603,57 +603,38 @@ class Window:
         tr = int(max(0, min(max_radius, top_right_roundness)))
         bl = int(max(0, min(max_radius, bottom_left_roundness)))
         br = int(max(0, min(max_radius, bottom_right_roundness)))
+
+        def arc(cx, cy, r, start_angle, end_angle):
+            pts = []
+            for i in range(steps + 1):
+                t = i / steps
+                theta = start_angle + (end_angle - start_angle) * t
+                pts.append((cx + r * math.cos(theta), cy + r * math.sin(theta)))
+            return pts
+
         points = []
         if tl > 0:
-            cx, cy = (left + tl, top - tl)
-            arc_points = []
-            for i in range(steps + 1):
-                theta = math.pi / 2 + math.pi / 2 * (i / steps)
-                arc_points.append(
-                    (cx + tl * math.cos(theta), cy + tl * math.sin(theta))
-                )
-            points.extend(reversed(arc_points))
+            points.append((left + tl, top))
         else:
             points.append((left, top))
-        points.append((right - tr, top))
         if tr > 0:
-            cx, cy = (right - tr, top - tr)
-            arc_points = []
-            for i in range(steps + 1):
-                theta = 0 + math.pi / 2 * (i / steps)
-                arc_points.append(
-                    (cx + tr * math.cos(theta), cy + tr * math.sin(theta))
-                )
-            points.extend(reversed(arc_points[1:]))
+            points.append((right - tr, top))
+            points.extend(arc(right - tr, top - tr, tr, math.pi / 2, 0)[1:])
         else:
             points.append((right, top))
         if br > 0:
-            cx, cy = (right - br, bottom + br)
-            arc_points = []
-            for i in range(steps + 1):
-                theta = math.pi / 2 + math.pi + math.pi / 2 * (i / steps)
-                arc_points.append(
-                    (cx + br * math.cos(theta), cy + br * math.sin(theta))
-                )
-            points.extend(reversed(arc_points))
+            points.append((right, bottom + br))
+            points.extend(arc(right - br, bottom + br, br, 0, -math.pi / 2)[1:])
         else:
             points.append((right, bottom))
         if bl > 0:
-            cx, cy = (left + bl, bottom + bl)
-            arc_points = []
-            for i in range(steps + 1):
-                theta = math.pi + math.pi / 2 * (i / steps)
-                arc_points.append(
-                    (cx + bl * math.cos(theta), cy + bl * math.sin(theta))
-                )
-            points.extend(reversed(arc_points))
+            points.append((left + bl, bottom))
+            points.extend(arc(left + bl, bottom + bl, bl, -math.pi / 2, -math.pi)[1:])
         else:
             points.append((left, bottom))
-        x_list = [p[0] for p in points]
-        y_list = [p[1] for p in points]
-        x_list = x_list[:-1]
-        y_list = y_list[:-1]
-        points = list(zip(x_list, y_list))
+        if tl > 0:
+            points.append((left, top - tl))
+            points.extend(arc(left + tl, top - tl, tl, math.pi, math.pi / 2)[1:])
         if len(points) < 3:
             return
         self.fill_polygon(points, color, outline_thickness, outline_color)
@@ -680,11 +661,11 @@ class Window:
             self._screen.blit(temp, (min_x, min_y))
 
     def fill_polygon(
-        self,
-        points: Iterable[Tuple[float, float]],
-        color: "Color",
-        outline_thickness: int = 0,
-        outline_color: "Color" = None,
+            self,
+            points: Iterable[Tuple[float, float]],
+            color: "Color",
+            outline_thickness: int = 0,
+            outline_color: "Color" = None,
     ):
         """Draw a filled polygon. Points should be an iterable of (x, y) pairs."""
         pg_points = [self._iud_to_pg(int(round(x)), int(round(y))) for x, y in points]
@@ -725,15 +706,15 @@ class Window:
                 pass
 
     def draw_image(
-        self,
-        image: "Image",
-        pos: V,
-        origin: Origin = Origin.BOTTOMLEFT,
-        image_filter: Optional["Color"] = None,
-        scale_x: float = 1.0,
-        scale_y: float = 1.0,
-        rotation: int = 0,
-        antialiasing: bool = True,
+            self,
+            image: "Image",
+            pos: V,
+            origin: Origin = Origin.BOTTOMLEFT,
+            image_filter: Optional["Color"] = None,
+            scale_x: float = 1.0,
+            scale_y: float = 1.0,
+            rotation: int = 0,
+            antialiasing: bool = True,
     ):
         """Draw an image at (x, y) in IUD coordinates.
 
@@ -779,33 +760,105 @@ class Window:
         self._screen.blit(surf, (px, py))
 
     def draw_text(
-        self,
-        text: str,
-        pos: V,
-        font: "Font",
-        color: "Color",
-        origin: Origin = Origin.BOTTOMLEFT,
+            self,
+            text: str,
+            pos: V,
+            font: "Font",
+            color: "Color",
+            origin: Origin = Origin.BOTTOMLEFT,
+            wrap_distance: Optional[int] = None,
     ):
-        """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor."""
+        """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor.
+
+        If `wrap_distance` is provided (positive integer, in pixels) the text will be
+        word-wrapped to fit within that pixel width. Newlines ("\\n") are accepted
+        as explicit line breaks.
+        """
         x, y = pos.to_tuple()
-        surf = font.font.render(text, True, color.rgb_tuple())
-        try:
-            surf = surf.convert_alpha()
-        except Exception:
+        lines = []
+        if wrap_distance is not None and wrap_distance > 0:
+            paragraphs = text.split("\n")
+            for para in paragraphs:
+                if para == "":
+                    lines.append("")
+                    continue
+                words = para.split(" ")
+                cur = ""
+                for w in words:
+                    if cur == "":
+                        candidate = w
+                    else:
+                        candidate = cur + " " + w
+                    try:
+                        cand_w = font.font.size(candidate)[0]
+                    except Exception:
+                        cand_w = 0
+                    if cand_w <= wrap_distance:
+                        cur = candidate
+                    else:
+                        if cur != "":
+                            lines.append(cur)
+                        try:
+                            word_w = font.font.size(w)[0]
+                        except Exception:
+                            word_w = 0
+                        if word_w <= wrap_distance:
+                            cur = w
+                        else:
+                            part = ""
+                            for ch in w:
+                                cand2 = part + ch
+                                try:
+                                    cand2_w = font.font.size(cand2)[0]
+                                except Exception:
+                                    cand2_w = 0
+                                if cand2_w <= wrap_distance:
+                                    part = cand2
+                                else:
+                                    if part != "":
+                                        lines.append(part)
+                                    part = ch
+                            cur = part
+                if cur != "":
+                    lines.append(cur)
+        else:
+            lines = text.split("\n")
+        if not lines:
+            return
+        rendered = []
+        max_w = 0
+        line_height = 0
+        for ln in lines:
+            render_text = ln if ln != "" else " "
+            surf = font.font.render(render_text, True, color.rgb_tuple())
             try:
-                surf = surf.convert()
+                surf = surf.convert_alpha()
             except Exception:
-                pass
+                try:
+                    surf = surf.convert()
+                except Exception:
+                    pass
+            w = surf.get_width()
+            h = surf.get_height()
+            rendered.append((surf, w, h))
+            if w > max_w:
+                max_w = w
+            if h > line_height:
+                line_height = h
+        total_h = line_height * len(rendered)
         px, py = self._iud_to_pg(int(x), int(y))
         ox, oy = origin.value
         oy *= -1
-        px -= surf.get_width() // 2
-        py -= surf.get_height() // 2
-        px -= ox * surf.get_width() // 2
-        py -= oy * surf.get_height() // 2
-        if color.a != 255:
-            try:
-                surf.set_alpha(color.a)
-            except Exception:
-                pass
-        self._screen.blit(surf, (px, py))
+        px -= max_w // 2
+        py -= total_h // 2
+        px -= ox * max_w // 2
+        py -= oy * total_h // 2
+        for i, (surf, w, h) in enumerate(rendered):
+            line_x = px + (max_w - w) // 2
+            line_y = py + i * line_height
+            if color.a != 255:
+                try:
+                    surf.set_alpha(color.a)
+                except Exception:
+                    pass
+            self._screen.blit(surf, (line_x, line_y))
