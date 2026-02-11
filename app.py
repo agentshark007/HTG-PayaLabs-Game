@@ -104,7 +104,7 @@ class App(Window):
 
     def initialize(self):
         self.scale = 1.0
-        self.state = State.MAIN_MENU
+        self.state = State.INTRO
 
         self._load_assets()
         self._initialize_intro()
