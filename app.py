@@ -55,7 +55,7 @@ class God:
 
         self.name = ""
         self.info = ""
-        self.images = ""
+        self.image = ""
 
         for line in lines:
             line = line.strip()
@@ -67,8 +67,7 @@ class God:
                 self.info = line.split("=", 1)[1]
 
             elif line.startswith("image="):
-                image = line.split("=", 1)[1]
-                self.images = f"images/god/{image}"
+                self.image = line.split("=", 1)[1]
 
             elif line == "tree:::":
                 break
@@ -239,14 +238,14 @@ class App(Window):
                     self.mouse_pos.x,
                     self.screen_left + (1 * self.scale),
                     self.screen_left + (149 * self.scale),
-                    ) and within(
+                ) and within(
                     self.mouse_pos.y,
                     self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
                     self.screen_top
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (25 * self.scale),
-                    )
+                )
                 if hover and self.mouse_down_primary:
                     self.new_game_selected_god = i
 
@@ -446,6 +445,56 @@ class App(Window):
                     Color(200, 255, 200),
                     Origin.TOPRIGHT,
                 )
+
+            # God image
+            selected_god = self.gods[self.new_game_selected_god]
+            try:
+                self.draw_image(
+                    Image(
+                        asset(
+                            f"images/god/{selected_god.image}/{selected_god.image}.png"
+                        )
+                    ),
+                    V(
+                        self.screen_right - (65 * self.scale),
+                        self.screen_top - (75 * self.scale),
+                    ),
+                    origin=Origin.CENTER,
+                    scale_x=self.scale * 1.5,
+                    scale_y=self.scale * 1.5,
+                    antialiasing=True,
+                )
+            except Exception:
+                raise Exception(f"Failed to load image for god '{
+                    selected_god.name}' at path: {
+                    asset(
+                        f'images/god/{
+                            selected_god.image}/{
+                            selected_god.image}.png')}")
+
+            # God name
+            self.draw_text(
+                selected_god.name,
+                V(
+                    self.screen_left + (155 * self.scale) + (3 * self.scale),
+                    self.screen_top - (2 * self.scale),
+                ),
+                self.heading_font.new_size(int(40 * self.scale)),
+                Color(255, 255, 255),
+                Origin.TOPLEFT,
+            )
+
+            # God lore
+            self.draw_text(
+                selected_god.info,
+                V(
+                    self.screen_left + (155 * self.scale) + (3 * self.scale),
+                    self.screen_top - (155 * self.scale) + (3 * self.scale),
+                ),
+                self.main_font.new_size(int(30 * self.scale)),
+                Color(255, 255, 255),
+                Origin.TOPLEFT,
+            )
 
         elif self.state == State.PLAYING:
             # Black background
