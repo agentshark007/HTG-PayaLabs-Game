@@ -37,15 +37,16 @@ def asset(path):
 class State(Enum):
     INTRO = 1
     CREDITS = 2
+    QUIT = 3
 
-    MAIN_MENU = 3
-    NEW_GAME = 4
-    LOAD_GAME_MENU = 5
-    SETTINGS_MENU = 6
+    MAIN_MENU = 4
+    NEW_GAME = 5
+    LOAD_GAME_MENU = 6
+    SETTINGS_MENU = 7
 
-    PLAYING = 7
-    PAUSED = 8
-    LOAD_GAME_PLAYING = 9
+    PLAYING = 8
+    PAUSED = 9
+    LOAD_GAME_PLAYING = 10
 
 
 class App(Window):
@@ -88,19 +89,36 @@ class App(Window):
             self.intro_pygame_logo,
         ]
 
+    def _initialize_main_menu(self):
+        self.main_menu_button_top_offset = 10
+        self.main_menu_button_width = 200
+        self.main_menu_button_height = 60
+        self.main_menu_button_padding = 10
+        self.main_menu_button_color = Color(50, 70, 50)
+        self.main_menu_button_hover_color = Color(60, 80, 100)
+        self.main_menu_button_outline_thickness = 2 * self.scale
+        self.main_menu_button_outline_color = Color(0, 50, 0)
+        self.main_menu_button_roundness = 10
+        self.main_menu_button_text_color = Color(255, 255, 255)
+        self.main_menu_button_text_font = self.main_font.new_size(int(40 * self.scale))
+
     def initialize(self):
         self.scale = 1.0
         self.state = State.MAIN_MENU
 
         self._load_assets()
         self._initialize_intro()
+        self._initialize_main_menu()
 
     def update(self):
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
 
-        if self.state == State.INTRO:
+        if self.state == State.QUIT:
+            quit()
+
+        elif self.state == State.INTRO:
             self.intro_current_logo_time += self.deltatime
             num_logos = len(self.intro_logos)
 
@@ -128,6 +146,48 @@ class App(Window):
             elif self.intro_current_logo_index == num_logos + 1:
                 if self.intro_current_logo_time > self.intro_post_delay:
                     self.state = State.MAIN_MENU
+
+        elif self.state == State.MAIN_MENU:
+            buttons = [
+                State.NEW_GAME,
+                State.LOAD_GAME_MENU,
+                State.SETTINGS_MENU,
+                State.CREDITS,
+                State.QUIT,
+            ]
+            for i, button in enumerate(buttons):
+                x = 0
+                y = (
+                    self.screen_top
+                    - (
+                        (
+                            self.main_menu_button_top_offset
+                            + self.main_menu_button_height / 2
+                        )
+                        + (
+                            i
+                            * (
+                                self.main_menu_button_height
+                                + self.main_menu_button_padding
+                            )
+                        )
+                    )
+                    * self.scale
+                )
+                width = self.main_menu_button_width * self.scale
+                height = self.main_menu_button_height * self.scale
+
+                ax = x - width / 2
+                ay = y - height / 2
+                bx = x + width / 2
+                by = y + height / 2
+
+                hover = within(self.mouse_pos.x, ax, bx) and within(
+                    self.mouse_pos.y, ay, by
+                )
+
+                if hover and self.mouse_down_primary:
+                    self.state = button
 
         elif self.state == State.PLAYING:
             pass
@@ -176,32 +236,28 @@ class App(Window):
                 pass
 
         elif self.state == State.MAIN_MENU:
-            button_top_offset = 10
-            button_width = 200
-            button_height = 60
-            button_padding = 10
-            button_color = Color(50, 70, 50)
-            button_hover_color = Color(60, 80, 100)
-            button_outline_thickness = 2 * self.scale
-            button_outline_color = Color(0, 50, 0)
-            button_roundness = 10
-
-            button_text_font = self.main_font.new_size(int(40 * self.scale))
-            button_text_color = Color(255, 255, 255)
-
             buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
             for i, button in enumerate(buttons):
                 x = 0
                 y = (
                     self.screen_top
                     - (
-                        (button_top_offset + button_height / 2)
-                        + (i * (button_height + button_padding))
+                        (
+                            self.main_menu_button_top_offset
+                            + self.main_menu_button_height / 2
+                        )
+                        + (
+                            i
+                            * (
+                                self.main_menu_button_height
+                                + self.main_menu_button_padding
+                            )
+                        )
                     )
                     * self.scale
                 )
-                width = button_width * self.scale
-                height = button_height * self.scale
+                width = self.main_menu_button_width * self.scale
+                height = self.main_menu_button_height * self.scale
 
                 ax = x - width / 2
                 ay = y - height / 2
@@ -215,17 +271,25 @@ class App(Window):
                 self.fill_rounded_rect(
                     V(ax, ay),
                     V(bx, by),
-                    button_hover_color if hover else button_color,
-                    int(button_outline_thickness),
-                    button_outline_color,
-                    button_roundness,
-                    button_roundness,
-                    button_roundness,
-                    button_roundness,
+                    (
+                        self.main_menu_button_hover_color
+                        if hover
+                        else self.main_menu_button_color
+                    ),
+                    int(self.main_menu_button_outline_thickness),
+                    self.main_menu_button_outline_color,
+                    self.main_menu_button_roundness,
+                    self.main_menu_button_roundness,
+                    self.main_menu_button_roundness,
+                    self.main_menu_button_roundness,
                 )
 
                 self.draw_text(
-                    button, V(x, y), button_text_font, button_text_color, Origin.CENTER
+                    button,
+                    V(x, y),
+                    self.main_menu_button_text_font,
+                    self.main_menu_button_text_color,
+                    Origin.CENTER,
                 )
 
         elif self.state == State.PLAYING:
