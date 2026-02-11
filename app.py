@@ -314,7 +314,7 @@ class App(Window):
                 V(self.screen_left, self.screen_top),
                 V(self.screen_left + (150 * self.scale), self.screen_bottom),
                 Color(30, 30, 30),
-                2 * self.scale,
+                int(2 * self.scale),
                 Color(50, 50, 50),
             )
 
@@ -325,7 +325,7 @@ class App(Window):
                     self.screen_top - (150 * self.scale),
                 ),
                 Color(30, 30, 30),
-                2 * self.scale,
+                int(2 * self.scale),
                 Color(50, 50, 50),
             )
 
@@ -336,7 +336,7 @@ class App(Window):
                     self.screen_top - (150 * self.scale),
                 ),
                 Color(30, 30, 30),
-                2 * self.scale,
+                int(2 * self.scale),
                 Color(50, 50, 50),
             )
 
