@@ -49,6 +49,13 @@ class State(Enum):
     LOAD_GAME_PLAYING = 10
 
 
+class God:
+    def __init__(self, encoded):
+        self.name = "Ares"
+        self.info = "God of war!"
+        self.images = "images/god/ares"
+
+
 class App(Window):
     def __init__(self):
         super().__init__(
@@ -310,6 +317,7 @@ class App(Window):
                 )
 
         elif self.state == State.NEW_GAME:
+            # God list
             self.fill_rect(
                 V(self.screen_left, self.screen_top),
                 V(self.screen_left + (150 * self.scale), self.screen_bottom),
@@ -318,6 +326,7 @@ class App(Window):
                 Color(50, 50, 50),
             )
 
+            # God image
             self.fill_rect(
                 V(self.screen_right, self.screen_top),
                 V(
@@ -329,15 +338,24 @@ class App(Window):
                 Color(50, 50, 50),
             )
 
+            # God name and stats
             self.fill_rect(
                 V(self.screen_left + (150 * self.scale), self.screen_top),
                 V(
                     self.screen_right - (130 * self.scale),
                     self.screen_top - (150 * self.scale),
                 ),
-                Color(30, 30, 30),
-                int(2 * self.scale),
-                Color(50, 50, 50),
+                Color(0, 0, 0),
+            )
+
+            # God lore
+            self.fill_rect(
+                V(
+                    self.screen_left + (150 * self.scale),
+                    self.screen_top - (150 * self.scale),
+                ),
+                V(self.screen_right, self.screen_bottom),
+                Color(0, 0, 0),
             )
 
         elif self.state == State.PLAYING:

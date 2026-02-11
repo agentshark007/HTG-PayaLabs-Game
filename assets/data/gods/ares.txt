@@ -1,5 +1,6 @@
 name=Ares
 info=Command Ares to win the Potato Wars!
+image=ares
 tree:::
 
 a1:
