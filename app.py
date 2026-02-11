@@ -66,7 +66,7 @@ class App(Window):
 
     def initialize(self):
         self.scale = 1.0
-        self.state = State.INTRO
+        self.state = State.MAIN_MENU
 
         self._load_assets()
         self._initialize_intro()
@@ -152,6 +152,7 @@ class App(Window):
                 pass
 
         elif self.state == State.MAIN_MENU:
+            button_top_offset = 0
             button_width = 200
             button_height = 40
             button_padding = 10
@@ -162,7 +163,11 @@ class App(Window):
             buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
             for i, button in enumerate(buttons):
                 x = 0
-                y = 0
+                y = (
+                    self.screen_top
+                    - (button_top_offset + (i * (button_width + button_padding)))
+                    * self.scale
+                )
                 width = button_width * self.scale
                 height = button_height * self.scale
 
