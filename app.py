@@ -12,13 +12,16 @@ def asset(path):
 
 class State(Enum):
     INTRO = 1
-    MAIN_MENU = 2
-    NEW_GAME = 3
-    LOAD_GAME_MENU = 4
-    SETTINGS = 5
-    PLAYING = 6
-    LOAD_GAME_PLAYING = 7
-    CREDITS = 8
+    CREDITS = 2
+
+    MAIN_MENU = 3
+    NEW_GAME = 4
+    LOAD_GAME_MENU = 5
+    SETTINGS_MENU = 6
+
+    PLAYING = 7
+    PAUSED = 8
+    LOAD_GAME_PLAYING = 9
 
 
 class App(Window):
@@ -100,7 +103,7 @@ class App(Window):
 
             elif self.intro_current_logo_index == num_logos + 1:
                 if self.intro_current_logo_time > self.intro_post_delay:
-                    self.state = State.PLAYING
+                    self.state = State.MAIN_MENU
 
         elif self.state == State.PLAYING:
             pass
@@ -147,6 +150,34 @@ class App(Window):
                 # index 0 = pre-delay, index num_logos+1 = post-delay: draw
                 # nothing
                 pass
+
+        elif self.state == State.MAIN_MENU:
+            button_width = 200
+            button_height = 40
+            button_padding = 10
+            button_color = Color(50, 50, 50)
+            button_outline_thickness = 2 * self.scale
+            button_outline_color = Color(255, 255, 255)
+
+            buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
+            for i, button in enumerate(buttons):
+                x = 0
+                y = 0
+                width = button_width * self.scale
+                height = button_height * self.scale
+
+                ax = x - width / 2
+                ay = y - height / 2
+                bx = x + width / 2
+                by = y + height / 2
+
+                self.fill_rect(
+                    V(ax, ay),
+                    V(bx, by),
+                    button_color,
+                    int(button_outline_thickness),
+                    button_outline_color,
+                )
 
         elif self.state == State.PLAYING:
             # Black background
