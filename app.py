@@ -85,7 +85,7 @@ class App(Window):
                     self.gods_text.append(f.read())
 
     def _initialize_intro(self):
-        self.intro_pre_delay = 3.0
+        self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
 
@@ -111,7 +111,7 @@ class App(Window):
         self.main_menu_button_outline_color = Color(0, 50, 0)
         self.main_menu_button_roundness = 10
         self.main_menu_button_text_color = Color(255, 255, 255)
-        self.main_menu_button_text_font = self.main_font.new_size(int(40 * self.scale))
+        self.main_menu_button_text_font = self.main_font
 
     def initialize(self):
         self.scale = 1.0
@@ -201,11 +201,14 @@ class App(Window):
                 if hover and self.mouse_down_primary:
                     self.state = button
 
+        elif self.state == State.NEW_GAME:
+            pass
+
         elif self.state == State.PLAYING:
             pass
 
     def draw(self):
-        self.clear(Color(0, 0, 0, 255))
+        self.clear(Color(0, 0, 0))
 
         if self.state == State.INTRO:
             num_logos = len(self.intro_logos)
@@ -248,6 +251,8 @@ class App(Window):
                 pass
 
         elif self.state == State.MAIN_MENU:
+            self.clear(Color(0, 0, 0))
+
             buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
             for i, button in enumerate(buttons):
                 x = 0
@@ -299,10 +304,41 @@ class App(Window):
                 self.draw_text(
                     button,
                     V(x, y),
-                    self.main_menu_button_text_font,
+                    self.main_menu_button_text_font.new_size(int(40 * self.scale)),
                     self.main_menu_button_text_color,
                     Origin.CENTER,
                 )
+
+        elif self.state == State.NEW_GAME:
+            self.fill_rect(
+                V(self.screen_left, self.screen_top),
+                V(self.screen_left + (150 * self.scale), self.screen_bottom),
+                Color(30, 30, 30),
+                2 * self.scale,
+                Color(50, 50, 50),
+            )
+
+            self.fill_rect(
+                V(self.screen_right, self.screen_top),
+                V(
+                    self.screen_right - (130 * self.scale),
+                    self.screen_top - (150 * self.scale),
+                ),
+                Color(30, 30, 30),
+                2 * self.scale,
+                Color(50, 50, 50),
+            )
+
+            self.fill_rect(
+                V(self.screen_left + (150 * self.scale), self.screen_top),
+                V(
+                    self.screen_right - (130 * self.scale),
+                    self.screen_top - (150 * self.scale),
+                ),
+                Color(30, 30, 30),
+                2 * self.scale,
+                Color(50, 50, 50),
+            )
 
         elif self.state == State.PLAYING:
             # Black background
