@@ -1,3 +1,4 @@
+import math
 import os
 from enum import Enum
 
@@ -145,6 +146,7 @@ class App(Window):
     def initialize(self):
         self.scale = 1.0
         self.state = State.INTRO
+        self.seconds_since_start = 0.0
 
         self._load_assets()
         self._initialize_intro()
@@ -156,6 +158,8 @@ class App(Window):
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
+
+        self.seconds_since_start += self.deltatime
 
         if self.state == State.QUIT:
             quit()
@@ -344,6 +348,7 @@ class App(Window):
                     self.main_menu_button_roundness,
                     self.main_menu_button_roundness,
                     self.main_menu_button_roundness,
+                    1,
                 )
 
                 self.draw_text(
@@ -460,7 +465,9 @@ class App(Window):
                         self.screen_top - (75 * self.scale),
                     ),
                     origin=Origin.CENTER,
-                    scale_x=self.scale * 1.5,
+                    scale_x=self.scale
+                    * 1.5
+                    * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
                     scale_y=self.scale * 1.5,
                     antialiasing=True,
                 )
@@ -477,17 +484,14 @@ class App(Window):
                 selected_god.name,
                 V(
                     self.screen_left + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top - (2 * self.scale),
+                    self.screen_top + (5 * self.scale),
                 ),
                 self.heading_font.new_size(int(40 * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
             )
 
-            # TODO: Implement god stats display (e.g., health, attack, defense)
-
             # God lore
-            # TODO: Implement text wrapping for god lore
             self.draw_text(
                 selected_god.info,
                 V(
@@ -497,9 +501,15 @@ class App(Window):
                 self.main_font.new_size(int(30 * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
+                wrap_distance=abs(
+                    self.screen_left
+                    - (self.screen_left + (155 * self.scale) + (3 * self.scale))
+                )
+                * 2,
             )
 
-            # TODO: Implement "Start Game" button that transitions to State.PLAYING when clicked
+            # TODO: Implement "Start Game" button that transitions to
+            # State.PLAYING when clicked
 
         elif self.state == State.PLAYING:
             # Black background
