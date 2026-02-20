@@ -242,10 +242,17 @@ class App(Window):
             for i, god in enumerate(self.gods):
                 hover = within_button(
                     self.mouse_pos,
-                    V(self.screen_left + (1 * self.scale),
-                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale)),
-                    V(self.screen_left + (149 * self.scale),
-                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale) - (25 * self.scale)),
+                    V(
+                        self.screen_left + (1 * self.scale),
+                        self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                    ),
+                    V(
+                        self.screen_left + (149 * self.scale),
+                        self.screen_top
+                        - (1 * self.scale)
+                        - (i * 25 * self.scale)
+                        - (25 * self.scale),
+                    ),
                 )
                 if hover and self.mouse_down_primary:
                     self.new_game_selected_god = i
@@ -257,7 +264,7 @@ class App(Window):
                 V(
                     self.screen_right - (130 * self.scale),
                     self.screen_bottom + (40 * self.scale),
-                    ),
+                ),
             )
 
             if hover:
@@ -414,10 +421,17 @@ class App(Window):
             for i, god in enumerate(self.gods):
                 hover = within_button(
                     self.mouse_pos,
-                    V(self.screen_left + (1 * self.scale),
-                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale)),
-                    V(self.screen_left + (149 * self.scale),
-                      self.screen_top - (1 * self.scale) - (i * 25 * self.scale) - (25 * self.scale)),
+                    V(
+                        self.screen_left + (1 * self.scale),
+                        self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                    ),
+                    V(
+                        self.screen_left + (149 * self.scale),
+                        self.screen_top
+                        - (1 * self.scale)
+                        - (i * 25 * self.scale)
+                        - (25 * self.scale),
+                    ),
                 )
 
                 if hover and self.new_game_selected_god == i:
@@ -576,6 +590,36 @@ class App(Window):
                 self.main_font.new_size(int(self.main_font.size * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
+            )
+
+            # Pause button
+            hover = within_button(
+                self.mouse_pos,
+                V(self.screen_left, self.screen_bottom),
+                V(
+                    self.screen_left + (30 * self.scale),
+                    self.screen_bottom + (30 * self.scale),
+                ),
+            )
+            self.fill_rounded_rect(
+                V(self.screen_left, self.screen_bottom),
+                V(
+                    self.screen_left + (30 * self.scale),
+                    self.screen_bottom + (30 * self.scale),
+                ),
+                Color(40, 40, 40) if hover else Color(30, 30, 30),
+                top_right_roundness=30 * self.scale,
+                steps=10
+            )
+            self.draw_text(
+                "||",
+                V(
+                    self.screen_left + (15 * self.scale),
+                    self.screen_bottom + (15 * self.scale),
+                    ),
+                self.main_font.new_size(int(20 * self.scale)),
+                Color(255, 255, 255),
+                Origin.CENTER,
             )
 
     def on_quit(self):
