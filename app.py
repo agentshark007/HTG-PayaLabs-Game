@@ -609,14 +609,14 @@ class App(Window):
                 ),
                 Color(40, 40, 40) if hover else Color(30, 30, 30),
                 top_right_roundness=30 * self.scale,
-                steps=10
+                steps=10,
             )
             self.draw_text(
                 "||",
                 V(
                     self.screen_left + (15 * self.scale),
                     self.screen_bottom + (15 * self.scale),
-                    ),
+                ),
                 self.main_font.new_size(int(20 * self.scale)),
                 Color(255, 255, 255),
                 Origin.CENTER,
