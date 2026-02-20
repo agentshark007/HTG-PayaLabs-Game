@@ -52,6 +52,7 @@ class State(Enum):
     PLAYING = 8
     PAUSED = 9
     LOAD_GAME_PLAYING = 10
+    SETTINGS_PLAYING = 11
 
 
 class God:
@@ -151,6 +152,7 @@ class App(Window):
         self.scale = 1.0
         self.state = State.INTRO
         self.seconds_since_start = 0.0
+        self.mouse_down_primary_last_frame = False
 
         self._load_assets()
         self._initialize_intro()
@@ -159,6 +161,10 @@ class App(Window):
         self._initialize_new_game()
 
     def update(self):
+        mouse_pressed = (
+            self.mouse_down_primary and not self.mouse_down_primary_last_frame
+        )
+
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
@@ -234,7 +240,7 @@ class App(Window):
 
                 hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
 
-                if hover and self.mouse_down_primary:
+                if hover and mouse_pressed:
                     self.state = button
 
         elif self.state == State.NEW_GAME:
@@ -254,7 +260,7 @@ class App(Window):
                         - (25 * self.scale),
                     ),
                 )
-                if hover and self.mouse_down_primary:
+                if hover and mouse_pressed:
                     self.new_game_selected_god = i
 
             # Start button
@@ -268,11 +274,63 @@ class App(Window):
             )
 
             if hover:
-                if self.mouse_down_primary:
+                if mouse_pressed:
                     self.state = State.PLAYING
 
         elif self.state == State.PLAYING:
-            pass
+            hover = within_button(
+                self.mouse_pos,
+                V(self.screen_left, self.screen_bottom),
+                V(
+                    self.screen_left + (30 * self.scale),
+                    self.screen_bottom + (30 * self.scale),
+                ),
+            )
+            if hover:
+                if mouse_pressed:
+                    self.state = State.PAUSED
+
+        elif self.state == State.PAUSED:
+            buttons = [
+                State.PLAYING,
+                State.LOAD_GAME_PLAYING,
+                State.LOAD_GAME_PLAYING,
+                State.SETTINGS_PLAYING,
+                State.MAIN_MENU,
+            ]
+            for i, button in enumerate(buttons):
+                x = 0
+                y = (
+                    self.screen_top
+                    - (
+                        (
+                            self.main_menu_button_top_offset
+                            + self.main_menu_button_height / 2
+                        )
+                        + (
+                            i
+                            * (
+                                self.main_menu_button_height
+                                + self.main_menu_button_padding
+                            )
+                        )
+                    )
+                    * self.scale
+                )
+                width = self.main_menu_button_width * self.scale
+                height = self.main_menu_button_height * self.scale
+
+                ax = x - width / 2
+                ay = y - height / 2
+                bx = x + width / 2
+                by = y + height / 2
+
+                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
+
+                if hover and mouse_pressed:
+                    self.state = button
+
+        self.mouse_down_primary_last_frame = self.mouse_down_primary
 
     def draw(self):
         self.clear(Color(0, 0, 0))
@@ -318,8 +376,6 @@ class App(Window):
                 pass
 
         elif self.state == State.MAIN_MENU:
-            self.clear(Color(0, 0, 0))
-
             buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
             for i, button in enumerate(buttons):
                 x = 0
@@ -559,9 +615,6 @@ class App(Window):
             )
 
         elif self.state == State.PLAYING:
-            # Black background
-            self.clear(Color(0, 0, 0))
-
             # Context image
             self.draw_image(
                 self.trees_scene,
@@ -621,6 +674,62 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.CENTER,
             )
+
+        elif self.state == State.PAUSED:
+            buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
+            for i, button in enumerate(buttons):
+                x = 0
+                y = (
+                    self.screen_top
+                    - (
+                        (
+                            self.main_menu_button_top_offset
+                            + self.main_menu_button_height / 2
+                        )
+                        + (
+                            i
+                            * (
+                                self.main_menu_button_height
+                                + self.main_menu_button_padding
+                            )
+                        )
+                    )
+                    * self.scale
+                )
+                width = self.main_menu_button_width * self.scale
+                height = self.main_menu_button_height * self.scale
+
+                ax = x - width / 2
+                ay = y - height / 2
+                bx = x + width / 2
+                by = y + height / 2
+
+                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
+
+                self.fill_rounded_rect(
+                    V(ax, ay),
+                    V(bx, by),
+                    (
+                        self.main_menu_button_hover_color
+                        if hover
+                        else self.main_menu_button_color
+                    ),
+                    int(self.main_menu_button_outline_thickness),
+                    self.main_menu_button_outline_color,
+                    self.main_menu_button_roundness,
+                    self.main_menu_button_roundness,
+                    self.main_menu_button_roundness,
+                    self.main_menu_button_roundness,
+                    1,
+                )
+
+                self.draw_text(
+                    button,
+                    V(x, y),
+                    self.main_menu_button_text_font.new_size(int(40 * self.scale)),
+                    self.main_menu_button_text_color,
+                    Origin.CENTER,
+                )
 
     def on_quit(self):
         try:
