@@ -1,19 +1,22 @@
-name=Ares
-info=Command Ares to win the Potato Wars!
-image=ares
-tree:::
+#info
+name: Ares
+info: Command Ares to win the Potato Wars!
+image: ares
 
-a1:
-You have just begun as the god Ares! What would you like to do?
-A: Fight a war: b1
-B: Go to sleep: b2
-C: Kill somebody: b3
+#tree
 
-b1:
-You are fighting a war!
+##a1
+title: Welcome as Ares!
+text: You have just begun as the god Ares! What would you like to do?
+b1: Fight a war
+b2: Go to sleep
+b3: Kill somebody
 
-b2:
-You are sleeping.
+##b1
+title: You are fighting a war!
 
-b3:
-You have been assigned the judge to find the killer, which is you.
+##b2
+title: You are sleeping.
+
+##b3
+title: You have been assigned the judge to find the killer, which is you.

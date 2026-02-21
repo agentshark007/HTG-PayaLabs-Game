@@ -32,6 +32,10 @@ def within_button(mouse_pos, a, b):
     return within(mouse_pos.x, a.x, b.x) and within(mouse_pos.y, a.y, b.y)
 
 
+def split_to_lines(text: str):
+    return [line for line in text.splitlines() if line.strip()]
+
+
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -55,28 +59,53 @@ class State(Enum):
     SETTINGS_PLAYING = 11
 
 
+class Link:
+    def __init__(self, link, text):
+        self.link = link
+        self.text = text
+
+
+class Screen:
+    def __init__(self, encoded: str):
+        lines = split_to_lines(encoded)
+        links = []
+        for line in lines:
+            if line.startswith("title: "):
+                self.title = line.removeprefix("title: ")
+            elif line.startswith("text: "):
+                self.text = line.removeprefix("text: ")
+            else:
+                screen, text = line.split(": ")
+                links.append(Link(screen, text))
+
+
+class Tree:
+    def __init__(self, encoded):
+        self.screens = {}
+
+
 class God:
     def __init__(self, encoded: str):
-        lines = encoded.splitlines()
-
-        self.name = ""
-        self.info = ""
-        self.image = ""
+        lines = split_to_lines(encoded)
 
         for line in lines:
-            line = line.strip()
 
-            if line.startswith("name="):
-                self.name = line.split("=", 1)[1]
-
-            elif line.startswith("info="):
-                self.info = line.split("=", 1)[1]
-
-            elif line.startswith("image="):
-                self.image = line.split("=", 1)[1]
-
-            elif line == "tree:::":
+            if line.startswith("name: "):
+                self.name = line.removeprefix("name: ")
+            elif line.startswith("info: "):
+                self.info = line.removeprefix("info: ")
+            elif line.startswith("image: "):
+                self.image = line.removeprefix("image: ")
+            elif line == "#tree":
                 break
+
+        self.tree = Tree(encoded)
+
+
+class Game:
+    def __init__(self, god: God):
+        self.god = god
+        self.current_screen = None
 
 
 class App(Window):
@@ -159,6 +188,8 @@ class App(Window):
         self._initialize_main_menu()
         self._load_data()
         self._initialize_new_game()
+
+        self.game = None  # Will be initialized properly in State.NEW_GAME
 
     def update(self):
         mouse_pressed = (
@@ -275,6 +306,7 @@ class App(Window):
 
             if hover:
                 if mouse_pressed:
+                    self.game = Game(self.gods[self.new_game_selected_god])
                     self.state = State.PLAYING
 
         elif self.state == State.PLAYING:
