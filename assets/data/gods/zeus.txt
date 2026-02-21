@@ -1,7 +1,7 @@
 #info
 name: Zeus
 info: Command Zeus to win the Potato Wars!
-image: Zeus
+image: zeus
 
 #tree
 

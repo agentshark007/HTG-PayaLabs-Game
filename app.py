@@ -11,19 +11,16 @@ def within(x, a, b):
             return True
         else:
             return False
-
     elif a > b:
         if b < x < a:
             return True
         else:
             return False
-
     elif a < b:
         if a < x < b:
             return True
         else:
             return False
-
     else:
         return False
 
@@ -47,12 +44,10 @@ class State(Enum):
     INTRO = 1
     CREDITS = 2
     QUIT = 3
-
     MAIN_MENU = 4
     NEW_GAME = 5
     LOAD_GAME_MENU = 6
     SETTINGS_MENU = 7
-
     PLAYING = 8
     PAUSED = 9
     LOAD_GAME_PLAYING = 10
@@ -81,15 +76,29 @@ class Screen:
 
 class Tree:
     def __init__(self, encoded):
+        lines = split_to_lines(encoded)
+        screens = []
+        ready = False
+        first = True
+        screen_text = ""
+        for line in lines:
+            if line.startswith("#tree"):
+                ready = True
+            if ready:
+                if line.startswith("##"):
+                    screen_text = ""
+                    if not first:
+                        screens.append(Screen(screen_text))
+                    first = False
+                else:
+                    screen_text += line
         self.screens = {}
 
 
 class God:
     def __init__(self, encoded: str):
         lines = split_to_lines(encoded)
-
         for line in lines:
-
             if line.startswith("name: "):
                 self.name = line.removeprefix("name: ")
             elif line.startswith("info: "):
@@ -98,7 +107,6 @@ class God:
                 self.image = line.removeprefix("image: ")
             elif line == "#tree":
                 break
-
         self.tree = Tree(encoded)
 
 
@@ -113,7 +121,7 @@ class App(Window):
         super().__init__(
             width=480,
             height=360,
-            title="HTG PayaLabs Game",
+            title="Fate of the Gods",
             resizable=Resizable.ASPECT,
             origin=Origin.CENTER,
         )
@@ -121,11 +129,9 @@ class App(Window):
     def _load_assets(self):
         # Scenes
         self.trees_scene = Image(asset("images/scene/trees.png"))
-
         # Fonts
         self.heading_font = Font(asset("fonts/Silkscreen-Regular.ttf"))
         self.main_font = Font(asset("fonts/VT323-Regular.ttf"))
-
         # Intro logos and sound
         self.intro_payalabs_logo = Image(asset("images/intro/payalabs.png"))
         self.intro_pgiud_logo = Image(asset("images/intro/pgiud.png"))
@@ -134,27 +140,22 @@ class App(Window):
 
     def _load_data(self):
         gods_folder = asset("data/gods")
-
         self.gods_text = []
-
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
                 with open(path, "r", encoding="utf-8") as f:
                     self.gods_text.append(f.read())
-
         self.gods = [God(i) for i in self.gods_text]
 
     def _initialize_intro(self):
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
-
         self.intro_current_logo_index = (
             0  # 0=pre-delay, 1=payalabs, 2=pgiud, 3=pygame, 4=post-delay
         )
         self.intro_current_logo_time = 0
-
         self.intro_logos = [
             self.intro_payalabs_logo,
             self.intro_pgiud_logo,
@@ -182,33 +183,26 @@ class App(Window):
         self.state = State.INTRO
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
-
         self._load_assets()
         self._initialize_intro()
         self._initialize_main_menu()
         self._load_data()
         self._initialize_new_game()
-
         self.game = None  # Will be initialized properly in State.NEW_GAME
 
     def update(self):
         mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
-
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
-
         self.seconds_since_start += self.deltatime
-
         if self.state == State.QUIT:
             quit()
-
         elif self.state == State.INTRO:
             self.intro_current_logo_time += self.deltatime
             num_logos = len(self.intro_logos)
-
             if self.intro_current_logo_index == 0:
                 if self.intro_current_logo_time > self.intro_pre_delay:
                     self.intro_current_logo_index = 1
@@ -218,7 +212,6 @@ class App(Window):
                             self.intro_boom_sound.play()
                     except Exception:
                         pass
-
             elif 1 <= self.intro_current_logo_index <= num_logos:
                 if self.intro_current_logo_time > self.intro_logo_time:
                     self.intro_current_logo_index += 1
@@ -229,11 +222,9 @@ class App(Window):
                                 self.intro_boom_sound.play()
                         except Exception:
                             pass
-
             elif self.intro_current_logo_index == num_logos + 1:
                 if self.intro_current_logo_time > self.intro_post_delay:
                     self.state = State.MAIN_MENU
-
         elif self.state == State.MAIN_MENU:
             buttons = [
                 State.NEW_GAME,
@@ -263,17 +254,13 @@ class App(Window):
                 )
                 width = self.main_menu_button_width * self.scale
                 height = self.main_menu_button_height * self.scale
-
                 ax = x - width / 2
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-
                 hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
-
                 if hover and mouse_pressed:
                     self.state = button
-
         elif self.state == State.NEW_GAME:
             # God list selection
             for i, god in enumerate(self.gods):
@@ -293,7 +280,6 @@ class App(Window):
                 )
                 if hover and mouse_pressed:
                     self.new_game_selected_god = i
-
             # Start button
             hover = within_button(
                 self.mouse_pos,
@@ -303,12 +289,10 @@ class App(Window):
                     self.screen_bottom + (40 * self.scale),
                 ),
             )
-
             if hover:
                 if mouse_pressed:
                     self.game = Game(self.gods[self.new_game_selected_god])
                     self.state = State.PLAYING
-
         elif self.state == State.PLAYING:
             hover = within_button(
                 self.mouse_pos,
@@ -321,7 +305,6 @@ class App(Window):
             if hover:
                 if mouse_pressed:
                     self.state = State.PAUSED
-
         elif self.state == State.PAUSED:
             buttons = [
                 State.PLAYING,
@@ -351,33 +334,25 @@ class App(Window):
                 )
                 width = self.main_menu_button_width * self.scale
                 height = self.main_menu_button_height * self.scale
-
                 ax = x - width / 2
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-
                 hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
-
                 if hover and mouse_pressed:
                     self.state = button
-
         self.mouse_down_primary_last_frame = self.mouse_down_primary
 
     def draw(self):
         self.clear(Color(0, 0, 0))
-
         if self.state == State.INTRO:
             num_logos = len(self.intro_logos)
             idx = self.intro_current_logo_index
-
             if 1 <= idx <= num_logos:
                 img = self.intro_logos[idx - 1]
-
                 total = self.intro_logo_time
                 t = self.intro_current_logo_time
                 fade = min(0.3, total / 2.0)
-
                 if total <= 0 or t <= 0:
                     alpha = 255
                 elif t < fade:
@@ -386,9 +361,7 @@ class App(Window):
                     alpha = int(255 * ((total - t) / fade))
                 else:
                     alpha = 255
-
                 alpha = max(0, min(255, alpha))
-
                 logo_scale = self.scale * 0.15
                 try:
                     self.draw_image(
@@ -406,7 +379,6 @@ class App(Window):
                 # index 0 = pre-delay, index num_logos+1 = post-delay: draw
                 # nothing
                 pass
-
         elif self.state == State.MAIN_MENU:
             buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
             for i, button in enumerate(buttons):
@@ -430,14 +402,11 @@ class App(Window):
                 )
                 width = self.main_menu_button_width * self.scale
                 height = self.main_menu_button_height * self.scale
-
                 ax = x - width / 2
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-
                 hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
-
                 self.fill_rounded_rect(
                     V(ax, ay),
                     V(bx, by),
@@ -454,7 +423,6 @@ class App(Window):
                     self.main_menu_button_roundness,
                     1,
                 )
-
                 self.draw_text(
                     button,
                     V(x, y),
@@ -462,7 +430,6 @@ class App(Window):
                     self.main_menu_button_text_color,
                     Origin.CENTER,
                 )
-
         elif self.state == State.NEW_GAME:
             # God list
             self.fill_rect(
@@ -472,7 +439,6 @@ class App(Window):
                 int(2 * self.scale),
                 Color(50, 50, 50),
             )
-
             # God image
             self.fill_rect(
                 V(self.screen_right, self.screen_top),
@@ -484,7 +450,6 @@ class App(Window):
                 int(2 * self.scale),
                 Color(50, 50, 50),
             )
-
             # God name and stats
             self.fill_rect(
                 V(self.screen_left + (150 * self.scale), self.screen_top),
@@ -494,7 +459,6 @@ class App(Window):
                 ),
                 Color(0, 0, 0),
             )
-
             # God lore
             self.fill_rect(
                 V(
@@ -504,7 +468,6 @@ class App(Window):
                 V(self.screen_right, self.screen_bottom),
                 Color(0, 0, 0),
             )
-
             # Gods list
             for i, god in enumerate(self.gods):
                 hover = within_button(
@@ -521,7 +484,6 @@ class App(Window):
                         - (25 * self.scale),
                     ),
                 )
-
                 if hover and self.new_game_selected_god == i:
                     color = Color(60, 60, 60)
                 elif hover:
@@ -530,7 +492,6 @@ class App(Window):
                     color = Color(50, 50, 50)
                 else:
                     color = Color(40, 40, 40)
-
                 self.fill_rect(
                     V(
                         self.screen_left + (1 * self.scale),
@@ -545,7 +506,6 @@ class App(Window):
                     ),
                     color,
                 )
-
                 self.draw_text(
                     god.name,
                     V(
@@ -556,7 +516,6 @@ class App(Window):
                     Color(200, 255, 200),
                     Origin.TOPRIGHT,
                 )
-
             # God image
             selected_god = self.gods[self.new_game_selected_god]
             try:
@@ -584,7 +543,6 @@ class App(Window):
                         f'images/god/{
                             selected_god.image}/{
                             selected_god.image}.png')}")
-
             # God name
             self.draw_text(
                 selected_god.name,
@@ -596,7 +554,6 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
             )
-
             # God lore
             self.draw_text(
                 selected_god.info,
@@ -613,7 +570,6 @@ class App(Window):
                 )
                 * 2,
             )
-
             # Start button
             hover = within_button(
                 self.mouse_pos,
@@ -623,7 +579,6 @@ class App(Window):
                     self.screen_bottom + (40 * self.scale),
                 ),
             )
-
             self.fill_rect(
                 V(self.screen_right, self.screen_bottom),
                 V(
@@ -634,7 +589,6 @@ class App(Window):
                 int(2 * self.scale),
                 Color(50, 50, 50),
             )
-
             self.draw_text(
                 "Start Game",
                 V(
@@ -645,7 +599,6 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.CENTER,
             )
-
         elif self.state == State.PLAYING:
             # Context image
             self.draw_image(
@@ -656,7 +609,6 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
-
             # Heading text
             self.draw_text(
                 "Heading text",
@@ -667,7 +619,6 @@ class App(Window):
                 color=Color(255, 255, 255),
                 origin=Origin.TOPLEFT,
             )
-
             # Main text
             self.draw_text(
                 "Main text. The quick brown fox jumps over the lazy dog.",
@@ -676,7 +627,6 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
             )
-
             # Pause button
             hover = within_button(
                 self.mouse_pos,
@@ -706,7 +656,6 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.CENTER,
             )
-
         elif self.state == State.PAUSED:
             buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
             for i, button in enumerate(buttons):
@@ -730,14 +679,11 @@ class App(Window):
                 )
                 width = self.main_menu_button_width * self.scale
                 height = self.main_menu_button_height * self.scale
-
                 ax = x - width / 2
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-
                 hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
-
                 self.fill_rounded_rect(
                     V(ax, ay),
                     V(bx, by),
@@ -754,7 +700,6 @@ class App(Window):
                     self.main_menu_button_roundness,
                     1,
                 )
-
                 self.draw_text(
                     button,
                     V(x, y),
