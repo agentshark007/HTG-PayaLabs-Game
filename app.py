@@ -72,27 +72,37 @@ class Screen:
             else:
                 screen, text = line.split(": ")
                 links.append(Link(screen, text))
+        self.links = links
 
 
 class Tree:
     def __init__(self, encoded):
         lines = split_to_lines(encoded)
-        screens = []
+        screens = {}
         ready = False
         first = True
         screen_text = ""
+        screen_id = None  # To track the screen IDs
+        first_screen_id = None  # To store the first screen's ID
         for line in lines:
             if line.startswith("#tree"):
                 ready = True
             if ready:
-                if line.startswith("##"):
-                    screen_text = ""
-                    if not first:
-                        screens.append(Screen(screen_text))
+                if line.startswith("##"):  # This signifies a new screen
+                    if not first:  # Skip the first screen as it hasn't been added
+                        screens[screen_id] = Screen(screen_text)  # Add to dictionary
                     first = False
+                    # Get screen ID, like a1, b1
+                    screen_id = line.removeprefix("##").strip()
+                    if first_screen_id is None:
+                        first_screen_id = screen_id  # Capture the first screen ID
+                    screen_text = ""  # Reset text for the new screen
                 else:
-                    screen_text += line
-        self.screens = {}
+                    screen_text += line + "\n"  # Append line to current screen text
+        if screen_id and screen_text:  # Make sure to add the last screen after the loop
+            screens[screen_id] = Screen(screen_text)
+        self.screens = screens  # Assign the populated dictionary to self.screens
+        self.first_screen_id = first_screen_id  # Store the first screen's ID
 
 
 class God:
@@ -108,12 +118,14 @@ class God:
             elif line == "#tree":
                 break
         self.tree = Tree(encoded)
+        # Set starting screen name from first screen
+        self.starting_screen_name = self.tree.first_screen_id
 
 
 class Game:
     def __init__(self, god: God):
         self.god = god
-        self.current_screen = None
+        self.current_screen = god.starting_screen_name
 
 
 class App(Window):
