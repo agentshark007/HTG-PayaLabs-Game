@@ -216,6 +216,9 @@ class App(Window):
         self.state = State.INTRO
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
+        # Track keys that were down in the previous frame so we can detect
+        # new key presses (edge detection).
+        self.keys_down_last_frame = set()
         self._load_assets()
         self._initialize_intro()
         self._initialize_main_menu()
@@ -338,6 +341,41 @@ class App(Window):
             if hover:
                 if mouse_pressed:
                     self.state = State.PAUSED
+            # Keyboard-driven link selection: if we're on a screen with
+            # lettered links (A, B, C, ...), allow pressing the corresponding
+            # key to jump to the linked screen. We only react to a key when
+            # it transitions from up -> down (edge detection) to avoid
+            # repeated firings while the key is held.
+            if self.game is not None:
+                try:
+                    current_screen = self.game.god.tree.screens[
+                        self.game.current_screen_index
+                    ]
+                except Exception:
+                    current_screen = None
+            else:
+                current_screen = None
+
+            if current_screen is not None and current_screen.links:
+                # For each link map index 0->A, 1->B, etc.
+                for i, link in enumerate(current_screen.links):
+                    if i >= 26:
+                        break  # only map up to A..Z
+                    key_name = chr(ord("A") + i)
+                    try:
+                        key_enum = Key[key_name]
+                    except Exception:
+                        continue
+                    pressed_now = self.keydown(key_enum)
+                    was_pressed = key_enum in self.keys_down_last_frame
+                    # if newly pressed, follow the link
+                    if pressed_now and not was_pressed:
+                        target_id = link.target
+                        # find screen index by id
+                        for idx, screen in enumerate(self.game.god.tree.screens):
+                            if screen.id == target_id:
+                                self.game.current_screen_index = idx
+                                break
         elif self.state == State.PAUSED:
             buttons = [
                 State.PLAYING,
@@ -375,6 +413,18 @@ class App(Window):
                 if hover and mouse_pressed:
                     self.state = button
         self.mouse_down_primary_last_frame = self.mouse_down_primary
+        # Update keys_down_last_frame for A..Z so the next frame can detect
+        # edges. Keep only keys we care about (A..Z) to keep the set small.
+        new_keys = set()
+        for i in range(26):
+            key_name = chr(ord("A") + i)
+            try:
+                key_enum = Key[key_name]
+            except Exception:
+                continue
+            if self.keydown(key_enum):
+                new_keys.add(key_enum)
+        self.keys_down_last_frame = new_keys
 
     def draw(self):
         self.clear(Color(0, 0, 0))
@@ -655,10 +705,14 @@ class App(Window):
             heading_text = (
                 current_screen.title if current_screen is not None else "Heading text"
             )
+            links = []
+            for i, link in enumerate(current_screen.links):
+                links.append(f"{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"[i]}: {link.label}")
+            links_text = "\n".join(links)
             main_text = (
-                current_screen.text
+                f"{current_screen.text}\nPress:\n{links_text}"
                 if current_screen is not None
-                else "Main text. The quick brown fox jumps over the lazy dog."
+                else "Main text"
             )
             # Heading text (left area)
             self.draw_text(
@@ -677,6 +731,9 @@ class App(Window):
                 self.main_font.new_size(int(self.main_font.size * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
+                wrap_distance=abs(
+                    self.screen_right - (-230 * self.scale) + (-10 * self.scale)
+                ),
             )
             # Pause button
             hover = is_point_in_rect(
