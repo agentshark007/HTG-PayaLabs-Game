@@ -5,7 +5,7 @@ from enum import Enum
 from pgiud import *
 
 
-def within(x, a, b):
+def is_between(x, a, b):
     if a == b:
         if x == a:
             return True
@@ -25,19 +25,19 @@ def within(x, a, b):
         return False
 
 
-def within_button(mouse_pos, a, b):
-    return within(mouse_pos.x, a.x, b.x) and within(mouse_pos.y, a.y, b.y)
+def is_point_in_rect(point, a, b):
+    return is_between(point.x, a.x, b.x) and is_between(point.y, a.y, b.y)
 
 
-def split_to_lines(text: str):
+def split_nonempty_lines(text: str):
     return [line for line in text.splitlines() if line.strip()]
 
 
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def asset(path):
-    return str(os.path.join(BASE_PATH, "assets", path))
+def get_asset_path(path):
+    return str(os.path.join(BASE_DIR, "assets", path))
 
 
 class State(Enum):
@@ -55,59 +55,79 @@ class State(Enum):
 
 
 class Link:
-    def __init__(self, link, text):
-        self.link = link
-        self.text = text
+    def __init__(self, target, label):
+        self.target = target
+        self.label = label
 
 
 class Screen:
-    def __init__(self, encoded: str):
-        lines = split_to_lines(encoded)
+    def __init__(self, encoded: str, screen_id: str = None):
+        # Each Screen now carries an id, title, text and links list
+        self.id = screen_id
+        lines = split_nonempty_lines(encoded)
         links = []
+        self.title = ""
+        self.text = ""
         for line in lines:
             if line.startswith("title: "):
-                self.title = line.removeprefix("title: ")
+                self.title = line[len("title: ") :].strip()
             elif line.startswith("text: "):
-                self.text = line.removeprefix("text: ")
+                self.text = line[len("text: ") :].strip()
             else:
-                screen, text = line.split(": ")
-                links.append(Link(screen, text))
+                # Assumes any other line is a link: "<screen_id>: <link text>"
+                # Use partition to avoid exceptions if the line is malformed
+                if ": " in line:
+                    target, _, link_text = line.partition(": ")
+                    links.append(Link(target.strip(), link_text.strip()))
+                else:
+                    # Unknown line format: ignore or append to text
+                    # We'll append to text to preserve any stray lines
+                    if self.text:
+                        self.text += "\n" + line.strip()
+                    else:
+                        self.text = line.strip()
         self.links = links
 
 
 class Tree:
     def __init__(self, encoded):
-        lines = split_to_lines(encoded)
-        screens = {}
+        lines = split_nonempty_lines(encoded)
+        screens = []
         ready = False
-        first = True
         screen_text = ""
         screen_id = None  # To track the screen IDs
-        first_screen_id = None  # To store the first screen's ID
+        first_screen_index = None  # To store the first screen's index
         for line in lines:
             if line.startswith("#tree"):
                 ready = True
-            if ready:
-                if line.startswith("##"):  # This signifies a new screen
-                    if not first:  # Skip the first screen as it hasn't been added
-                        screens[screen_id] = Screen(screen_text)  # Add to dictionary
-                    first = False
-                    # Get screen ID, like a1, b1
-                    screen_id = line.removeprefix("##").strip()
-                    if first_screen_id is None:
-                        first_screen_id = screen_id  # Capture the first screen ID
-                    screen_text = ""  # Reset text for the new screen
-                else:
-                    screen_text += line + "\n"  # Append line to current screen text
-        if screen_id and screen_text:  # Make sure to add the last screen after the loop
-            screens[screen_id] = Screen(screen_text)
-        self.screens = screens  # Assign the populated dictionary to self.screens
-        self.first_screen_id = first_screen_id  # Store the first screen's ID
+                continue
+            if not ready:
+                continue
+            if line.startswith("##"):  # This signifies a new screen
+                # If we were building a previous screen, append it
+                if screen_id is not None:
+                    screens.append(Screen(screen_text, screen_id))
+                # Start a new screen
+                screen_id = line.removeprefix("##").strip()
+                screen_text = ""
+                # If this is the first screen we've seen, record its index
+                if first_screen_index is None:
+                    first_screen_index = len(screens)
+            else:
+                screen_text += line + "\n"
+        # Add the last screen if present
+        if screen_id is not None and screen_text:
+            screens.append(Screen(screen_text, screen_id))
+        self.screens = screens
+        # If no explicit first index was captured, default to 0
+        self.first_screen_index = (
+            first_screen_index if first_screen_index is not None else 0
+        )
 
 
 class God:
     def __init__(self, encoded: str):
-        lines = split_to_lines(encoded)
+        lines = split_nonempty_lines(encoded)
         for line in lines:
             if line.startswith("name: "):
                 self.name = line.removeprefix("name: ")
@@ -118,14 +138,15 @@ class God:
             elif line == "#tree":
                 break
         self.tree = Tree(encoded)
-        # Set starting screen name from first screen
-        self.starting_screen_name = self.tree.first_screen_id
+        # Set starting screen index from tree
+        self.start_screen_index = self.tree.first_screen_index
 
 
 class Game:
     def __init__(self, god: God):
         self.god = god
-        self.current_screen = god.starting_screen_name
+        # current_screen_index is an integer index into god.tree.screens
+        self.current_screen_index = god.start_screen_index
 
 
 class App(Window):
@@ -140,18 +161,18 @@ class App(Window):
 
     def _load_assets(self):
         # Scenes
-        self.trees_scene = Image(asset("images/scene/trees.png"))
+        self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
         # Fonts
-        self.heading_font = Font(asset("fonts/Silkscreen-Regular.ttf"))
-        self.main_font = Font(asset("fonts/VT323-Regular.ttf"))
+        self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
+        self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
         # Intro logos and sound
-        self.intro_payalabs_logo = Image(asset("images/intro/payalabs.png"))
-        self.intro_pgiud_logo = Image(asset("images/intro/pgiud.png"))
-        self.intro_pygame_logo = Image(asset("images/intro/pygame.png"))
-        self.intro_boom_sound = Sound(asset("sounds/intro_boom.mp3"))
+        self.intro_payalabs_logo = Image(get_asset_path("images/intro/payalabs.png"))
+        self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
+        self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
+        self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
 
     def _load_data(self):
-        gods_folder = asset("data/gods")
+        gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
@@ -270,13 +291,13 @@ class App(Window):
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
+                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
                 if hover and mouse_pressed:
                     self.state = button
         elif self.state == State.NEW_GAME:
             # God list selection
             for i, god in enumerate(self.gods):
-                hover = within_button(
+                hover = is_point_in_rect(
                     self.mouse_pos,
                     V(
                         self.screen_left + (1 * self.scale),
@@ -293,7 +314,7 @@ class App(Window):
                 if hover and mouse_pressed:
                     self.new_game_selected_god = i
             # Start button
-            hover = within_button(
+            hover = is_point_in_rect(
                 self.mouse_pos,
                 V(self.screen_right, self.screen_bottom),
                 V(
@@ -306,7 +327,7 @@ class App(Window):
                     self.game = Game(self.gods[self.new_game_selected_god])
                     self.state = State.PLAYING
         elif self.state == State.PLAYING:
-            hover = within_button(
+            hover = is_point_in_rect(
                 self.mouse_pos,
                 V(self.screen_left, self.screen_bottom),
                 V(
@@ -350,7 +371,7 @@ class App(Window):
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
+                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
                 if hover and mouse_pressed:
                     self.state = button
         self.mouse_down_primary_last_frame = self.mouse_down_primary
@@ -418,7 +439,7 @@ class App(Window):
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
+                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
                 self.fill_rounded_rect(
                     V(ax, ay),
                     V(bx, by),
@@ -482,7 +503,7 @@ class App(Window):
             )
             # Gods list
             for i, god in enumerate(self.gods):
-                hover = within_button(
+                hover = is_point_in_rect(
                     self.mouse_pos,
                     V(
                         self.screen_left + (1 * self.scale),
@@ -533,7 +554,7 @@ class App(Window):
             try:
                 self.draw_image(
                     Image(
-                        asset(
+                        get_asset_path(
                             f"images/god/{selected_god.image}/{selected_god.image}.png"
                         )
                     ),
@@ -551,7 +572,7 @@ class App(Window):
             except Exception:
                 raise Exception(f"Failed to load image for god '{
                     selected_god.name}' at path: {
-                    asset(
+                    get_asset_path(
                         f'images/god/{
                             selected_god.image}/{
                             selected_god.image}.png')}")
@@ -583,7 +604,7 @@ class App(Window):
                 * 2,
             )
             # Start button
-            hover = within_button(
+            hover = is_point_in_rect(
                 self.mouse_pos,
                 V(self.screen_right, self.screen_bottom),
                 V(
@@ -621,9 +642,27 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
-            # Heading text
+            # Heading and main text come from the current screen (if available)
+            if self.game is not None:
+                try:
+                    current_screen = self.game.god.tree.screens[
+                        self.game.current_screen_index
+                    ]
+                except Exception:
+                    current_screen = None
+            else:
+                current_screen = None
+            heading_text = (
+                current_screen.title if current_screen is not None else "Heading text"
+            )
+            main_text = (
+                current_screen.text
+                if current_screen is not None
+                else "Main text. The quick brown fox jumps over the lazy dog."
+            )
+            # Heading text (left area)
             self.draw_text(
-                "Heading text",
+                heading_text,
                 V(-230 * self.scale, 40 * self.scale),
                 font=self.heading_font.new_size(
                     int(self.heading_font.size * self.scale)
@@ -631,16 +670,16 @@ class App(Window):
                 color=Color(255, 255, 255),
                 origin=Origin.TOPLEFT,
             )
-            # Main text
+            # Main text (left area)
             self.draw_text(
-                "Main text. The quick brown fox jumps over the lazy dog.",
+                main_text,
                 V(-230 * self.scale, 10 * self.scale),
                 self.main_font.new_size(int(self.main_font.size * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOPLEFT,
             )
             # Pause button
-            hover = within_button(
+            hover = is_point_in_rect(
                 self.mouse_pos,
                 V(self.screen_left, self.screen_bottom),
                 V(
@@ -695,7 +734,7 @@ class App(Window):
                 ay = y - height / 2
                 bx = x + width / 2
                 by = y + height / 2
-                hover = within_button(self.mouse_pos, V(ax, ay), V(bx, by))
+                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
                 self.fill_rounded_rect(
                     V(ax, ay),
                     V(bx, by),
