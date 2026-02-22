@@ -355,7 +355,6 @@ class App(Window):
                     current_screen = None
             else:
                 current_screen = None
-
             if current_screen is not None and current_screen.links:
                 # For each link map index 0->A, 1->B, etc.
                 for i, link in enumerate(current_screen.links):
