@@ -23,7 +23,7 @@ When you run the game, it opens a window and displays a test scene image, sample
    pip install -r requirements.txt
    ```
 
-`pgiud` version `1.1` is included in the repository, so you do not need to install it separately.
+`pgiud` version `1.3` is included in the repository, so you do not need to install it separately.
 
 ## Developers
 All developers listed here are part of PayaLabs.

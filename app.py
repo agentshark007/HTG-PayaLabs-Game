@@ -272,7 +272,7 @@ class App(Window):
             for i, button in enumerate(buttons):
                 x = 0
                 y = (
-                    self.screen_top
+                    self.screen_top.y
                     - (
                         (
                             self.main_menu_button_top_offset
@@ -303,12 +303,12 @@ class App(Window):
                 hover = is_point_in_rect(
                     self.mouse_pos,
                     V(
-                        self.screen_left + (1 * self.scale),
-                        self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                        self.screen_left.x + (1 * self.scale),
+                        self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
                     ),
                     V(
-                        self.screen_left + (149 * self.scale),
-                        self.screen_top
+                        self.screen_left.x + (149 * self.scale),
+                        self.screen_top.y
                         - (1 * self.scale)
                         - (i * 25 * self.scale)
                         - (25 * self.scale),
@@ -319,10 +319,10 @@ class App(Window):
             # Start button
             hover = is_point_in_rect(
                 self.mouse_pos,
-                V(self.screen_right, self.screen_bottom),
+                V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right - (130 * self.scale),
-                    self.screen_bottom + (40 * self.scale),
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_bottom.y + (40 * self.scale),
                 ),
             )
             if hover:
@@ -332,10 +332,10 @@ class App(Window):
         elif self.state == State.PLAYING:
             hover = is_point_in_rect(
                 self.mouse_pos,
-                V(self.screen_left, self.screen_bottom),
+                V(self.screen_left.x, self.screen_bottom.y),
                 V(
-                    self.screen_left + (30 * self.scale),
-                    self.screen_bottom + (30 * self.scale),
+                    self.screen_left.x + (30 * self.scale),
+                    self.screen_bottom.y + (30 * self.scale),
                 ),
             )
             if hover:
@@ -386,7 +386,7 @@ class App(Window):
             for i, button in enumerate(buttons):
                 x = 0
                 y = (
-                    self.screen_top
+                    self.screen_top.y
                     - (
                         (
                             self.main_menu_button_top_offset
@@ -448,7 +448,7 @@ class App(Window):
                 try:
                     self.draw_image(
                         img,
-                        V(self.screen_center_x, self.screen_center_y),
+                        V(self.screen_center.x, self.screen_center.y),
                         origin=Origin.CENTER,
                         image_filter=Color(255, 255, 255, alpha),
                         scale_x=logo_scale,
@@ -466,7 +466,7 @@ class App(Window):
             for i, button in enumerate(buttons):
                 x = 0
                 y = (
-                    self.screen_top
+                    self.screen_top.y
                     - (
                         (
                             self.main_menu_button_top_offset
@@ -515,18 +515,18 @@ class App(Window):
         elif self.state == State.NEW_GAME:
             # God list
             self.fill_rect(
-                V(self.screen_left, self.screen_top),
-                V(self.screen_left + (150 * self.scale), self.screen_bottom),
+                V(self.screen_left.x, self.screen_top.y),
+                V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
                 Color(30, 30, 30),
                 int(2 * self.scale),
                 Color(50, 50, 50),
             )
             # God image
             self.fill_rect(
-                V(self.screen_right, self.screen_top),
+                V(self.screen_right.x, self.screen_top.y),
                 V(
-                    self.screen_right - (130 * self.scale),
-                    self.screen_top - (150 * self.scale),
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_top.y - (150 * self.scale),
                 ),
                 Color(30, 30, 30),
                 int(2 * self.scale),
@@ -534,20 +534,20 @@ class App(Window):
             )
             # God name and stats
             self.fill_rect(
-                V(self.screen_left + (150 * self.scale), self.screen_top),
+                V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
                 V(
-                    self.screen_right - (130 * self.scale),
-                    self.screen_top - (150 * self.scale),
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_top.y - (150 * self.scale),
                 ),
                 Color(0, 0, 0),
             )
             # God lore
             self.fill_rect(
                 V(
-                    self.screen_left + (150 * self.scale),
-                    self.screen_top - (150 * self.scale),
+                    self.screen_left.x + (150 * self.scale),
+                    self.screen_top.y - (150 * self.scale),
                 ),
-                V(self.screen_right, self.screen_bottom),
+                V(self.screen_right.x, self.screen_bottom.y),
                 Color(0, 0, 0),
             )
             # Gods list
@@ -555,12 +555,12 @@ class App(Window):
                 hover = is_point_in_rect(
                     self.mouse_pos,
                     V(
-                        self.screen_left + (1 * self.scale),
-                        self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                        self.screen_left.x + (1 * self.scale),
+                        self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
                     ),
                     V(
-                        self.screen_left + (149 * self.scale),
-                        self.screen_top
+                        self.screen_left.x + (149 * self.scale),
+                        self.screen_top.y
                         - (1 * self.scale)
                         - (i * 25 * self.scale)
                         - (25 * self.scale),
@@ -576,12 +576,12 @@ class App(Window):
                     color = Color(40, 40, 40)
                 self.fill_rect(
                     V(
-                        self.screen_left + (1 * self.scale),
-                        self.screen_top - (1 * self.scale) - (i * 25 * self.scale),
+                        self.screen_left.x + (1 * self.scale),
+                        self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
                     ),
                     V(
-                        self.screen_left + (149 * self.scale),
-                        self.screen_top
+                        self.screen_left.x + (149 * self.scale),
+                        self.screen_top.y
                         - (1 * self.scale)
                         - (i * 25 * self.scale)
                         - (25 * self.scale),
@@ -591,12 +591,12 @@ class App(Window):
                 self.draw_text(
                     god.name,
                     V(
-                        self.screen_left + (55 * self.scale) - (3 * self.scale),
-                        self.screen_top - (25 * self.scale * i) + (3 * self.scale),
+                        self.screen_left.x + (55 * self.scale) - (3 * self.scale),
+                        self.screen_top.y - (25 * self.scale * i) + (3 * self.scale),
                     ),
                     self.main_font.new_size(int(30 * self.scale)),
                     Color(200, 255, 200),
-                    Origin.TOPRIGHT,
+                    Origin.TOP_RIGHT,
                 )
             # God image
             selected_god = self.gods[self.new_game_selected_god]
@@ -608,8 +608,8 @@ class App(Window):
                         )
                     ),
                     V(
-                        self.screen_right - (65 * self.scale),
-                        self.screen_top - (75 * self.scale),
+                        self.screen_right.x - (65 * self.scale),
+                        self.screen_top.y - (75 * self.scale),
                     ),
                     origin=Origin.CENTER,
                     scale_x=self.scale
@@ -629,43 +629,43 @@ class App(Window):
             self.draw_text(
                 selected_god.name,
                 V(
-                    self.screen_left + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top + (5 * self.scale),
+                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                    self.screen_top.y + (5 * self.scale),
                 ),
                 self.heading_font.new_size(int(40 * self.scale)),
                 Color(255, 255, 255),
-                Origin.TOPLEFT,
+                Origin.TOP_LEFT,
             )
             # God lore
-            self.draw_text(
+            self.draw_text_word_wrap(
                 selected_god.info,
                 V(
-                    self.screen_left + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top - (155 * self.scale) + (3 * self.scale),
+                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                    self.screen_top.y - (155 * self.scale) + (3 * self.scale),
                 ),
                 self.main_font.new_size(int(30 * self.scale)),
                 Color(255, 255, 255),
-                Origin.TOPLEFT,
+                Origin.TOP_LEFT,
                 wrap_distance=abs(
-                    self.screen_left
-                    - (self.screen_left + (155 * self.scale) + (3 * self.scale))
+                    self.screen_left.x
+                    - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
                 )
                 * 2,
             )
             # Start button
             hover = is_point_in_rect(
                 self.mouse_pos,
-                V(self.screen_right, self.screen_bottom),
+                V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right - (130 * self.scale),
-                    self.screen_bottom + (40 * self.scale),
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_bottom.y + (40 * self.scale),
                 ),
             )
             self.fill_rect(
-                V(self.screen_right, self.screen_bottom),
+                V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right - (130 * self.scale),
-                    self.screen_bottom + (40 * self.scale),
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_bottom.y + (40 * self.scale),
                 ),
                 Color(40, 40, 40) if hover else Color(30, 30, 30),
                 int(2 * self.scale),
@@ -674,8 +674,8 @@ class App(Window):
             self.draw_text(
                 "Start Game",
                 V(
-                    self.screen_right - (65 * self.scale),
-                    self.screen_bottom + (20 * self.scale),
+                    self.screen_right.x - (65 * self.scale),
+                    self.screen_bottom.y + (20 * self.scale),
                 ),
                 self.main_font.new_size(int(30 * self.scale)),
                 Color(255, 255, 255),
@@ -721,33 +721,33 @@ class App(Window):
                     int(self.heading_font.size * self.scale)
                 ),
                 color=Color(255, 255, 255),
-                origin=Origin.TOPLEFT,
+                origin=Origin.TOP_LEFT,
             )
             # Main text (left area)
-            self.draw_text(
+            self.draw_text_word_wrap(
                 main_text,
                 V(-230 * self.scale, 10 * self.scale),
                 self.main_font.new_size(int(self.main_font.size * self.scale)),
                 Color(255, 255, 255),
-                Origin.TOPLEFT,
+                Origin.TOP_LEFT,
                 wrap_distance=abs(
-                    self.screen_right - (-230 * self.scale) + (-10 * self.scale)
+                    self.screen_right.x - (-230 * self.scale) + (-10 * self.scale)
                 ),
             )
             # Pause button
             hover = is_point_in_rect(
                 self.mouse_pos,
-                V(self.screen_left, self.screen_bottom),
+                V(self.screen_left.x, self.screen_bottom.y),
                 V(
-                    self.screen_left + (30 * self.scale),
-                    self.screen_bottom + (30 * self.scale),
+                    self.screen_left.x + (30 * self.scale),
+                    self.screen_bottom.y + (30 * self.scale),
                 ),
             )
             self.fill_rounded_rect(
-                V(self.screen_left, self.screen_bottom),
+                V(self.screen_left.x, self.screen_bottom.y),
                 V(
-                    self.screen_left + (30 * self.scale),
-                    self.screen_bottom + (30 * self.scale),
+                    self.screen_left.x + (30 * self.scale),
+                    self.screen_bottom.y + (30 * self.scale),
                 ),
                 Color(40, 40, 40) if hover else Color(30, 30, 30),
                 top_right_roundness=30 * self.scale,
@@ -756,8 +756,8 @@ class App(Window):
             self.draw_text(
                 "||",
                 V(
-                    self.screen_left + (15 * self.scale),
-                    self.screen_bottom + (15 * self.scale),
+                    self.screen_left.x + (15 * self.scale),
+                    self.screen_bottom.y + (15 * self.scale),
                 ),
                 self.main_font.new_size(int(20 * self.scale)),
                 Color(255, 255, 255),
@@ -768,7 +768,7 @@ class App(Window):
             for i, button in enumerate(buttons):
                 x = 0
                 y = (
-                    self.screen_top
+                    self.screen_top.y
                     - (
                         (
                             self.main_menu_button_top_offset

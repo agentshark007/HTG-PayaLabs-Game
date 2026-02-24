@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import math
 from enum import Enum
 from typing import Iterable, Optional, Tuple
+
 import pygame
 
-__version__ = "1.2"
+__version__ = "1.3"
 __all__ = [
     "V",
     "Key",
@@ -323,10 +325,10 @@ class Origin(Enum):
     BOTTOM = (0, -1)
     LEFT = (-1, 0)
     RIGHT = (1, 0)
-    TOPLEFT = (-1, 1)
-    TOPRIGHT = (1, 1)
-    BOTTOMLEFT = (-1, -1)
-    BOTTOMRIGHT = (1, -1)
+    TOP_LEFT = (-1, 1)
+    TOP_RIGHT = (1, 1)
+    BOTTOM_LEFT = (-1, -1)
+    BOTTOM_RIGHT = (1, -1)
 
 
 class Resizable(Enum):
@@ -345,7 +347,7 @@ class Window:
             height: int = 600,
             title: str = "PGIUD Window",
             resizable: Resizable = Resizable.NONE,
-            origin: Origin = Origin.BOTTOMLEFT,
+            origin: Origin = Origin.BOTTOM_LEFT,
     ):
         pygame.init()
         try:
@@ -419,28 +421,40 @@ class Window:
         return V(*self._pg_to_iud(px, py))
 
     @property
-    def screen_center_x(self):
-        return self.screen_position(Origin.CENTER).x
-
-    @property
-    def screen_center_y(self):
-        return self.screen_position(Origin.CENTER).y
+    def screen_center(self):
+        return self.screen_position(Origin.CENTER)
 
     @property
     def screen_top(self):
-        return self.screen_position(Origin.TOP).y
+        return self.screen_position(Origin.TOP)
 
     @property
     def screen_bottom(self):
-        return self.screen_position(Origin.BOTTOM).y
+        return self.screen_position(Origin.BOTTOM)
 
     @property
     def screen_left(self):
-        return self.screen_position(Origin.LEFT).x
+        return self.screen_position(Origin.LEFT)
 
     @property
     def screen_right(self):
-        return self.screen_position(Origin.RIGHT).x
+        return self.screen_position(Origin.RIGHT)
+
+    @property
+    def screen_top_left(self):
+        return self.screen_position(Origin.TOP_LEFT)
+
+    @property
+    def screen_top_right(self):
+        return self.screen_position(Origin.TOP_RIGHT)
+
+    @property
+    def screen_bottom_left(self):
+        return self.screen_position(Origin.BOTTOM_LEFT)
+
+    @property
+    def screen_bottom_right(self):
+        return self.screen_position(Origin.BOTTOM_RIGHT)
 
     def _pg_to_iud(self, x: int, y: int):
         ox, oy = self._origin.value
@@ -705,11 +719,40 @@ class Window:
             except Exception:
                 pass
 
+    def fill_circle(
+            self,
+            center: V,
+            radius: float,
+            color: "Color",
+            outline_thickness: int = 0,
+            outline_color: "Color" = None,
+    ):
+        """Draw a filled circle at center with the given radius in IUD coordinates."""
+        cx, cy = center.to_tuple()
+        px, py = self._iud_to_pg(int(cx), int(cy))
+        r = max(0, int(round(radius)))
+        if r <= 0:
+            return
+        if color.a == 255:
+            pygame.draw.circle(self._screen, color.rgb_tuple(), (px, py), r)
+        else:
+            diameter = r * 2
+            temp = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
+            pygame.draw.circle(temp, color.to_tuple(), (r, r), r)
+            self._screen.blit(temp, (px - r, py - r))
+        if outline_thickness > 0 and outline_color is not None:
+            col = (
+                outline_color.rgb_tuple()
+                if outline_color.a == 255
+                else outline_color.to_tuple()
+            )
+            pygame.draw.circle(self._screen, col, (px, py), r, outline_thickness)
+
     def draw_image(
             self,
             image: "Image",
             pos: V,
-            origin: Origin = Origin.BOTTOMLEFT,
+            origin: Origin = Origin.BOTTOM_LEFT,
             image_filter: Optional["Color"] = None,
             scale_x: float = 1.0,
             scale_y: float = 1.0,
@@ -765,14 +808,74 @@ class Window:
             pos: V,
             font: "Font",
             color: "Color",
-            origin: Origin = Origin.BOTTOMLEFT,
-            wrap_distance: Optional[int] = None,
+            origin: Origin = Origin.BOTTOM_LEFT,
     ):
         """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor.
 
+        Supports manual line breaks via \\n. Only Y changes between lines;
+        X and origin/anchor stay fixed per line.
+        """
+        x, y = pos.to_tuple()
+        lines = text.split("\n")
+        if not lines:
+            return
+        rendered = []
+        default_h = 0
+        for ln in lines:
+            render_text = ln if ln != "" else " "
+            surf = font.font.render(render_text, True, color.rgb_tuple())
+            try:
+                surf = surf.convert_alpha()
+            except Exception:
+                try:
+                    surf = surf.convert()
+                except Exception:
+                    pass
+            w = surf.get_width()
+            h = surf.get_height()
+            rendered.append((surf, w, h))
+            if h > default_h:
+                default_h = h
+        total_h = default_h * len(rendered)
+        oy_val = origin.value[1]
+        block_top_y = y + total_h // 2 - oy_val * total_h // 2
+        for i, (surf, w, h) in enumerate(rendered):
+            line_y = block_top_y - i * default_h
+            px, py = self._iud_to_pg(int(x), int(line_y))
+            oxv = origin.value[0]
+            px -= w // 2 + oxv * w // 2
+            if color.a != 255:
+                try:
+                    surf.set_alpha(color.a)
+                except Exception:
+                    pass
+            self._screen.blit(surf, (px, py))
+
+    def draw_text_word_wrap(
+            self,
+            text: str,
+            pos: V,
+            font: "Font",
+            color: "Color",
+            origin: Origin = Origin.BOTTOM_LEFT,
+            wrap_distance: Optional[int] = None,
+            line_height: Optional[int] = None,
+            anchor_first_line: bool = False,
+            max_lines: Optional[int] = None,
+            max_line_ending: Optional[str] = None,
+    ):
+        """Draw word-wrapped text at (x, y) in IUD coordinates.
+
+        Only Y changes between lines; X and origin/anchor stay fixed per line.
+
         If `wrap_distance` is provided (positive integer, in pixels) the text will be
-        word-wrapped to fit within that pixel width. Newlines ("\\n") are accepted
-        as explicit line breaks.
+        word-wrapped to fit within that pixel width. Newlines are accepted as
+        explicit line breaks.
+        If `line_height` is provided, it overrides the default font line height.
+        If `anchor_first_line` is True, pos anchors the first line and subsequent
+        lines extend downward. If False, pos and origin anchor the full text block.
+        If `max_lines` is set, output is capped and `max_line_ending` is appended
+        to the last visible line when truncated.
         """
         x, y = pos.to_tuple()
         lines = []
@@ -785,10 +888,7 @@ class Window:
                 words = para.split(" ")
                 cur = ""
                 for w in words:
-                    if cur == "":
-                        candidate = w
-                    else:
-                        candidate = cur + " " + w
+                    candidate = w if cur == "" else cur + " " + w
                     try:
                         cand_w = font.font.size(candidate)[0]
                     except Exception:
@@ -825,9 +925,26 @@ class Window:
             lines = text.split("\n")
         if not lines:
             return
+        truncated = False
+        if max_lines is not None and len(lines) > max_lines:
+            lines = lines[:max_lines]
+            truncated = True
+        if truncated and max_line_ending is not None and lines:
+            if wrap_distance is not None and wrap_distance > 0:
+                last = lines[-1]
+                while last:
+                    try:
+                        candidate_w = font.font.size(last + max_line_ending)[0]
+                    except Exception:
+                        candidate_w = 0
+                    if candidate_w <= wrap_distance:
+                        break
+                    last = last[:-1]
+                lines[-1] = last + max_line_ending
+            else:
+                lines[-1] = lines[-1] + max_line_ending
         rendered = []
-        max_w = 0
-        line_height = 0
+        default_h = 0
         for ln in lines:
             render_text = ln if ln != "" else " "
             surf = font.font.render(render_text, True, color.rgb_tuple())
@@ -841,24 +958,23 @@ class Window:
             w = surf.get_width()
             h = surf.get_height()
             rendered.append((surf, w, h))
-            if w > max_w:
-                max_w = w
-            if h > line_height:
-                line_height = h
-        total_h = line_height * len(rendered)
-        px, py = self._iud_to_pg(int(x), int(y))
-        ox, oy = origin.value
-        oy *= -1
-        px -= max_w // 2
-        py -= total_h // 2
-        px -= ox * max_w // 2
-        py -= oy * total_h // 2
+            if h > default_h:
+                default_h = h
+        step = line_height if line_height is not None else default_h
         for i, (surf, w, h) in enumerate(rendered):
-            line_x = px + (max_w - w) // 2
-            line_y = py + i * line_height
+            if anchor_first_line:
+                line_y = y - i * step
+            else:
+                total_h = step * (len(rendered) - 1) + default_h
+                oy_val = origin.value[1]
+                block_top_y = y + total_h // 2 - oy_val * total_h // 2
+                line_y = block_top_y - i * step
+            px, py = self._iud_to_pg(int(x), int(line_y))
+            oxv = origin.value[0]
+            px -= w // 2 + oxv * w // 2
             if color.a != 255:
                 try:
                     surf.set_alpha(color.a)
                 except Exception:
                     pass
-            self._screen.blit(surf, (line_x, line_y))
+            self._screen.blit(surf, (px, py))
