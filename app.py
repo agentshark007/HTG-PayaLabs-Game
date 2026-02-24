@@ -359,7 +359,7 @@ class App(Window):
                 # For each link map index 0->A, 1->B, etc.
                 for i, link in enumerate(current_screen.links):
                     if i >= 26:
-                        break  # only map up to A..Z
+                        break  # only map up to A to Z
                     key_name = chr(ord("A") + i)
                     try:
                         key_enum = Key[key_name]
@@ -412,8 +412,8 @@ class App(Window):
                 if hover and mouse_pressed:
                     self.state = button
         self.mouse_down_primary_last_frame = self.mouse_down_primary
-        # Update keys_down_last_frame for A..Z so the next frame can detect
-        # edges. Keep only keys we care about (A..Z) to keep the set small.
+        # Update keys_down_last_frame for A to Z so the next frame can detect
+        # edges. Keep only keys we care about (A to Z) to keep the set small.
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
