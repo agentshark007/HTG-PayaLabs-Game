@@ -226,191 +226,230 @@ class App(Window):
         self._initialize_new_game()
         self.game = None  # Will be initialized properly in State.NEW_GAME
 
+    def _update_intro(self):
+        self.intro_current_logo_time += self.deltatime
+        num_logos = len(self.intro_logos)
+        if self.intro_current_logo_index == 0:
+            if self.intro_current_logo_time > self.intro_pre_delay:
+                self.intro_current_logo_index = 1
+                self.intro_current_logo_time = 0
+                try:
+                    if self.intro_boom_sound:
+                        self.intro_boom_sound.play()
+                except Exception:
+                    pass
+        elif 1 <= self.intro_current_logo_index <= num_logos:
+            if self.intro_current_logo_time > self.intro_logo_time:
+                self.intro_current_logo_index += 1
+                self.intro_current_logo_time = 0
+                if 1 <= self.intro_current_logo_index <= num_logos:
+                    try:
+                        if self.intro_boom_sound:
+                            self.intro_boom_sound.play()
+                    except Exception:
+                        pass
+        elif self.intro_current_logo_index == num_logos + 1:
+            if self.intro_current_logo_time > self.intro_post_delay:
+                self.state = State.MAIN_MENU
+
+    def _update_credits(self):
+        pass
+
+    def _update_quit(self):
+        quit()
+
+    def _update_main_menu(self):
+        buttons = [
+            State.NEW_GAME,
+            State.LOAD_GAME_MENU,
+            State.SETTINGS_MENU,
+            State.CREDITS,
+            State.QUIT,
+        ]
+        for i, button in enumerate(buttons):
+            x = 0
+            y = (
+                self.screen_top.y
+                - (
+                    (
+                        self.main_menu_button_top_offset
+                        + self.main_menu_button_height / 2
+                    )
+                    + (
+                        i
+                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                    )
+                )
+                * self.scale
+            )
+            width = self.main_menu_button_width * self.scale
+            height = self.main_menu_button_height * self.scale
+            ax = x - width / 2
+            ay = y - height / 2
+            bx = x + width / 2
+            by = y + height / 2
+            hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
+            if hover and self.mouse_pressed:
+                self.state = button
+
+    def _update_new_game(self):
+        # God list selection
+        for i, god in enumerate(self.gods):
+            hover = is_point_in_rect(
+                self.mouse_pos,
+                V(
+                    self.screen_left.x + (1 * self.scale),
+                    self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
+                ),
+                V(
+                    self.screen_left.x + (149 * self.scale),
+                    self.screen_top.y
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (25 * self.scale),
+                ),
+            )
+            if hover and self.mouse_pressed:
+                self.new_game_selected_god = i
+        # Start button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+        )
+        if hover:
+            if self.mouse_pressed:
+                self.game = Game(self.gods[self.new_game_selected_god])
+                self.state = State.PLAYING
+
+    def _update_load_game_menu(self):
+        pass
+
+    def _update_settings_menu(self):
+        pass
+
+    def _update_playing(self):
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_left.x, self.screen_bottom.y),
+            V(
+                self.screen_left.x + (30 * self.scale),
+                self.screen_bottom.y + (30 * self.scale),
+            ),
+        )
+        if hover:
+            if self.mouse_pressed:
+                self.state = State.PAUSED
+        # Keyboard-driven link selection: if we're on a screen with
+        # lettered links (A, B, C, ...), allow pressing the corresponding
+        # key to jump to the linked screen. We only react to a key when
+        # it transitions from up -> down (edge detection) to avoid
+        # repeated firings while the key is held.
+        if self.game is not None:
+            try:
+                current_screen = self.game.god.tree.screens[
+                    self.game.current_screen_index
+                ]
+            except Exception:
+                current_screen = None
+        else:
+            current_screen = None
+        if current_screen is not None and current_screen.links:
+            # For each link map index 0->A, 1->B, etc.
+            for i, link in enumerate(current_screen.links):
+                if i >= 26:
+                    break  # only map up to A to Z
+                key_name = chr(ord("A") + i)
+                try:
+                    key_enum = Key[key_name]
+                except Exception:
+                    continue
+                pressed_now = self.keydown(key_enum)
+                was_pressed = key_enum in self.keys_down_last_frame
+                # if newly pressed, follow the link
+                if pressed_now and not was_pressed:
+                    target_id = link.target
+                    # find screen index by id
+                    for idx, screen in enumerate(self.game.god.tree.screens):
+                        if screen.id == target_id:
+                            self.game.current_screen_index = idx
+                            break
+
+    def _update_paused(self):
+        buttons = [
+            State.PLAYING,
+            State.LOAD_GAME_PLAYING,
+            State.LOAD_GAME_PLAYING,
+            State.SETTINGS_PLAYING,
+            State.MAIN_MENU,
+        ]
+        for i, button in enumerate(buttons):
+            x = 0
+            y = (
+                self.screen_top.y
+                - (
+                    (
+                        self.main_menu_button_top_offset
+                        + self.main_menu_button_height / 2
+                    )
+                    + (
+                        i
+                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                    )
+                )
+                * self.scale
+            )
+            width = self.main_menu_button_width * self.scale
+            height = self.main_menu_button_height * self.scale
+            ax = x - width / 2
+            ay = y - height / 2
+            bx = x + width / 2
+            by = y + height / 2
+            hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
+            if hover and self.mouse_pressed:
+                self.state = button
+
+    def _update_load_game_playing(self):
+        pass
+
+    def _update_settings_playing(self):
+        pass
+
     def update(self):
-        mouse_pressed = (
+        self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
         self.seconds_since_start += self.deltatime
-        if self.state == State.QUIT:
-            quit()
-        elif self.state == State.INTRO:
-            self.intro_current_logo_time += self.deltatime
-            num_logos = len(self.intro_logos)
-            if self.intro_current_logo_index == 0:
-                if self.intro_current_logo_time > self.intro_pre_delay:
-                    self.intro_current_logo_index = 1
-                    self.intro_current_logo_time = 0
-                    try:
-                        if self.intro_boom_sound:
-                            self.intro_boom_sound.play()
-                    except Exception:
-                        pass
-            elif 1 <= self.intro_current_logo_index <= num_logos:
-                if self.intro_current_logo_time > self.intro_logo_time:
-                    self.intro_current_logo_index += 1
-                    self.intro_current_logo_time = 0
-                    if 1 <= self.intro_current_logo_index <= num_logos:
-                        try:
-                            if self.intro_boom_sound:
-                                self.intro_boom_sound.play()
-                        except Exception:
-                            pass
-            elif self.intro_current_logo_index == num_logos + 1:
-                if self.intro_current_logo_time > self.intro_post_delay:
-                    self.state = State.MAIN_MENU
+        if self.state == State.INTRO:
+            self._update_intro()
+        elif self.state == State.CREDITS:
+            self._update_credits()
+        elif self.state == State.QUIT:
+            self._update_quit()
         elif self.state == State.MAIN_MENU:
-            buttons = [
-                State.NEW_GAME,
-                State.LOAD_GAME_MENU,
-                State.SETTINGS_MENU,
-                State.CREDITS,
-                State.QUIT,
-            ]
-            for i, button in enumerate(buttons):
-                x = 0
-                y = (
-                    self.screen_top.y
-                    - (
-                        (
-                            self.main_menu_button_top_offset
-                            + self.main_menu_button_height / 2
-                        )
-                        + (
-                            i
-                            * (
-                                self.main_menu_button_height
-                                + self.main_menu_button_padding
-                            )
-                        )
-                    )
-                    * self.scale
-                )
-                width = self.main_menu_button_width * self.scale
-                height = self.main_menu_button_height * self.scale
-                ax = x - width / 2
-                ay = y - height / 2
-                bx = x + width / 2
-                by = y + height / 2
-                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
-                if hover and mouse_pressed:
-                    self.state = button
+            self._update_main_menu()
         elif self.state == State.NEW_GAME:
-            # God list selection
-            for i, god in enumerate(self.gods):
-                hover = is_point_in_rect(
-                    self.mouse_pos,
-                    V(
-                        self.screen_left.x + (1 * self.scale),
-                        self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
-                    ),
-                    V(
-                        self.screen_left.x + (149 * self.scale),
-                        self.screen_top.y
-                        - (1 * self.scale)
-                        - (i * 25 * self.scale)
-                        - (25 * self.scale),
-                    ),
-                )
-                if hover and mouse_pressed:
-                    self.new_game_selected_god = i
-            # Start button
-            hover = is_point_in_rect(
-                self.mouse_pos,
-                V(self.screen_right.x, self.screen_bottom.y),
-                V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_bottom.y + (40 * self.scale),
-                ),
-            )
-            if hover:
-                if mouse_pressed:
-                    self.game = Game(self.gods[self.new_game_selected_god])
-                    self.state = State.PLAYING
+            self._update_new_game()
+        elif self.state == State.LOAD_GAME_MENU:
+            self._update_load_game_menu()
+        elif self.state == State.SETTINGS_MENU:
+            self._update_settings_menu()
         elif self.state == State.PLAYING:
-            hover = is_point_in_rect(
-                self.mouse_pos,
-                V(self.screen_left.x, self.screen_bottom.y),
-                V(
-                    self.screen_left.x + (30 * self.scale),
-                    self.screen_bottom.y + (30 * self.scale),
-                ),
-            )
-            if hover:
-                if mouse_pressed:
-                    self.state = State.PAUSED
-            # Keyboard-driven link selection: if we're on a screen with
-            # lettered links (A, B, C, ...), allow pressing the corresponding
-            # key to jump to the linked screen. We only react to a key when
-            # it transitions from up -> down (edge detection) to avoid
-            # repeated firings while the key is held.
-            if self.game is not None:
-                try:
-                    current_screen = self.game.god.tree.screens[
-                        self.game.current_screen_index
-                    ]
-                except Exception:
-                    current_screen = None
-            else:
-                current_screen = None
-            if current_screen is not None and current_screen.links:
-                # For each link map index 0->A, 1->B, etc.
-                for i, link in enumerate(current_screen.links):
-                    if i >= 26:
-                        break  # only map up to A to Z
-                    key_name = chr(ord("A") + i)
-                    try:
-                        key_enum = Key[key_name]
-                    except Exception:
-                        continue
-                    pressed_now = self.keydown(key_enum)
-                    was_pressed = key_enum in self.keys_down_last_frame
-                    # if newly pressed, follow the link
-                    if pressed_now and not was_pressed:
-                        target_id = link.target
-                        # find screen index by id
-                        for idx, screen in enumerate(self.game.god.tree.screens):
-                            if screen.id == target_id:
-                                self.game.current_screen_index = idx
-                                break
+            self._update_playing()
         elif self.state == State.PAUSED:
-            buttons = [
-                State.PLAYING,
-                State.LOAD_GAME_PLAYING,
-                State.LOAD_GAME_PLAYING,
-                State.SETTINGS_PLAYING,
-                State.MAIN_MENU,
-            ]
-            for i, button in enumerate(buttons):
-                x = 0
-                y = (
-                    self.screen_top.y
-                    - (
-                        (
-                            self.main_menu_button_top_offset
-                            + self.main_menu_button_height / 2
-                        )
-                        + (
-                            i
-                            * (
-                                self.main_menu_button_height
-                                + self.main_menu_button_padding
-                            )
-                        )
-                    )
-                    * self.scale
-                )
-                width = self.main_menu_button_width * self.scale
-                height = self.main_menu_button_height * self.scale
-                ax = x - width / 2
-                ay = y - height / 2
-                bx = x + width / 2
-                by = y + height / 2
-                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
-                if hover and mouse_pressed:
-                    self.state = button
+            self._update_paused()
+        elif self.state == State.LOAD_GAME_PLAYING:
+            self._update_load_game_playing()
+        elif self.state == State.SETTINGS_PLAYING:
+            self._update_settings_playing()
+        else:
+            raise Exception(f"Unknown state: {self.state} in update")
         self.mouse_down_primary_last_frame = self.mouse_down_primary
         # Update keys_down_last_frame for A to Z so the next frame can detect
         # edges. Keep only keys we care about (A to Z) to keep the set small.
@@ -425,395 +464,434 @@ class App(Window):
                 new_keys.add(key_enum)
         self.keys_down_last_frame = new_keys
 
-    def draw(self):
-        self.clear(Color(0, 0, 0))
-        if self.state == State.INTRO:
-            num_logos = len(self.intro_logos)
-            idx = self.intro_current_logo_index
-            if 1 <= idx <= num_logos:
-                img = self.intro_logos[idx - 1]
-                total = self.intro_logo_time
-                t = self.intro_current_logo_time
-                fade = min(0.3, total / 2.0)
-                if total <= 0 or t <= 0:
-                    alpha = 255
-                elif t < fade:
-                    alpha = int(255 * (t / fade))
-                elif t > total - fade:
-                    alpha = int(255 * ((total - t) / fade))
-                else:
-                    alpha = 255
-                alpha = max(0, min(255, alpha))
-                logo_scale = self.scale * 0.15
-                try:
-                    self.draw_image(
-                        img,
-                        V(self.screen_center.x, self.screen_center.y),
-                        origin=Origin.CENTER,
-                        image_filter=Color(255, 255, 255, alpha),
-                        scale_x=logo_scale,
-                        scale_y=logo_scale,
-                        antialiasing=True,
-                    )
-                except Exception:
-                    pass
+    def _draw_intro(self):
+        num_logos = len(self.intro_logos)
+        idx = self.intro_current_logo_index
+        if 1 <= idx <= num_logos:
+            img = self.intro_logos[idx - 1]
+            total = self.intro_logo_time
+            t = self.intro_current_logo_time
+            fade = min(0.3, total / 2.0)
+            if total <= 0 or t <= 0:
+                alpha = 255
+            elif t < fade:
+                alpha = int(255 * (t / fade))
+            elif t > total - fade:
+                alpha = int(255 * ((total - t) / fade))
             else:
-                # index 0 = pre-delay, index num_logos+1 = post-delay: draw
-                # nothing
-                pass
-        elif self.state == State.MAIN_MENU:
-            buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
-            for i, button in enumerate(buttons):
-                x = 0
-                y = (
-                    self.screen_top.y
-                    - (
-                        (
-                            self.main_menu_button_top_offset
-                            + self.main_menu_button_height / 2
-                        )
-                        + (
-                            i
-                            * (
-                                self.main_menu_button_height
-                                + self.main_menu_button_padding
-                            )
-                        )
-                    )
-                    * self.scale
-                )
-                width = self.main_menu_button_width * self.scale
-                height = self.main_menu_button_height * self.scale
-                ax = x - width / 2
-                ay = y - height / 2
-                bx = x + width / 2
-                by = y + height / 2
-                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
-                self.fill_rounded_rect(
-                    V(ax, ay),
-                    V(bx, by),
-                    (
-                        self.main_menu_button_hover_color
-                        if hover
-                        else self.main_menu_button_color
-                    ),
-                    int(self.main_menu_button_outline_thickness),
-                    self.main_menu_button_outline_color,
-                    self.main_menu_button_roundness,
-                    self.main_menu_button_roundness,
-                    self.main_menu_button_roundness,
-                    self.main_menu_button_roundness,
-                    1,
-                )
-                self.draw_text(
-                    button,
-                    V(x, y),
-                    self.main_menu_button_text_font.new_size(int(40 * self.scale)),
-                    self.main_menu_button_text_color,
-                    Origin.CENTER,
-                )
-        elif self.state == State.NEW_GAME:
-            # God list
-            self.fill_rect(
-                V(self.screen_left.x, self.screen_top.y),
-                V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
-                Color(30, 30, 30),
-                int(2 * self.scale),
-                Color(50, 50, 50),
-            )
-            # God image
-            self.fill_rect(
-                V(self.screen_right.x, self.screen_top.y),
-                V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_top.y - (150 * self.scale),
-                ),
-                Color(30, 30, 30),
-                int(2 * self.scale),
-                Color(50, 50, 50),
-            )
-            # God name and stats
-            self.fill_rect(
-                V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
-                V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_top.y - (150 * self.scale),
-                ),
-                Color(0, 0, 0),
-            )
-            # God lore
-            self.fill_rect(
-                V(
-                    self.screen_left.x + (150 * self.scale),
-                    self.screen_top.y - (150 * self.scale),
-                ),
-                V(self.screen_right.x, self.screen_bottom.y),
-                Color(0, 0, 0),
-            )
-            # Gods list
-            for i, god in enumerate(self.gods):
-                hover = is_point_in_rect(
-                    self.mouse_pos,
-                    V(
-                        self.screen_left.x + (1 * self.scale),
-                        self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
-                    ),
-                    V(
-                        self.screen_left.x + (149 * self.scale),
-                        self.screen_top.y
-                        - (1 * self.scale)
-                        - (i * 25 * self.scale)
-                        - (25 * self.scale),
-                    ),
-                )
-                if hover and self.new_game_selected_god == i:
-                    color = Color(60, 60, 60)
-                elif hover:
-                    color = Color(50, 50, 50)
-                elif self.new_game_selected_god == i:
-                    color = Color(50, 50, 50)
-                else:
-                    color = Color(40, 40, 40)
-                self.fill_rect(
-                    V(
-                        self.screen_left.x + (1 * self.scale),
-                        self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
-                    ),
-                    V(
-                        self.screen_left.x + (149 * self.scale),
-                        self.screen_top.y
-                        - (1 * self.scale)
-                        - (i * 25 * self.scale)
-                        - (25 * self.scale),
-                    ),
-                    color,
-                )
-                self.draw_text(
-                    god.name,
-                    V(
-                        self.screen_left.x + (55 * self.scale) - (3 * self.scale),
-                        self.screen_top.y - (25 * self.scale * i) + (3 * self.scale),
-                    ),
-                    self.main_font.new_size(int(30 * self.scale)),
-                    Color(200, 255, 200),
-                    Origin.TOP_RIGHT,
-                )
-            # God image
-            selected_god = self.gods[self.new_game_selected_god]
+                alpha = 255
+            alpha = max(0, min(255, alpha))
+            logo_scale = self.scale * 0.15
             try:
                 self.draw_image(
-                    Image(
-                        get_asset_path(
-                            f"images/god/{selected_god.image}/{selected_god.image}.png"
-                        )
-                    ),
-                    V(
-                        self.screen_right.x - (65 * self.scale),
-                        self.screen_top.y - (75 * self.scale),
-                    ),
+                    img,
+                    V(self.screen_center.x, self.screen_center.y),
                     origin=Origin.CENTER,
-                    scale_x=self.scale
-                    * 1.5
-                    * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
-                    scale_y=self.scale * 1.5,
+                    image_filter=Color(255, 255, 255, alpha),
+                    scale_x=logo_scale,
+                    scale_y=logo_scale,
                     antialiasing=True,
                 )
             except Exception:
-                raise Exception(f"Failed to load image for god '{
-                    selected_god.name}' at path: {
-                    get_asset_path(
-                        f'images/god/{
-                            selected_god.image}/{
-                            selected_god.image}.png')}")
-            # God name
-            self.draw_text(
-                selected_god.name,
-                V(
-                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top.y + (5 * self.scale),
-                ),
-                self.heading_font.new_size(int(40 * self.scale)),
-                Color(255, 255, 255),
-                Origin.TOP_LEFT,
-            )
-            # God lore
-            self.draw_text_word_wrap(
-                selected_god.info,
-                V(
-                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top.y - (155 * self.scale) + (3 * self.scale),
-                ),
-                self.main_font.new_size(int(30 * self.scale)),
-                Color(255, 255, 255),
-                Origin.TOP_LEFT,
-                wrap_distance=abs(
-                    self.screen_left.x
-                    - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
+                pass
+        else:
+            # index 0 = pre-delay, index num_logos+1 = post-delay: draw
+            # nothing
+            pass
+
+    def _draw_credits(self):
+        pass
+
+    def _draw_quit(self):
+        pass
+
+    def _draw_main_menu(self):
+        buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
+        for i, button in enumerate(buttons):
+            x = 0
+            y = (
+                self.screen_top.y
+                - (
+                    (
+                        self.main_menu_button_top_offset
+                        + self.main_menu_button_height / 2
+                    )
+                    + (
+                        i
+                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                    )
                 )
-                * 2,
+                * self.scale
             )
-            # Start button
+            width = self.main_menu_button_width * self.scale
+            height = self.main_menu_button_height * self.scale
+            ax = x - width / 2
+            ay = y - height / 2
+            bx = x + width / 2
+            by = y + height / 2
+            hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
+            self.fill_rounded_rect(
+                V(ax, ay),
+                V(bx, by),
+                (
+                    self.main_menu_button_hover_color
+                    if hover
+                    else self.main_menu_button_color
+                ),
+                int(self.main_menu_button_outline_thickness),
+                self.main_menu_button_outline_color,
+                self.main_menu_button_roundness,
+                self.main_menu_button_roundness,
+                self.main_menu_button_roundness,
+                self.main_menu_button_roundness,
+                1,
+            )
+            self.draw_text(
+                button,
+                V(x, y),
+                self.main_menu_button_text_font.new_size(int(40 * self.scale)),
+                self.main_menu_button_text_color,
+                Origin.CENTER,
+            )
+
+    def _draw_new_game(self):
+        # God list
+        self.fill_rect(
+            V(self.screen_left.x, self.screen_top.y),
+            V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
+            Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+        )
+        # God image
+        self.fill_rect(
+            V(self.screen_right.x, self.screen_top.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_top.y - (150 * self.scale),
+            ),
+            Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+        )
+        # God name and stats
+        self.fill_rect(
+            V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_top.y - (150 * self.scale),
+            ),
+            Color(0, 0, 0),
+        )
+        # God lore
+        self.fill_rect(
+            V(
+                self.screen_left.x + (150 * self.scale),
+                self.screen_top.y - (150 * self.scale),
+            ),
+            V(self.screen_right.x, self.screen_bottom.y),
+            Color(0, 0, 0),
+        )
+        # Gods list
+        for i, god in enumerate(self.gods):
             hover = is_point_in_rect(
                 self.mouse_pos,
-                V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_bottom.y + (40 * self.scale),
+                    self.screen_left.x + (1 * self.scale),
+                    self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
+                ),
+                V(
+                    self.screen_left.x + (149 * self.scale),
+                    self.screen_top.y
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (25 * self.scale),
                 ),
             )
+            if hover and self.new_game_selected_god == i:
+                color = Color(60, 60, 60)
+            elif hover:
+                color = Color(50, 50, 50)
+            elif self.new_game_selected_god == i:
+                color = Color(50, 50, 50)
+            else:
+                color = Color(40, 40, 40)
             self.fill_rect(
-                V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_bottom.y + (40 * self.scale),
+                    self.screen_left.x + (1 * self.scale),
+                    self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
                 ),
-                Color(40, 40, 40) if hover else Color(30, 30, 30),
-                int(2 * self.scale),
-                Color(50, 50, 50),
+                V(
+                    self.screen_left.x + (149 * self.scale),
+                    self.screen_top.y
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (25 * self.scale),
+                ),
+                color,
             )
             self.draw_text(
-                "Start Game",
+                god.name,
+                V(
+                    self.screen_left.x + (55 * self.scale) - (3 * self.scale),
+                    self.screen_top.y - (25 * self.scale * i) + (3 * self.scale),
+                ),
+                self.main_font.new_size(int(30 * self.scale)),
+                Color(200, 255, 200),
+                Origin.TOP_RIGHT,
+            )
+        # God image
+        selected_god = self.gods[self.new_game_selected_god]
+        try:
+            self.draw_image(
+                Image(
+                    get_asset_path(
+                        f"images/god/{selected_god.image}/{selected_god.image}.png"
+                    )
+                ),
                 V(
                     self.screen_right.x - (65 * self.scale),
-                    self.screen_bottom.y + (20 * self.scale),
+                    self.screen_top.y - (75 * self.scale),
                 ),
-                self.main_font.new_size(int(30 * self.scale)),
-                Color(255, 255, 255),
-                Origin.CENTER,
-            )
-        elif self.state == State.PLAYING:
-            # Context image
-            self.draw_image(
-                self.trees_scene,
-                V(0 * self.scale, 110 * self.scale),
                 origin=Origin.CENTER,
-                scale_x=self.scale,
-                scale_y=self.scale,
-                antialiasing=False,
+                scale_x=self.scale
+                * 1.5
+                * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
+                scale_y=self.scale * 1.5,
+                antialiasing=True,
             )
-            # Heading and main text come from the current screen (if available)
-            if self.game is not None:
-                try:
-                    current_screen = self.game.god.tree.screens[
-                        self.game.current_screen_index
-                    ]
-                except Exception:
-                    current_screen = None
-            else:
+        except Exception:
+            raise Exception(f"Failed to load image for god '{
+                selected_god.name}' at path: {
+                get_asset_path(
+                    f'images/god/{
+                        selected_god.image}/{
+                        selected_god.image}.png')}")
+        # God name
+        self.draw_text(
+            selected_god.name,
+            V(
+                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                self.screen_top.y + (5 * self.scale),
+            ),
+            self.heading_font.new_size(int(40 * self.scale)),
+            Color(255, 255, 255),
+            Origin.TOP_LEFT,
+        )
+        # God lore
+        self.draw_text_word_wrap(
+            selected_god.info,
+            V(
+                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                self.screen_top.y - (155 * self.scale) + (3 * self.scale),
+            ),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.TOP_LEFT,
+            wrap_distance=abs(
+                self.screen_left.x
+                - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
+            )
+            * 2,
+        )
+        # Start button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+        )
+        self.fill_rect(
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+            Color(40, 40, 40) if hover else Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+        )
+        self.draw_text(
+            "Start Game",
+            V(
+                self.screen_right.x - (65 * self.scale),
+                self.screen_bottom.y + (20 * self.scale),
+            ),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
+
+    def _draw_load_game_menu(self):
+        pass
+
+    def _draw_settings_menu(self):
+        pass
+
+    def _draw_playing(self):
+        # Context image
+        self.draw_image(
+            self.trees_scene,
+            V(0 * self.scale, 110 * self.scale),
+            origin=Origin.CENTER,
+            scale_x=self.scale,
+            scale_y=self.scale,
+            antialiasing=False,
+        )
+        # Heading and main text come from the current screen (if available)
+        if self.game is not None:
+            try:
+                current_screen = self.game.god.tree.screens[
+                    self.game.current_screen_index
+                ]
+            except Exception:
                 current_screen = None
-            heading_text = (
-                current_screen.title if current_screen is not None else "Heading text"
+        else:
+            current_screen = None
+        heading_text = (
+            current_screen.title if current_screen is not None else "Heading text"
+        )
+        links = []
+        for i, link in enumerate(current_screen.links):
+            links.append(f"{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"[i]}: {link.label}")
+        links_text = "\n".join(links)
+        main_text = (
+            f"{current_screen.text}\nPress:\n{links_text}"
+            if current_screen is not None
+            else "Main text"
+        )
+        # Heading text (left area)
+        self.draw_text(
+            heading_text,
+            V(-230 * self.scale, 40 * self.scale),
+            font=self.heading_font.new_size(int(self.heading_font.size * self.scale)),
+            color=Color(255, 255, 255),
+            origin=Origin.TOP_LEFT,
+        )
+        # Main text (left area)
+        self.draw_text_word_wrap(
+            main_text,
+            V(-230 * self.scale, 10 * self.scale),
+            self.main_font.new_size(int(self.main_font.size * self.scale)),
+            Color(255, 255, 255),
+            Origin.TOP_LEFT,
+            wrap_distance=abs(
+                self.screen_right.x - (-230 * self.scale) + (-10 * self.scale)
+            ),
+        )
+        # Pause button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_left.x, self.screen_bottom.y),
+            V(
+                self.screen_left.x + (30 * self.scale),
+                self.screen_bottom.y + (30 * self.scale),
+            ),
+        )
+        self.fill_rounded_rect(
+            V(self.screen_left.x, self.screen_bottom.y),
+            V(
+                self.screen_left.x + (30 * self.scale),
+                self.screen_bottom.y + (30 * self.scale),
+            ),
+            Color(40, 40, 40) if hover else Color(30, 30, 30),
+            top_right_roundness=30 * self.scale,
+            steps=10,
+        )
+        self.draw_text(
+            "||",
+            V(
+                self.screen_left.x + (15 * self.scale),
+                self.screen_bottom.y + (15 * self.scale),
+            ),
+            self.main_font.new_size(int(20 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
+
+    def _draw_paused(self):
+        buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
+        for i, button in enumerate(buttons):
+            x = 0
+            y = (
+                self.screen_top.y
+                - (
+                    (
+                        self.main_menu_button_top_offset
+                        + self.main_menu_button_height / 2
+                    )
+                    + (
+                        i
+                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                    )
+                )
+                * self.scale
             )
-            links = []
-            for i, link in enumerate(current_screen.links):
-                links.append(f"{"ABCDEFGHIJKLMNOPQRSTUVWXYZ"[i]}: {link.label}")
-            links_text = "\n".join(links)
-            main_text = (
-                f"{current_screen.text}\nPress:\n{links_text}"
-                if current_screen is not None
-                else "Main text"
-            )
-            # Heading text (left area)
-            self.draw_text(
-                heading_text,
-                V(-230 * self.scale, 40 * self.scale),
-                font=self.heading_font.new_size(
-                    int(self.heading_font.size * self.scale)
-                ),
-                color=Color(255, 255, 255),
-                origin=Origin.TOP_LEFT,
-            )
-            # Main text (left area)
-            self.draw_text_word_wrap(
-                main_text,
-                V(-230 * self.scale, 10 * self.scale),
-                self.main_font.new_size(int(self.main_font.size * self.scale)),
-                Color(255, 255, 255),
-                Origin.TOP_LEFT,
-                wrap_distance=abs(
-                    self.screen_right.x - (-230 * self.scale) + (-10 * self.scale)
-                ),
-            )
-            # Pause button
-            hover = is_point_in_rect(
-                self.mouse_pos,
-                V(self.screen_left.x, self.screen_bottom.y),
-                V(
-                    self.screen_left.x + (30 * self.scale),
-                    self.screen_bottom.y + (30 * self.scale),
-                ),
-            )
+            width = self.main_menu_button_width * self.scale
+            height = self.main_menu_button_height * self.scale
+            ax = x - width / 2
+            ay = y - height / 2
+            bx = x + width / 2
+            by = y + height / 2
+            hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             self.fill_rounded_rect(
-                V(self.screen_left.x, self.screen_bottom.y),
-                V(
-                    self.screen_left.x + (30 * self.scale),
-                    self.screen_bottom.y + (30 * self.scale),
+                V(ax, ay),
+                V(bx, by),
+                (
+                    self.main_menu_button_hover_color
+                    if hover
+                    else self.main_menu_button_color
                 ),
-                Color(40, 40, 40) if hover else Color(30, 30, 30),
-                top_right_roundness=30 * self.scale,
-                steps=10,
+                int(self.main_menu_button_outline_thickness),
+                self.main_menu_button_outline_color,
+                self.main_menu_button_roundness,
+                self.main_menu_button_roundness,
+                self.main_menu_button_roundness,
+                self.main_menu_button_roundness,
+                1,
             )
             self.draw_text(
-                "||",
-                V(
-                    self.screen_left.x + (15 * self.scale),
-                    self.screen_bottom.y + (15 * self.scale),
-                ),
-                self.main_font.new_size(int(20 * self.scale)),
-                Color(255, 255, 255),
+                button,
+                V(x, y),
+                self.main_menu_button_text_font.new_size(int(40 * self.scale)),
+                self.main_menu_button_text_color,
                 Origin.CENTER,
             )
+
+    def _draw_load_game_playing(self):
+        pass
+
+    def _draw_settings_playing(self):
+        pass
+
+    def draw(self):
+        self.clear(Color(0, 0, 0))
+        if self.state == State.INTRO:
+            self._draw_intro()
+        elif self.state == State.CREDITS:
+            self._draw_credits()
+        elif self.state == State.QUIT:
+            self._draw_quit()
+        elif self.state == State.MAIN_MENU:
+            self._draw_main_menu()
+        elif self.state == State.NEW_GAME:
+            self._draw_new_game()
+        elif self.state == State.LOAD_GAME_MENU:
+            self._draw_load_game_menu()
+        elif self.state == State.SETTINGS_MENU:
+            self._draw_settings_menu()
+        elif self.state == State.PLAYING:
+            self._draw_playing()
         elif self.state == State.PAUSED:
-            buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
-            for i, button in enumerate(buttons):
-                x = 0
-                y = (
-                    self.screen_top.y
-                    - (
-                        (
-                            self.main_menu_button_top_offset
-                            + self.main_menu_button_height / 2
-                        )
-                        + (
-                            i
-                            * (
-                                self.main_menu_button_height
-                                + self.main_menu_button_padding
-                            )
-                        )
-                    )
-                    * self.scale
-                )
-                width = self.main_menu_button_width * self.scale
-                height = self.main_menu_button_height * self.scale
-                ax = x - width / 2
-                ay = y - height / 2
-                bx = x + width / 2
-                by = y + height / 2
-                hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
-                self.fill_rounded_rect(
-                    V(ax, ay),
-                    V(bx, by),
-                    (
-                        self.main_menu_button_hover_color
-                        if hover
-                        else self.main_menu_button_color
-                    ),
-                    int(self.main_menu_button_outline_thickness),
-                    self.main_menu_button_outline_color,
-                    self.main_menu_button_roundness,
-                    self.main_menu_button_roundness,
-                    self.main_menu_button_roundness,
-                    self.main_menu_button_roundness,
-                    1,
-                )
-                self.draw_text(
-                    button,
-                    V(x, y),
-                    self.main_menu_button_text_font.new_size(int(40 * self.scale)),
-                    self.main_menu_button_text_color,
-                    Origin.CENTER,
-                )
+            self._draw_paused()
+        elif self.state == State.LOAD_GAME_PLAYING:
+            self._draw_load_game_playing()
+        elif self.state == State.SETTINGS_PLAYING:
+            self._draw_settings_playing()
+        else:
+            raise Exception(f"Unknown state: {self.state} in update")
 
     def on_quit(self):
         try:
