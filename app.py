@@ -226,6 +226,12 @@ class App(Window):
         self._initialize_new_game()
         self.game = None  # Will be initialized properly in State.NEW_GAME
 
+    def _update_settings(self, from_game: bool):
+        pass
+
+    def _update_load_game(self, from_game: bool):
+        pass
+
     def _update_intro(self):
         self.intro_current_logo_time += self.deltatime
         num_logos = len(self.intro_logos)
@@ -326,10 +332,10 @@ class App(Window):
                 self.state = State.PLAYING
 
     def _update_load_game_menu(self):
-        pass
+        self._update_load_game(False)
 
     def _update_settings_menu(self):
-        pass
+        self._update_settings(False)
 
     def _update_playing(self):
         hover = is_point_in_rect(
@@ -413,10 +419,10 @@ class App(Window):
                 self.state = button
 
     def _update_load_game_playing(self):
-        pass
+        self._update_load_game(True)
 
     def _update_settings_playing(self):
-        pass
+        self._update_settings(True)
 
     def update(self):
         self.mouse_pressed = (
@@ -463,6 +469,12 @@ class App(Window):
             if self.keydown(key_enum):
                 new_keys.add(key_enum)
         self.keys_down_last_frame = new_keys
+
+    def _draw_settings(self, from_game: bool):
+        pass
+
+    def _draw_load_game(self, from_game: bool):
+        pass
 
     def _draw_intro(self):
         num_logos = len(self.intro_logos)
@@ -725,10 +737,10 @@ class App(Window):
         )
 
     def _draw_load_game_menu(self):
-        pass
+        self._draw_load_game(False)
 
     def _draw_settings_menu(self):
-        pass
+        self._draw_settings(False)
 
     def _draw_playing(self):
         # Context image
@@ -861,10 +873,10 @@ class App(Window):
             )
 
     def _draw_load_game_playing(self):
-        pass
+        self._draw_load_game(True)
 
     def _draw_settings_playing(self):
-        pass
+        self._draw_settings(True)
 
     def draw(self):
         self.clear(Color(0, 0, 0))
