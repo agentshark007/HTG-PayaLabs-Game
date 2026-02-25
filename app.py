@@ -520,7 +520,7 @@ class App(Window):
                 self.screen_bottom.y + (40 * self.scale),
             ),
         )
-        self.fill_rect(
+        self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
@@ -529,6 +529,8 @@ class App(Window):
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
+            top_left_roundness=10 * self.scale,
+            steps=10,
         )
         self.draw_text(
             "Back",
@@ -559,7 +561,7 @@ class App(Window):
                 self.screen_bottom.y + (40 * self.scale),
             ),
         )
-        self.fill_rect(
+        self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
@@ -568,6 +570,8 @@ class App(Window):
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
+            top_left_roundness=10 * self.scale,
+            steps=10,
         )
         self.draw_text(
             "Back",
@@ -656,10 +660,10 @@ class App(Window):
                 ),
                 int(self.main_menu_button_outline_thickness),
                 self.main_menu_button_outline_color,
-                self.main_menu_button_roundness,
-                self.main_menu_button_roundness,
-                self.main_menu_button_roundness,
-                self.main_menu_button_roundness,
+                self.main_menu_button_roundness * self.scale,
+                self.main_menu_button_roundness * self.scale,
+                self.main_menu_button_roundness * self.scale,
+                self.main_menu_button_roundness * self.scale,
                 1,
             )
             self.draw_text(
@@ -819,7 +823,7 @@ class App(Window):
                 self.screen_bottom.y + (40 * self.scale),
             ),
         )
-        self.fill_rect(
+        self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
@@ -828,6 +832,8 @@ class App(Window):
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
+            top_left_roundness=10 * self.scale,
+            steps=10,
         )
         self.draw_text(
             "Start Game",
@@ -968,10 +974,10 @@ class App(Window):
                 ),
                 int(self.main_menu_button_outline_thickness),
                 self.main_menu_button_outline_color,
-                self.main_menu_button_roundness,
-                self.main_menu_button_roundness,
-                self.main_menu_button_roundness,
-                self.main_menu_button_roundness,
+                self.main_menu_button_roundness * self.scale,
+                self.main_menu_button_roundness * self.scale,
+                self.main_menu_button_roundness * self.scale,
+                self.main_menu_button_roundness * self.scale,
                 1,
             )
             self.draw_text(
