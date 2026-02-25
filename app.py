@@ -33,6 +33,10 @@ def split_nonempty_lines(text: str):
     return [line for line in text.splitlines() if line.strip()]
 
 
+def distance(a, b):
+    return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -370,13 +374,15 @@ class App(Window):
         self._update_settings(False)
 
     def _update_playing(self):
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(self.screen_left.x, self.screen_bottom.y),
-            V(
-                self.screen_left.x + (30 * self.scale),
-                self.screen_bottom.y + (30 * self.scale),
-            ),
+        hover = (
+            distance(
+                self.mouse_pos,
+                V(
+                    self.screen_left.x + (15 * self.scale),
+                    self.screen_bottom.y + (15 * self.scale),
+                ),
+            )
+            < 10 * self.scale
         )
         if hover:
             if self.mouse_pressed:
@@ -904,23 +910,23 @@ class App(Window):
             ),
         )
         # Pause button
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(self.screen_left.x, self.screen_bottom.y),
-            V(
-                self.screen_left.x + (30 * self.scale),
-                self.screen_bottom.y + (30 * self.scale),
-            ),
+        hover = (
+            distance(
+                self.mouse_pos,
+                V(
+                    self.screen_left.x + (15 * self.scale),
+                    self.screen_bottom.y + (15 * self.scale),
+                ),
+            )
+            < 10 * self.scale
         )
-        self.fill_rounded_rect(
-            V(self.screen_left.x, self.screen_bottom.y),
+        self.fill_circle(
             V(
-                self.screen_left.x + (30 * self.scale),
-                self.screen_bottom.y + (30 * self.scale),
+                self.screen_left.x + (15 * self.scale),
+                self.screen_bottom.y + (15 * self.scale),
             ),
-            Color(40, 40, 40) if hover else Color(30, 30, 30),
-            top_right_roundness=30 * self.scale,
-            steps=10,
+            10 * self.scale,
+            Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
         self.draw_text(
             "||",
@@ -928,7 +934,7 @@ class App(Window):
                 self.screen_left.x + (15 * self.scale),
                 self.screen_bottom.y + (15 * self.scale),
             ),
-            self.main_font.new_size(int(20 * self.scale)),
+            self.main_font.new_size(int(17 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
