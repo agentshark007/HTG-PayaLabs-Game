@@ -227,7 +227,23 @@ class App(Window):
         self.game = None  # Will be initialized properly in State.NEW_GAME
 
     def _update_settings(self, from_game: bool):
-        pass
+        # Settings
+        # TODO: implement actual settings options and functionality
+        # Back button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+        )
+        if hover:
+            if self.mouse_pressed:
+                if from_game:
+                    self.state = State.PAUSED
+                else:
+                    self.state = State.MAIN_MENU
 
     def _update_load_game(self, from_game: bool):
         pass
@@ -471,7 +487,43 @@ class App(Window):
         self.keys_down_last_frame = new_keys
 
     def _draw_settings(self, from_game: bool):
-        pass
+        # Draw background of play area only if from_game is true
+        if from_game:
+            self._draw_playing()
+            self.fill_rect(
+                self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
+            )
+        # Draw settings options
+        # TODO: implement actual settings options and functionality
+        # Draw back button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+        )
+        self.fill_rect(
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+            Color(40, 40, 40) if hover else Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+        )
+        self.draw_text(
+            "Back",
+            V(
+                self.screen_right.x - (65 * self.scale),
+                self.screen_bottom.y + (20 * self.scale),
+            ),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
 
     def _draw_load_game(self, from_game: bool):
         pass
@@ -824,6 +876,12 @@ class App(Window):
         )
 
     def _draw_paused(self):
+        # Draw background of play area
+        self._draw_playing()
+        self.fill_rect(
+            self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
+        )
+        # Draw buttons
         buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
         for i, button in enumerate(buttons):
             x = 0
