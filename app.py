@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 from enum import Enum
 
 from pgiud import *
@@ -216,8 +217,12 @@ class App(Window):
         self.new_game_selected_god = 0
 
     def initialize(self):
+        self.argv = sys.argv[1:]  # Store command-line arguments if needed
         self.scale = 1.0
-        self.state = State.INTRO
+        if "--skip-intro" in self.argv:
+            self.state = State.MAIN_MENU
+        else:
+            self.state = State.INTRO
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         # Track keys that were down in the previous frame so we can detect
@@ -277,7 +282,8 @@ class App(Window):
                 self.intro_current_logo_time = 0
                 try:
                     if self.intro_boom_sound:
-                        self.intro_boom_sound.play()
+                        if "--disable-sound" not in self.argv:
+                            self.intro_boom_sound.play()
                 except Exception:
                     pass
         elif 1 <= self.intro_current_logo_index <= num_logos:
@@ -287,7 +293,8 @@ class App(Window):
                 if 1 <= self.intro_current_logo_index <= num_logos:
                     try:
                         if self.intro_boom_sound:
-                            self.intro_boom_sound.play()
+                            if "--disable-sound" not in self.argv:
+                                self.intro_boom_sound.play()
                     except Exception:
                         pass
         elif self.intro_current_logo_index == num_logos + 1:
@@ -511,10 +518,11 @@ class App(Window):
     def _draw_settings(self, from_game: bool):
         # Draw background of play area only if from_game is true
         if from_game:
-            self._draw_playing()
-            self.fill_rect(
-                self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
-            )
+            if "--remove-transparency" not in self.argv:
+                self._draw_playing()
+                self.fill_rect(
+                    self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
+                )
         # Draw settings options
         # TODO: implement actual settings options and functionality
         # Draw back button
@@ -552,10 +560,11 @@ class App(Window):
     def _draw_load_game(self, from_game: bool):
         # Draw background of play area only if from_game is true
         if from_game:
-            self._draw_playing()
-            self.fill_rect(
-                self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
-            )
+            if "--remove-transparency" not in self.argv:
+                self._draw_playing()
+                self.fill_rect(
+                    self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
+                )
         # Draw load game options
         # TODO: implement actual load game options and functionality
         # Draw back button
@@ -941,10 +950,11 @@ class App(Window):
 
     def _draw_paused(self):
         # Draw background of play area
-        self._draw_playing()
-        self.fill_rect(
-            self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
-        )
+        if "--remove-transparency" not in self.argv:
+            self._draw_playing()
+            self.fill_rect(
+                self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
+            )
         # Draw buttons
         buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
         for i, button in enumerate(buttons):

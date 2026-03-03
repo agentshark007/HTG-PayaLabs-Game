@@ -4,7 +4,7 @@
 ## Description
 Fate of the Gods is an open-source project currently in development. It is developed by PayaLabs, led by Andru Cupala.
 
-When you run the game, it opens a window and displays a test scene image, sample heading and main text, and uses custom fonts. The game currently does not have gameplay, story, or interactive mechanics yet.
+When you run the game, it opens a window and displays a the main menu. From there, you can start a new game, load a saved game, or access the settings.
 
 ## Project Structure
 
@@ -39,6 +39,12 @@ All developers listed here are part of PayaLabs.
   - `development`: Used during active development and contains the latest code. Very unstable and likely doesn't work at all.
   - `feature`: Used after a feature is complete. Unstable, but usually works without errors.
   - `htg-progress-report`: Created as a version branch for the history through games progress report.
+
+
+## Run arguments
+- `--skip-intro`: Skips the intro sequence and goes directly to the main menu.
+- `--remove-transparency`: Removes the transparency of certain UI elements for better visibility.
+- `--disable-sound`: Disables all sound effects and music in the game.
 
 ## Contributing
 
