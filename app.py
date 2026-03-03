@@ -200,18 +200,22 @@ class App(Window):
             self.intro_pygame_logo,
         ]
 
-    def _initialize_main_menu(self):
-        self.main_menu_button_top_offset = 10
-        self.main_menu_button_width = 200
-        self.main_menu_button_height = 60
-        self.main_menu_button_padding = 10
-        self.main_menu_button_color = Color(50, 70, 50)
-        self.main_menu_button_hover_color = Color(60, 80, 100)
-        self.main_menu_button_outline_thickness = 2 * self.scale
-        self.main_menu_button_outline_color = Color(0, 50, 0)
-        self.main_menu_button_roundness = 10
-        self.main_menu_button_text_color = Color(255, 255, 255)
-        self.main_menu_button_text_font = self.main_font
+    def _initialize_button_list_settings(self):
+        self.button_list_title_top_offset = 25
+        self.button_list_title_font = self.heading_font.new_size(int(40 * self.scale))
+        self.button_list_button_top_offset = 60
+        self.button_list_button_width = 180
+        self.button_list_button_height = 50
+        self.button_list_button_padding = 10
+        self.button_list_button_color = Color(50, 70, 50)
+        self.button_list_button_hover_color = Color(60, 80, 100)
+        self.button_list_button_outline_thickness = 2 * self.scale
+        self.button_list_button_outline_color = Color(0, 50, 0)
+        self.button_list_button_roundness = 10
+        self.button_list_button_text_color = Color(255, 255, 255)
+        self.button_list_button_text_font = self.main_font.new_size(
+            int(40 * self.scale)
+        )
 
     def _initialize_new_game(self):
         self.new_game_selected_god = 0
@@ -230,7 +234,7 @@ class App(Window):
         self.keys_down_last_frame = set()
         self._load_assets()
         self._initialize_intro()
-        self._initialize_main_menu()
+        self._initialize_button_list_settings()
         self._load_data()
         self._initialize_new_game()
         self.game = None  # Will be initialized properly in State.NEW_GAME
@@ -321,18 +325,21 @@ class App(Window):
                 self.screen_top.y
                 - (
                     (
-                        self.main_menu_button_top_offset
-                        + self.main_menu_button_height / 2
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
                     + (
                         i
-                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
                     )
                 )
                 * self.scale
             )
-            width = self.main_menu_button_width * self.scale
-            height = self.main_menu_button_height * self.scale
+            width = self.button_list_button_width * self.scale
+            height = self.button_list_button_height * self.scale
             ax = x - width / 2
             ay = y - height / 2
             bx = x + width / 2
@@ -443,18 +450,21 @@ class App(Window):
                 self.screen_top.y
                 - (
                     (
-                        self.main_menu_button_top_offset
-                        + self.main_menu_button_height / 2
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
                     + (
                         i
-                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
                     )
                 )
                 * self.scale
             )
-            width = self.main_menu_button_width * self.scale
-            height = self.main_menu_button_height * self.scale
+            width = self.button_list_button_width * self.scale
+            height = self.button_list_button_height * self.scale
             ax = x - width / 2
             ay = y - height / 2
             bx = x + width / 2
@@ -648,18 +658,21 @@ class App(Window):
                 self.screen_top.y
                 - (
                     (
-                        self.main_menu_button_top_offset
-                        + self.main_menu_button_height / 2
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
                     + (
                         i
-                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
                     )
                 )
                 * self.scale
             )
-            width = self.main_menu_button_width * self.scale
-            height = self.main_menu_button_height * self.scale
+            width = self.button_list_button_width * self.scale
+            height = self.button_list_button_height * self.scale
             ax = x - width / 2
             ay = y - height / 2
             bx = x + width / 2
@@ -669,25 +682,35 @@ class App(Window):
                 V(ax, ay),
                 V(bx, by),
                 (
-                    self.main_menu_button_hover_color
+                    self.button_list_button_hover_color
                     if hover
-                    else self.main_menu_button_color
+                    else self.button_list_button_color
                 ),
-                int(self.main_menu_button_outline_thickness),
-                self.main_menu_button_outline_color,
-                self.main_menu_button_roundness * self.scale,
-                self.main_menu_button_roundness * self.scale,
-                self.main_menu_button_roundness * self.scale,
-                self.main_menu_button_roundness * self.scale,
+                int(self.button_list_button_outline_thickness),
+                self.button_list_button_outline_color,
+                self.button_list_button_roundness * self.scale,
+                self.button_list_button_roundness * self.scale,
+                self.button_list_button_roundness * self.scale,
+                self.button_list_button_roundness * self.scale,
                 1,
             )
             self.draw_text(
                 button,
                 V(x, y),
-                self.main_menu_button_text_font.new_size(int(40 * self.scale)),
-                self.main_menu_button_text_color,
+                self.button_list_button_text_font,
+                self.button_list_button_text_color,
                 Origin.CENTER,
             )
+        self.draw_text(
+            "Fate of the Gods",
+            V(
+                self.screen_center.x,
+                self.screen_top.y - (self.button_list_title_top_offset * self.scale),
+            ),
+            self.button_list_title_font,
+            self.button_list_button_text_color,
+            Origin.CENTER,
+        )
 
     def _draw_new_game(self):
         # God list
@@ -963,18 +986,21 @@ class App(Window):
                 self.screen_top.y
                 - (
                     (
-                        self.main_menu_button_top_offset
-                        + self.main_menu_button_height / 2
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
                     + (
                         i
-                        * (self.main_menu_button_height + self.main_menu_button_padding)
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
                     )
                 )
                 * self.scale
             )
-            width = self.main_menu_button_width * self.scale
-            height = self.main_menu_button_height * self.scale
+            width = self.button_list_button_width * self.scale
+            height = self.button_list_button_height * self.scale
             ax = x - width / 2
             ay = y - height / 2
             bx = x + width / 2
@@ -984,25 +1010,35 @@ class App(Window):
                 V(ax, ay),
                 V(bx, by),
                 (
-                    self.main_menu_button_hover_color
+                    self.button_list_button_hover_color
                     if hover
-                    else self.main_menu_button_color
+                    else self.button_list_button_color
                 ),
-                int(self.main_menu_button_outline_thickness),
-                self.main_menu_button_outline_color,
-                self.main_menu_button_roundness * self.scale,
-                self.main_menu_button_roundness * self.scale,
-                self.main_menu_button_roundness * self.scale,
-                self.main_menu_button_roundness * self.scale,
+                int(self.button_list_button_outline_thickness),
+                self.button_list_button_outline_color,
+                self.button_list_button_roundness * self.scale,
+                self.button_list_button_roundness * self.scale,
+                self.button_list_button_roundness * self.scale,
+                self.button_list_button_roundness * self.scale,
                 1,
             )
             self.draw_text(
                 button,
                 V(x, y),
-                self.main_menu_button_text_font.new_size(int(40 * self.scale)),
-                self.main_menu_button_text_color,
+                self.button_list_button_text_font,
+                self.button_list_button_text_color,
                 Origin.CENTER,
             )
+        self.draw_text(
+            "Paused",
+            V(
+                self.screen_center.x,
+                self.screen_top.y - (self.button_list_title_top_offset * self.scale),
+            ),
+            self.button_list_title_font,
+            self.button_list_button_text_color,
+            Origin.CENTER,
+        )
 
     def _draw_load_game_playing(self):
         self._draw_load_game(True)
