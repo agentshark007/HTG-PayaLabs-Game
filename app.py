@@ -90,6 +90,7 @@ class State(Enum):
     """
     Enum representing the different states of the application/game.
     """
+
     INTRO = 1
     CREDITS = 2
     QUIT = 3
@@ -107,6 +108,7 @@ class Link:
     """
     Represents a link/choice in a screen, pointing to another screen.
     """
+
     def __init__(self, target, label):
         self.target = target
         self.label = label
@@ -116,6 +118,7 @@ class Screen:
     """
     Represents a screen in the game tree, with title, text, and links.
     """
+
     def __init__(self, encoded: str, screen_id: str = None):
         self.id = screen_id
         lines = split_nonempty_lines(encoded)
@@ -144,6 +147,7 @@ class Tree:
     Represents a tree of screens for a god/story.
     Parses encoded text to build the screen sequence.
     """
+
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         screens = []
@@ -178,6 +182,7 @@ class God:
     """
     Represents a god in the game, with a tree of screens (story) and metadata.
     """
+
     def __init__(self, encoded: str):
         lines = split_nonempty_lines(encoded)
         for line in lines:
@@ -197,6 +202,7 @@ class Game:
     """
     Represents a game instance, with a god and the current screen index.
     """
+
     def __init__(self, god: God):
         self.god = god
         self.current_screen_index = god.start_screen_index
@@ -207,6 +213,7 @@ class App(Window):
     Main application class, inheriting from Window.
     Manages states, updates, and draws for the game.
     """
+
     def __init__(self):
         super().__init__(
             width=480,
@@ -379,7 +386,7 @@ class App(Window):
     def _update_credits(self):
         """
         Update logic for the credits screen/menu.
-        Currently does nothing, as the credits are static.
+        Currently, this does nothing, as the credits are static.
         """
         pass
 
@@ -746,7 +753,7 @@ class App(Window):
     def _draw_credits(self):
         """
         Draw the credits screen/menu.
-        Currently does nothing, as the credits are static.
+        Currently, this does nothing, as the credits are static.
         """
         pass
 
