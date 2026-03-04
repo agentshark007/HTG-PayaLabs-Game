@@ -1,4 +1,5 @@
 import logging
+import logging.handlers
 import math
 import os
 import sys
@@ -7,6 +8,31 @@ from enum import Enum
 from colorlog import ColoredFormatter
 
 from pgiud import *
+
+# Logging configuration
+LOG_FORMAT = "%(asctime)s [%(levelname)s]: %(message)s"
+LOG_FILE = "game.log"
+log_level = logging.DEBUG
+console_handler = logging.StreamHandler(sys.stdout)
+console_formatter = ColoredFormatter(
+    "%(log_color)s%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    log_colors={
+        "DEBUG": "cyan",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "red",
+        "CRITICAL": "bold_red",
+    },
+)
+console_handler.setFormatter(console_formatter)
+file_handler = logging.handlers.RotatingFileHandler(
+    LOG_FILE, maxBytes=2 * 1024 * 1024, backupCount=3
+)
+file_handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt="%Y-%m-%d %H:%M:%S"))
+logging.basicConfig(
+    level=log_level, handlers=[console_handler, file_handler], force=True
+)
 
 
 def is_between(x, a, b):
@@ -227,52 +253,56 @@ class App(Window):
         )
 
     def _find_arg_with_prefix(self, prefix):
-        """
-        Returns the first argument in self.argv that starts with the given prefix, or None if not found.
-        """
-        return next((s for s in self.argv if s.startswith(prefix)), None)
+        result = next((s for s in self.argv if s.startswith(prefix)), None)
+        return result
 
     def _parse_argv(self):
-        logging.info("Parsing command-line arguments.")
         self.argv = sys.argv[1:]
 
     def _parse_log_level(self):
         level_arg = self._find_arg_with_prefix("--level=")
         if level_arg:
-            logging.info(f"Log level argument found: {level_arg}")
-            return level_arg.split("=", 1)[1]
-        logging.info("No log level argument found; using default.")
+            result = level_arg.split("=", 1)[1]
+            return result
         return None
 
     def _setup_state(self):
         if "--skip-intro" in self.argv:
-            logging.info("Skipping intro; setting state to MAIN_MENU.")
             self.state = State.MAIN_MENU
         else:
-            logging.info("Showing intro; setting state to INTRO.")
             self.state = State.INTRO
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
 
     def initialize(self):
-        logging.info("App initialization started.")
         self._parse_argv()
         log_level = self._parse_log_level()
         self._initialize_logging(log_level)
         self.scale = 1.0
         self._setup_state()
-        self._load_assets()
-        self._initialize_intro()
-        self._initialize_button_list_settings()
-        self._load_data()
-        self._initialize_new_game()
-        logging.info("App initialization completed.")
+        try:
+            self._load_assets()
+        except Exception:
+            pass
+        try:
+            self._initialize_intro()
+        except Exception:
+            pass
+        try:
+            self._initialize_button_list_settings()
+        except Exception:
+            pass
+        try:
+            self._load_data()
+        except Exception:
+            pass
+        try:
+            self._initialize_new_game()
+        except Exception:
+            pass
 
     def _initialize_logging(self, log_level=None):
-        logging.info(f"Initializing logging. Level: {
-            log_level if log_level else 'WARN'}")
-
         def decode_level(level_str):
             level_str = level_str.upper()
             if level_str == "DEBUG":
@@ -288,31 +318,16 @@ class App(Window):
             else:
                 raise ValueError(f"Invalid log level: {level_str}")
 
-        handler = logging.StreamHandler()
-        formatter = ColoredFormatter(
-            "%(log_color)s%(levelname)s: %(message)s",
-            log_colors={
-                "DEBUG": "cyan",
-                "INFO": "green",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "bold_red",
-            },
-        )
-        handler.setFormatter(formatter)
         logger = logging.getLogger()
         if log_level:
             try:
                 logger.setLevel(decode_level(log_level))
             except Exception:
-                logging.error(f"Invalid log level '{log_level}', defaulting to WARN.")
                 logger.setLevel(logging.WARN)
         else:
             logger.setLevel(logging.WARN)
-        logger.handlers = [handler]
 
     def _load_assets(self):
-        logging.info("Loading game assets.")
         try:
             self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
@@ -324,12 +339,10 @@ class App(Window):
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
-            logging.info("Assets loaded successfully.")
         except Exception as e:
-            logging.error(f"Error loading assets: {e}")
+            pass
 
     def _load_data(self):
-        logging.info("Loading game data (gods and stories).")
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         for name in os.listdir(gods_folder):
@@ -338,14 +351,11 @@ class App(Window):
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         self.gods_text.append(f.read())
-                    logging.info(f"Loaded god data: {name}")
                 except Exception as e:
-                    logging.error(f"Failed to load god data from {name}: {e}")
+                    pass
         self.gods = [God(i) for i in self.gods_text]
-        logging.info(f"Total gods loaded: {len(self.gods)}")
 
     def _initialize_intro(self):
-        logging.info("Initializing intro sequence.")
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
@@ -358,7 +368,6 @@ class App(Window):
         ]
 
     def _initialize_button_list_settings(self):
-        logging.info("Initializing button list settings.")
         self.button_list_title_top_offset = 25
         self.button_list_title_font = self.heading_font.new_size(int(40 * self.scale))
         self.button_list_button_top_offset = 60
@@ -376,7 +385,6 @@ class App(Window):
         )
 
     def _initialize_new_game(self):
-        logging.info("Initializing new game parameters.")
         self.new_game_selected_god = None
 
     def _update_settings(self, from_game: bool):
@@ -655,10 +663,6 @@ class App(Window):
         self._update_settings(True)
 
     def update(self):
-        """
-        Main update method, called every frame.
-        Updates the application state, handles user input, and triggers state-specific updates.
-        """
         prev_state = getattr(self, "state", None)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
@@ -667,34 +671,35 @@ class App(Window):
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
         self.seconds_since_start += self.deltatime
-        if self.state == State.INTRO:
-            self._update_intro()
-        elif self.state == State.CREDITS:
-            self._update_credits()
-        elif self.state == State.QUIT:
-            self._update_quit()
-        elif self.state == State.MAIN_MENU:
-            self._update_main_menu()
-        elif self.state == State.NEW_GAME:
-            self._update_new_game()
-        elif self.state == State.LOAD_GAME_MENU:
-            self._update_load_game_menu()
-        elif self.state == State.SETTINGS_MENU:
-            self._update_settings_menu()
-        elif self.state == State.PLAYING:
-            self._update_playing()
-        elif self.state == State.PAUSED:
-            self._update_paused()
-        elif self.state == State.LOAD_GAME_PLAYING:
-            self._update_load_game_playing()
-        elif self.state == State.SETTINGS_PLAYING:
-            self._update_settings_playing()
-        else:
-            logging.error(f"Unknown state: {self.state} in update")
-            raise Exception(f"Unknown state: {self.state} in update")
+        try:
+            if self.state == State.INTRO:
+                self._update_intro()
+            elif self.state == State.CREDITS:
+                self._update_credits()
+            elif self.state == State.QUIT:
+                self._update_quit()
+            elif self.state == State.MAIN_MENU:
+                self._update_main_menu()
+            elif self.state == State.NEW_GAME:
+                self._update_new_game()
+            elif self.state == State.LOAD_GAME_MENU:
+                self._update_load_game_menu()
+            elif self.state == State.SETTINGS_MENU:
+                self._update_settings_menu()
+            elif self.state == State.PLAYING:
+                self._update_playing()
+            elif self.state == State.PAUSED:
+                self._update_paused()
+            elif self.state == State.LOAD_GAME_PLAYING:
+                self._update_load_game_playing()
+            elif self.state == State.SETTINGS_PLAYING:
+                self._update_settings_playing()
+            else:
+                raise Exception(f"Unknown state: {self.state} in update")
+        except Exception:
+            pass
         if prev_state != self.state:
-            logging.info(f"State changed: {prev_state} -> {self.state}")
-        self.mouse_down_primary_last_frame = self.mouse_down_primary
+            self.mouse_down_primary_last_frame = self.mouse_down_primary
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
@@ -1287,35 +1292,34 @@ class App(Window):
         self._draw_settings(True)
 
     def draw(self):
-        """
-        Main draw method, called every frame.
-        Clears the screen and calls the appropriate draw method based on the current state.
-        """
         self.clear(Color(0, 0, 0))
-        if self.state == State.INTRO:
-            self._draw_intro()
-        elif self.state == State.CREDITS:
-            self._draw_credits()
-        elif self.state == State.QUIT:
-            self._draw_quit()
-        elif self.state == State.MAIN_MENU:
-            self._draw_main_menu()
-        elif self.state == State.NEW_GAME:
-            self._draw_new_game()
-        elif self.state == State.LOAD_GAME_MENU:
-            self._draw_load_game_menu()
-        elif self.state == State.SETTINGS_MENU:
-            self._draw_settings_menu()
-        elif self.state == State.PLAYING:
-            self._draw_playing()
-        elif self.state == State.PAUSED:
-            self._draw_paused()
-        elif self.state == State.LOAD_GAME_PLAYING:
-            self._draw_load_game_playing()
-        elif self.state == State.SETTINGS_PLAYING:
-            self._draw_settings_playing()
-        else:
-            raise Exception(f"Unknown state: {self.state} in update")
+        try:
+            if self.state == State.INTRO:
+                self._draw_intro()
+            elif self.state == State.CREDITS:
+                self._draw_credits()
+            elif self.state == State.QUIT:
+                self._draw_quit()
+            elif self.state == State.MAIN_MENU:
+                self._draw_main_menu()
+            elif self.state == State.NEW_GAME:
+                self._draw_new_game()
+            elif self.state == State.LOAD_GAME_MENU:
+                self._draw_load_game_menu()
+            elif self.state == State.SETTINGS_MENU:
+                self._draw_settings_menu()
+            elif self.state == State.PLAYING:
+                self._draw_playing()
+            elif self.state == State.PAUSED:
+                self._draw_paused()
+            elif self.state == State.LOAD_GAME_PLAYING:
+                self._draw_load_game_playing()
+            elif self.state == State.SETTINGS_PLAYING:
+                self._draw_settings_playing()
+            else:
+                raise Exception(f"Unknown state: {self.state} in draw")
+        except Exception:
+            pass
 
     def on_quit(self):
         """
