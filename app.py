@@ -1,11 +1,10 @@
+import logging
 import math
 import os
 import sys
 from enum import Enum
-import logging
+
 from colorlog import ColoredFormatter
-
-
 
 from pgiud import *
 
@@ -271,7 +270,9 @@ class App(Window):
         logging.info("App initialization completed.")
 
     def _initialize_logging(self, log_level=None):
-        logging.info(f"Initializing logging. Level: {log_level if log_level else 'WARN'}")
+        logging.info(f"Initializing logging. Level: {
+            log_level if log_level else 'WARN'}")
+
         def decode_level(level_str):
             level_str = level_str.upper()
             if level_str == "DEBUG":
@@ -286,16 +287,17 @@ class App(Window):
                 return logging.CRITICAL
             else:
                 raise ValueError(f"Invalid log level: {level_str}")
+
         handler = logging.StreamHandler()
         formatter = ColoredFormatter(
             "%(log_color)s%(levelname)s: %(message)s",
             log_colors={
-                'DEBUG':    'cyan',
-                'INFO':     'green',
-                'WARNING':  'yellow',
-                'ERROR':    'red',
-                'CRITICAL': 'bold_red',
-            }
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
         )
         handler.setFormatter(formatter)
         logger = logging.getLogger()
@@ -315,7 +317,9 @@ class App(Window):
             self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
-            self.intro_payalabs_logo = Image(get_asset_path("images/intro/payalabs.png"))
+            self.intro_payalabs_logo = Image(
+                get_asset_path("images/intro/payalabs.png")
+            )
             self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
             if "--disable-sound" not in self.argv:
@@ -373,8 +377,7 @@ class App(Window):
 
     def _initialize_new_game(self):
         logging.info("Initializing new game parameters.")
-        self.new_game_selected_god = 0
-
+        self.new_game_selected_god = None
 
     def _update_settings(self, from_game: bool):
         """
@@ -501,6 +504,8 @@ class App(Window):
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
                 self.state = button
+                if button == State.NEW_GAME:
+                    self.new_game_selected_god = None
 
     def _update_new_game(self):
         """
@@ -531,10 +536,9 @@ class App(Window):
                 self.screen_bottom.y + (40 * self.scale),
             ),
         )
-        if hover:
-            if self.mouse_pressed:
-                self.game = Game(self.gods[self.new_game_selected_god])
-                self.state = State.PLAYING
+        if hover and self.mouse_pressed and self.new_game_selected_god is not None:
+            self.game = Game(self.gods[self.new_game_selected_god])
+            self.state = State.PLAYING
 
     def _update_load_game_menu(self):
         """
@@ -651,7 +655,7 @@ class App(Window):
         Main update method, called every frame.
         Updates the application state, handles user input, and triggers state-specific updates.
         """
-        prev_state = getattr(self, 'state', None)
+        prev_state = getattr(self, "state", None)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
@@ -936,19 +940,34 @@ class App(Window):
             V(self.screen_right.x, self.screen_bottom.y),
             Color(0, 0, 0),
         )
+        # Draw god selection list
+        self.draw_text(
+            "Select Your God",
+            V(
+                self.screen_left.x + (75 * self.scale),
+                self.screen_top.y - (15 * self.scale),
+            ),
+            self.main_font.new_size(int(23 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
         for i, god in enumerate(self.gods):
             hover = is_point_in_rect(
                 self.mouse_pos,
                 V(
                     self.screen_left.x + (1 * self.scale),
-                    self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
+                    self.screen_top.y
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (30 * self.scale),
                 ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
-                    - (25 * self.scale),
+                    - (25 * self.scale)
+                    - (30 * self.scale),
                 ),
             )
             if hover and self.new_game_selected_god == i:
@@ -962,78 +981,85 @@ class App(Window):
             self.fill_rect(
                 V(
                     self.screen_left.x + (1 * self.scale),
-                    self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
+                    self.screen_top.y
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (30 * self.scale),
                 ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
-                    - (25 * self.scale),
+                    - (25 * self.scale)
+                    - (30 * self.scale),
                 ),
                 color,
             )
             self.draw_text(
                 god.name,
                 V(
-                    self.screen_left.x + (55 * self.scale) - (3 * self.scale),
-                    self.screen_top.y - (25 * self.scale * i) + (3 * self.scale),
+                    self.screen_left.x + (75 * self.scale),
+                    self.screen_top.y - (25 * self.scale * i) - (30 * self.scale),
+                ),
+                self.main_font.new_size(int(23 * self.scale)),
+                Color(200, 220, 200),
+                Origin.TOP,
+            )
+        # Draw god details if selected
+        if self.new_game_selected_god is not None:
+            selected_god = self.gods[self.new_game_selected_god]
+            try:
+                self.draw_image(
+                    Image(
+                        get_asset_path(
+                            f"images/god/{selected_god.image}/{selected_god.image}.png"
+                        )
+                    ),
+                    V(
+                        self.screen_right.x - (65 * self.scale),
+                        self.screen_top.y - (75 * self.scale),
+                    ),
+                    origin=Origin.CENTER,
+                    scale_x=self.scale
+                    * 1.5
+                    * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
+                    scale_y=self.scale * 1.5,
+                    antialiasing=True,
+                )
+            except Exception:
+                raise Exception(f"Failed to load image for god '{
+                    selected_god.name}' at path: {
+                    get_asset_path(
+                        f'images/god/{
+                            selected_god.image}/{
+                            selected_god.image}.png')}")
+            self.draw_text(
+                selected_god.name,
+                V(
+                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                    self.screen_top.y + (5 * self.scale),
+                ),
+                self.heading_font.new_size(int(40 * self.scale)),
+                Color(255, 255, 255),
+                Origin.TOP_LEFT,
+            )
+            self.draw_text_word_wrap(
+                selected_god.info,
+                V(
+                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                    self.screen_top.y - (155 * self.scale) + (3 * self.scale),
                 ),
                 self.main_font.new_size(int(30 * self.scale)),
-                Color(200, 255, 200),
-                Origin.TOP_RIGHT,
+                Color(255, 255, 255),
+                Origin.TOP_LEFT,
+                wrap_distance=abs(
+                    self.screen_left.x
+                    - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
+                )
+                * 2,
             )
-        selected_god = self.gods[self.new_game_selected_god]
-        try:
-            self.draw_image(
-                Image(
-                    get_asset_path(
-                        f"images/god/{selected_god.image}/{selected_god.image}.png"
-                    )
-                ),
-                V(
-                    self.screen_right.x - (65 * self.scale),
-                    self.screen_top.y - (75 * self.scale),
-                ),
-                origin=Origin.CENTER,
-                scale_x=self.scale
-                * 1.5
-                * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
-                scale_y=self.scale * 1.5,
-                antialiasing=True,
-            )
-        except Exception:
-            raise Exception(f"Failed to load image for god '{
-                selected_god.name}' at path: {
-                get_asset_path(
-                    f'images/god/{
-                        selected_god.image}/{
-                        selected_god.image}.png')}")
-        self.draw_text(
-            selected_god.name,
-            V(
-                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                self.screen_top.y + (5 * self.scale),
-            ),
-            self.heading_font.new_size(int(40 * self.scale)),
-            Color(255, 255, 255),
-            Origin.TOP_LEFT,
-        )
-        self.draw_text_word_wrap(
-            selected_god.info,
-            V(
-                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                self.screen_top.y - (155 * self.scale) + (3 * self.scale),
-            ),
-            self.main_font.new_size(int(30 * self.scale)),
-            Color(255, 255, 255),
-            Origin.TOP_LEFT,
-            wrap_distance=abs(
-                self.screen_left.x
-                - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
-            )
-            * 2,
-        )
+        # Draw Start Game button
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -1042,13 +1068,19 @@ class App(Window):
                 self.screen_bottom.y + (40 * self.scale),
             ),
         )
+        button_enabled = self.new_game_selected_god is not None
+        button_color = (
+            Color(40, 40, 40) if hover and button_enabled else Color(30, 30, 30)
+        )
+        if not button_enabled:
+            button_color = Color(20, 20, 20)  # Even darker if disabled
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
             ),
-            Color(40, 40, 40) if hover else Color(30, 30, 30),
+            button_color,
             int(2 * self.scale),
             Color(50, 50, 50),
             top_left_roundness=10 * self.scale,
@@ -1061,7 +1093,7 @@ class App(Window):
                 self.screen_bottom.y + (20 * self.scale),
             ),
             self.main_font.new_size(int(30 * self.scale)),
-            Color(255, 255, 255),
+            Color(255, 255, 255) if button_enabled else Color(120, 120, 120),
             Origin.CENTER,
         )
 
