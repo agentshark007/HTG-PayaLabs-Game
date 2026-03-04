@@ -2,6 +2,10 @@ import math
 import os
 import sys
 from enum import Enum
+import logging
+from colorlog import ColoredFormatter
+
+
 
 from pgiud import *
 
@@ -223,36 +227,121 @@ class App(Window):
             origin=Origin.CENTER,
         )
 
+    def _find_arg_with_prefix(self, prefix):
+        """
+        Returns the first argument in self.argv that starts with the given prefix, or None if not found.
+        """
+        return next((s for s in self.argv if s.startswith(prefix)), None)
+
+    def _parse_argv(self):
+        logging.info("Parsing command-line arguments.")
+        self.argv = sys.argv[1:]
+
+    def _parse_log_level(self):
+        level_arg = self._find_arg_with_prefix("--level=")
+        if level_arg:
+            logging.info(f"Log level argument found: {level_arg}")
+            return level_arg.split("=", 1)[1]
+        logging.info("No log level argument found; using default.")
+        return None
+
+    def _setup_state(self):
+        if "--skip-intro" in self.argv:
+            logging.info("Skipping intro; setting state to MAIN_MENU.")
+            self.state = State.MAIN_MENU
+        else:
+            logging.info("Showing intro; setting state to INTRO.")
+            self.state = State.INTRO
+        self.seconds_since_start = 0.0
+        self.mouse_down_primary_last_frame = False
+        self.keys_down_last_frame = set()
+
+    def initialize(self):
+        logging.info("App initialization started.")
+        self._parse_argv()
+        log_level = self._parse_log_level()
+        self._initialize_logging(log_level)
+        self.scale = 1.0
+        self._setup_state()
+        self._load_assets()
+        self._initialize_intro()
+        self._initialize_button_list_settings()
+        self._load_data()
+        self._initialize_new_game()
+        logging.info("App initialization completed.")
+
+    def _initialize_logging(self, log_level=None):
+        logging.info(f"Initializing logging. Level: {log_level if log_level else 'WARN'}")
+        def decode_level(level_str):
+            level_str = level_str.upper()
+            if level_str == "DEBUG":
+                return logging.DEBUG
+            elif level_str == "INFO":
+                return logging.INFO
+            elif level_str == "WARN":
+                return logging.WARNING
+            elif level_str == "ERROR":
+                return logging.ERROR
+            elif level_str == "CRITICAL":
+                return logging.CRITICAL
+            else:
+                raise ValueError(f"Invalid log level: {level_str}")
+        handler = logging.StreamHandler()
+        formatter = ColoredFormatter(
+            "%(log_color)s%(levelname)s: %(message)s",
+            log_colors={
+                'DEBUG':    'cyan',
+                'INFO':     'green',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'bold_red',
+            }
+        )
+        handler.setFormatter(formatter)
+        logger = logging.getLogger()
+        if log_level:
+            try:
+                logger.setLevel(decode_level(log_level))
+            except Exception:
+                logging.error(f"Invalid log level '{log_level}', defaulting to WARN.")
+                logger.setLevel(logging.WARN)
+        else:
+            logger.setLevel(logging.WARN)
+        logger.handlers = [handler]
+
     def _load_assets(self):
-        """
-        Load game assets like images, fonts, and sounds.
-        """
-        self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
-        self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
-        self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
-        self.intro_payalabs_logo = Image(get_asset_path("images/intro/payalabs.png"))
-        self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
-        self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
-        if "--disable-sound" not in self.argv:
-            self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
+        logging.info("Loading game assets.")
+        try:
+            self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
+            self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
+            self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
+            self.intro_payalabs_logo = Image(get_asset_path("images/intro/payalabs.png"))
+            self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
+            self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
+            if "--disable-sound" not in self.argv:
+                self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
+            logging.info("Assets loaded successfully.")
+        except Exception as e:
+            logging.error(f"Error loading assets: {e}")
 
     def _load_data(self):
-        """
-        Load game data, including available gods and their stories.
-        """
+        logging.info("Loading game data (gods and stories).")
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
-                with open(path, "r", encoding="utf-8") as f:
-                    self.gods_text.append(f.read())
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        self.gods_text.append(f.read())
+                    logging.info(f"Loaded god data: {name}")
+                except Exception as e:
+                    logging.error(f"Failed to load god data from {name}: {e}")
         self.gods = [God(i) for i in self.gods_text]
+        logging.info(f"Total gods loaded: {len(self.gods)}")
 
     def _initialize_intro(self):
-        """
-        Initialize parameters for the intro sequence.
-        """
+        logging.info("Initializing intro sequence.")
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
@@ -265,9 +354,7 @@ class App(Window):
         ]
 
     def _initialize_button_list_settings(self):
-        """
-        Initialize settings for button lists in menus.
-        """
+        logging.info("Initializing button list settings.")
         self.button_list_title_top_offset = 25
         self.button_list_title_font = self.heading_font.new_size(int(40 * self.scale))
         self.button_list_button_top_offset = 60
@@ -285,31 +372,9 @@ class App(Window):
         )
 
     def _initialize_new_game(self):
-        """
-        Initialize parameters for starting a new game.
-        """
+        logging.info("Initializing new game parameters.")
         self.new_game_selected_god = 0
 
-    def initialize(self):
-        """
-        Initialize the application state, loading assets and data,
-        and determining the starting state (e.g., skipping intro).
-        """
-        self.argv = sys.argv[1:]
-        self.scale = 1.0
-        if "--skip-intro" in self.argv:
-            self.state = State.MAIN_MENU
-        else:
-            self.state = State.INTRO
-        self.seconds_since_start = 0.0
-        self.mouse_down_primary_last_frame = False
-        self.keys_down_last_frame = set()
-        self._load_assets()
-        self._initialize_intro()
-        self._initialize_button_list_settings()
-        self._load_data()
-        self._initialize_new_game()
-        self.game = None
 
     def _update_settings(self, from_game: bool):
         """
@@ -586,6 +651,7 @@ class App(Window):
         Main update method, called every frame.
         Updates the application state, handles user input, and triggers state-specific updates.
         """
+        prev_state = getattr(self, 'state', None)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
@@ -616,7 +682,10 @@ class App(Window):
         elif self.state == State.SETTINGS_PLAYING:
             self._update_settings_playing()
         else:
+            logging.error(f"Unknown state: {self.state} in update")
             raise Exception(f"Unknown state: {self.state} in update")
+        if prev_state != self.state:
+            logging.info(f"State changed: {prev_state} -> {self.state}")
         self.mouse_down_primary_last_frame = self.mouse_down_primary
         new_keys = set()
         for i in range(26):

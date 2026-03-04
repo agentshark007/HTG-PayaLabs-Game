@@ -45,6 +45,13 @@ All developers listed here are part of PayaLabs.
 - `--skip-intro`: Skips the intro sequence and goes directly to the main menu.
 - `--remove-transparency`: Removes the transparency of certain UI elements for better visibility.
 - `--disable-sound`: Disables all sound effects and music in the game.
+- `--level=X`: Sets the logging level to X, where X can be one of the following:
+  - `DEBUG`: Logs detailed information for debugging purposes.
+  - `INFO`: Logs general information about the game's execution.
+  - `WARN`: Logs warnings about potential issues in the game.
+  - `ERROR`: Logs errors that occur during the game's execution.
+  - `CRITICAL`: Logs critical errors that may cause the game to crash.
+  By default, the logging level is set to `WARN`.
 
 ## Contributing
 
