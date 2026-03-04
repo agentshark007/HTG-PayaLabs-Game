@@ -9,7 +9,6 @@ from colorlog import ColoredFormatter
 
 from pgiud import *
 
-# Logging configuration
 LOG_FORMAT = "%(asctime)s [%(levelname)s]: %(message)s"
 LOG_FILE = "game.log"
 log_level = logging.DEBUG
@@ -36,16 +35,7 @@ logging.basicConfig(
 
 
 def is_between(x, a, b):
-    """
-    Check if x is between a and b (exclusive).
-    Handles cases where a == b, a > b, and a < b.
-    Args:
-        x: Value to check.
-        a: First bound.
-        b: Second bound.
-    Returns:
-        bool: True if x is between a and b, False otherwise.
-    """
+    """Return True if x is between a and b (inclusive)."""
     if a == b:
         if x == a:
             return True
@@ -66,38 +56,17 @@ def is_between(x, a, b):
 
 
 def is_point_in_rect(point, a, b):
-    """
-    Check if a point is inside the rectangle defined by points a and b.
-    Args:
-        point: Point to check (with x, y attributes).
-        a: One corner of the rectangle.
-        b: Opposite corner of the rectangle.
-    Returns:
-        bool: True if point is inside the rectangle, False otherwise.
-    """
+    """Return True if point is inside the rectangle defined by a and b."""
     return is_between(point.x, a.x, b.x) and is_between(point.y, a.y, b.y)
 
 
 def split_nonempty_lines(text: str):
-    """
-    Split text into non-empty lines, stripping whitespace.
-    Args:
-        text (str): Input text.
-    Returns:
-        list: List of non-empty lines.
-    """
+    """Split text into non-empty lines."""
     return [line for line in text.splitlines() if line.strip()]
 
 
 def distance(a, b):
-    """
-    Calculate Euclidean distance between two points a and b.
-    Args:
-        a: First point (with x, y attributes).
-        b: Second point (with x, y attributes).
-    Returns:
-        float: Distance between a and b.
-    """
+    """Calculate Euclidean distance between points a and b."""
     return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
 
@@ -105,21 +74,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_asset_path(path):
-    """
-    Get the absolute path to an asset in the assets directory.
-    Args:
-        path (str): Relative path inside assets.
-    Returns:
-        str: Absolute path to the asset.
-    """
+    """Return absolute path for asset given a relative path."""
     return str(os.path.join(BASE_DIR, "assets", path))
 
 
 class State(Enum):
-    """
-    Enum representing the different states of the application/game.
-    """
-
+    """Game state enumeration."""
     INTRO = 1
     CREDITS = 2
     QUIT = 3
@@ -134,20 +94,14 @@ class State(Enum):
 
 
 class Link:
-    """
-    Represents a link/choice in a screen, pointing to another screen.
-    """
-
+    """Represents a link/choice in a game screen tree."""
     def __init__(self, target, label):
         self.target = target
         self.label = label
 
 
 class Screen:
-    """
-    Represents a screen in the game tree, with title, text, and links.
-    """
-
+    """Represents a screen in the game tree."""
     def __init__(self, encoded: str, screen_id: str = None):
         self.id = screen_id
         lines = split_nonempty_lines(encoded)
@@ -172,11 +126,7 @@ class Screen:
 
 
 class Tree:
-    """
-    Represents a tree of screens for a god/story.
-    Parses encoded text to build the screen sequence.
-    """
-
+    """Represents the decision tree for a god's story."""
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         screens = []
@@ -208,10 +158,7 @@ class Tree:
 
 
 class God:
-    """
-    Represents a god in the game, with a tree of screens (story) and metadata.
-    """
-
+    """Represents a god character loaded from data."""
     def __init__(self, encoded: str):
         lines = split_nonempty_lines(encoded)
         for line in lines:
@@ -228,10 +175,7 @@ class God:
 
 
 class Game:
-    """
-    Represents a game instance, with a god and the current screen index.
-    """
-
+    """Represents a game session for a selected god."""
     def __init__(self, god: God):
         self.god = god
         self.current_screen_index = god.start_screen_index
@@ -239,11 +183,12 @@ class Game:
 
 class App(Window):
     """
-    Main application class, inheriting from Window.
-    Manages states, updates, and draws for the game.
+    Main application class for Fate of the Gods.
+    Handles initialization, state management, asset loading, main loop, and rendering.
+    Inherits from Window (pgiud).
     """
-
     def __init__(self):
+        """Initialize the App window and game state."""
         super().__init__(
             width=480,
             height=360,
@@ -252,14 +197,22 @@ class App(Window):
             origin=Origin.CENTER,
         )
 
+    def set_state(self, new_state: State):
+        """Set the current game state."""
+        self.state = new_state
+        logging.info(f"State changed from {self.state} to {new_state}.")
+
     def _find_arg_with_prefix(self, prefix):
+        """Find command-line argument with given prefix."""
         result = next((s for s in self.argv if s.startswith(prefix)), None)
         return result
 
     def _parse_argv(self):
+        """Parse command-line arguments."""
         self.argv = sys.argv[1:]
 
     def _parse_log_level(self):
+        """Parse log level from command-line arguments."""
         level_arg = self._find_arg_with_prefix("--level=")
         if level_arg:
             result = level_arg.split("=", 1)[1]
@@ -267,42 +220,36 @@ class App(Window):
         return None
 
     def _setup_state(self):
+        """Set up initial game state based on arguments."""
         if "--skip-intro" in self.argv:
-            self.state = State.MAIN_MENU
+            self.set_state(State.MAIN_MENU)
         else:
-            self.state = State.INTRO
+            self.set_state(State.INTRO)
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
 
     def initialize(self):
+        """Initialize game assets, state, and data."""
         self._parse_argv()
         log_level = self._parse_log_level()
         self._initialize_logging(log_level)
-        self.scale = 1.0
-        self._setup_state()
+        logging.info("Initializing...")
         try:
+            self.scale = 1.0
+            self._setup_state()
             self._load_assets()
-        except Exception:
-            pass
-        try:
             self._initialize_intro()
-        except Exception:
-            pass
-        try:
             self._initialize_button_list_settings()
-        except Exception:
-            pass
-        try:
             self._load_data()
-        except Exception:
-            pass
-        try:
             self._initialize_new_game()
         except Exception:
-            pass
+            logging.error("Initialization failed with an error:", exc_info=True)
+        finally:
+            logging.info("Initialization complete.")
 
     def _initialize_logging(self, log_level=None):
+        """Set up logging handlers and formatters."""
         def decode_level(level_str):
             level_str = level_str.upper()
             if level_str == "DEBUG":
@@ -328,6 +275,8 @@ class App(Window):
             logger.setLevel(logging.WARN)
 
     def _load_assets(self):
+        """Load game assets (images, sounds, fonts)."""
+        logging.info("Loading assets...")
         try:
             self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
@@ -340,22 +289,37 @@ class App(Window):
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
         except Exception as e:
-            pass
+            logging.error("Error loading assets:", exc_info=True)
+        logging.info("Assets loaded.")
 
     def _load_data(self):
+        """Load game data for gods from files."""
+        logging.info("Loading data...")
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
+        god_files = []
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
+                logging.info(f"Loading god from file: {name}...")
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         self.gods_text.append(f.read())
+                        god_files.append(name)
                 except Exception as e:
-                    pass
-        self.gods = [God(i) for i in self.gods_text]
+                    logging.error("Failed to load god from file:", exc_info=True)
+                logging.info(f"God loaded from file: {name}.")
+        self.gods = []
+        for i, god_text in enumerate(self.gods_text):
+            try:
+                self.gods.append(God(god_text))
+            except Exception as e:
+                file_name = god_files[i] if i < len(god_files) else "unknown"
+                logging.error(f"Failed to parse god text from file '{file_name}': {e}", exc_info=True)
+        logging.info("Data loaded.")
 
     def _initialize_intro(self):
+        """Initialize intro screen assets and state."""
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
@@ -368,6 +332,7 @@ class App(Window):
         ]
 
     def _initialize_button_list_settings(self):
+        """Initialize button list settings for menus."""
         self.button_list_title_top_offset = 25
         self.button_list_title_font = self.heading_font.new_size(int(40 * self.scale))
         self.button_list_button_top_offset = 60
@@ -385,54 +350,45 @@ class App(Window):
         )
 
     def _initialize_new_game(self):
+        """Initialize new game selection state."""
         self.new_game_selected_god = None
 
     def _update_settings(self, from_game: bool):
-        """
-        Update logic for the settings menu, handling navigation and interactions.
-        Args:
-            from_game (bool): True if called from the game state, False otherwise.
-        """
+        """Update settings menu state."""
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
         )
         if hover:
             if self.mouse_pressed:
                 if from_game:
-                    self.state = State.PAUSED
+                    self.set_state(State.PAUSED)
                 else:
-                    self.state = State.MAIN_MENU
+                    self.set_state(State.MAIN_MENU)
 
     def _update_load_game(self, from_game: bool):
-        """
-        Update logic for the load game menu, handling navigation and interactions.
-        Args:
-            from_game (bool): True if called from the game state, False otherwise.
-        """
+        """Update load game menu state."""
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
         )
         if hover:
             if self.mouse_pressed:
                 if from_game:
-                    self.state = State.PAUSED
+                    self.set_state(State.PAUSED)
                 else:
-                    self.state = State.MAIN_MENU
+                    self.set_state(State.MAIN_MENU)
 
     def _update_intro(self):
-        """
-        Update logic for the intro sequence, handling logo display and transitions.
-        """
+        """Update intro screen state and handle logo transitions and sound."""
         self.intro_current_logo_time += self.deltatime
         num_logos = len(self.intro_logos)
         if self.intro_current_logo_index == 0:
@@ -458,25 +414,18 @@ class App(Window):
                             pass
         elif self.intro_current_logo_index == num_logos + 1:
             if self.intro_current_logo_time > self.intro_post_delay:
-                self.state = State.MAIN_MENU
+                self.set_state(State.MAIN_MENU)
 
     def _update_credits(self):
-        """
-        Update logic for the credits screen/menu.
-        Currently, this does nothing, as the credits are static.
-        """
+        """Update credits screen state."""
         pass
 
     def _update_quit(self):
-        """
-        Update logic for quitting the game/application.
-        """
+        """Update quit screen state."""
         quit()
 
     def _update_main_menu(self):
-        """
-        Update logic for the main menu, handling button navigation and state changes.
-        """
+        """Update main menu state and handle button selection."""
         buttons = [
             State.NEW_GAME,
             State.LOAD_GAME_MENU,
@@ -487,21 +436,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                self.screen_top.y
-                - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
+                    self.screen_top.y
+                    - (
+                            (
+                                    self.button_list_button_top_offset
+                                    + self.button_list_button_height / 2
+                            )
+                            + (
+                                    i
+                                    * (
+                                            self.button_list_button_height
+                                            + self.button_list_button_padding
+                                    )
+                            )
                     )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
-                )
-                * self.scale
+                    * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -511,14 +460,12 @@ class App(Window):
             by = y + height / 2
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
-                self.state = button
+                self.set_state(button)
                 if button == State.NEW_GAME:
                     self.new_game_selected_god = None
 
     def _update_new_game(self):
-        """
-        Update logic for selecting a new game, including god selection.
-        """
+        """Update new game selection state."""
         for i, god in enumerate(self.gods):
             hover = is_point_in_rect(
                 self.mouse_pos,
@@ -528,7 +475,7 @@ class App(Window):
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (30 * self.scale),
-                ),
+                    ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
@@ -536,7 +483,7 @@ class App(Window):
                     - (i * 25 * self.scale)
                     - (25 * self.scale)
                     - (30 * self.scale),
-                ),
+                    ),
             )
             if hover and self.mouse_pressed:
                 self.new_game_selected_god = i
@@ -546,42 +493,35 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
         )
         if hover and self.mouse_pressed and self.new_game_selected_god is not None:
             self.game = Game(self.gods[self.new_game_selected_god])
-            self.state = State.PLAYING
+            self.set_state(State.PLAYING)
 
     def _update_load_game_menu(self):
-        """
-        Update logic for the load game menu when accessed from the main menu or paused state.
-        """
+        """Update load game menu state."""
         self._update_load_game(False)
 
     def _update_settings_menu(self):
-        """
-        Update logic for the settings menu when accessed from the main menu or paused state.
-        """
+        """Update settings menu state."""
         self._update_settings(False)
 
     def _update_playing(self):
-        """
-        Update logic for the playing state, including handling user input for navigation
-        and interacting with the game world.
-        """
+        """Update playing state, handle user input and game progression."""
         hover = (
-            distance(
-                self.mouse_pos,
-                V(
-                    self.screen_left.x + (15 * self.scale),
-                    self.screen_bottom.y + (15 * self.scale),
-                ),
-            )
-            < 10 * self.scale
+                distance(
+                    self.mouse_pos,
+                    V(
+                        self.screen_left.x + (15 * self.scale),
+                        self.screen_bottom.y + (15 * self.scale),
+                        ),
+                )
+                < 10 * self.scale
         )
         if hover:
             if self.mouse_pressed:
-                self.state = State.PAUSED
+                self.set_state(State.PAUSED)
         if self.game is not None:
             try:
                 current_screen = self.game.god.tree.screens[
@@ -610,10 +550,7 @@ class App(Window):
                             break
 
     def _update_paused(self):
-        """
-        Update logic for the paused state, including showing the pause menu and handling
-        user input to resume or exit.
-        """
+        """Update paused state."""
         buttons = [
             State.PLAYING,
             State.LOAD_GAME_PLAYING,
@@ -624,21 +561,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                self.screen_top.y
-                - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
+                    self.screen_top.y
+                    - (
+                            (
+                                    self.button_list_button_top_offset
+                                    + self.button_list_button_height / 2
+                            )
+                            + (
+                                    i
+                                    * (
+                                            self.button_list_button_height
+                                            + self.button_list_button_padding
+                                    )
+                            )
                     )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
-                )
-                * self.scale
+                    * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -648,30 +585,28 @@ class App(Window):
             by = y + height / 2
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
-                self.state = button
+                self.set_state(button)
 
     def _update_load_game_playing(self):
-        """
-        Update logic for the load game menu when accessed from the playing state.
-        """
+        """Update load game while playing state."""
         self._update_load_game(True)
 
     def _update_settings_playing(self):
-        """
-        Update logic for the settings menu when accessed from the playing state.
-        """
+        """Update settings while playing state."""
         self._update_settings(True)
 
     def update(self):
+        """Main update loop. Handles state transitions and input."""
         prev_state = getattr(self, "state", None)
         self.mouse_pressed = (
-            self.mouse_down_primary and not self.mouse_down_primary_last_frame
+                self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
         self.seconds_since_start += self.deltatime
         try:
+            # State machine for game update
             if self.state == State.INTRO:
                 self._update_intro()
             elif self.state == State.CREDITS:
@@ -695,9 +630,9 @@ class App(Window):
             elif self.state == State.SETTINGS_PLAYING:
                 self._update_settings_playing()
             else:
-                raise Exception(f"Unknown state: {self.state} in update")
+                raise Exception(f"Unknown state: {self.state}")
         except Exception:
-            pass
+            logging.error("Error during update:", exc_info=True)
         if prev_state != self.state:
             self.mouse_down_primary_last_frame = self.mouse_down_primary
         new_keys = set()
@@ -712,13 +647,10 @@ class App(Window):
         self.keys_down_last_frame = new_keys
 
     def _draw_settings(self, from_game: bool):
-        """
-        Draw the settings menu.
-        Args:
-            from_game (bool): True if called from the game state, False otherwise.
-        """
+        """Draw settings menu."""
         if from_game:
             if "--remove-transparency" not in self.argv:
+                # Draws the background overlay for settings
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -729,39 +661,38 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
         )
+        # Draws the 'Back' button background
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
             top_left_roundness=10 * self.scale,
             steps=10,
         )
+        # Draws the 'Back' button label
         self.draw_text(
             "Back",
             V(
                 self.screen_right.x - (65 * self.scale),
                 self.screen_bottom.y + (20 * self.scale),
-            ),
+                ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
 
     def _draw_load_game(self, from_game: bool):
-        """
-        Draw the load game menu.
-        Args:
-            from_game (bool): True if called from the game state, False otherwise.
-        """
+        """Draw load game menu."""
         if from_game:
             if "--remove-transparency" not in self.argv:
+                # Draws the background overlay for load game
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -772,35 +703,35 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
         )
+        # Draws the 'Back' button background
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
             top_left_roundness=10 * self.scale,
             steps=10,
         )
+        # Draws the 'Back' button label
         self.draw_text(
             "Back",
             V(
                 self.screen_right.x - (65 * self.scale),
                 self.screen_bottom.y + (20 * self.scale),
-            ),
+                ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
 
     def _draw_intro(self):
-        """
-        Draw the intro sequence, showing logos with fade in/out effects.
-        """
+        """Draw intro logos with fade-in/out effects."""
         num_logos = len(self.intro_logos)
         idx = self.intro_current_logo_index
         if 1 <= idx <= num_logos:
@@ -834,42 +765,34 @@ class App(Window):
             pass
 
     def _draw_credits(self):
-        """
-        Draw the credits screen/menu.
-        Currently, this does nothing, as the credits are static.
-        """
+        """Draw credits screen."""
         pass
 
     def _draw_quit(self):
-        """
-        Draw the quit confirmation screen/menu.
-        """
+        """Draw quit screen."""
         pass
 
     def _draw_main_menu(self):
-        """
-        Draw the main menu, including buttons for starting a new game,
-        loading a game, settings, credits, and quitting.
-        """
+        """Draw main menu screen."""
         buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                self.screen_top.y
-                - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
+                    self.screen_top.y
+                    - (
+                            (
+                                    self.button_list_button_top_offset
+                                    + self.button_list_button_height / 2
+                            )
+                            + (
+                                    i
+                                    * (
+                                            self.button_list_button_height
+                                            + self.button_list_button_padding
+                                    )
+                            )
                     )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
-                )
-                * self.scale
+                    * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -878,6 +801,7 @@ class App(Window):
             bx = x + width / 2
             by = y + height / 2
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
+            # Draws the main menu button background
             self.fill_rounded_rect(
                 V(ax, ay),
                 V(bx, by),
@@ -893,7 +817,8 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 self.button_list_button_roundness * self.scale,
                 1,
-            )
+                )
+            # Draws the main menu button label
             self.draw_text(
                 button,
                 V(x, y),
@@ -903,12 +828,13 @@ class App(Window):
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
+        # Draws the main menu title
         self.draw_text(
             "Fate of the Gods",
             V(
                 self.screen_center.x,
                 self.screen_top.y - (self.button_list_title_top_offset * self.scale),
-            ),
+                ),
             self.button_list_title_font.new_size(
                 self.button_list_title_font.size * self.scale
             ),
@@ -917,10 +843,8 @@ class App(Window):
         )
 
     def _draw_new_game(self):
-        """
-        Draw the new game screen, including god selection and start game button.
-        """
-        # God list
+        """Draw new game selection screen."""
+        # Draws left panel background for god selection
         self.fill_rect(
             V(self.screen_left.x, self.screen_top.y),
             V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
@@ -928,42 +852,42 @@ class App(Window):
             int(2 * self.scale),
             Color(50, 50, 50),
         )
-        # God image
+        # Draws right panel background for god info
         self.fill_rect(
             V(self.screen_right.x, self.screen_top.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_top.y - (150 * self.scale),
-            ),
+                ),
             Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
         )
-        # IDK what this is but it looks weird without it so here we are
+        # Draws center background for info
         self.fill_rect(
             V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_top.y - (150 * self.scale),
-            ),
+                ),
             Color(0, 0, 0),
         )
-        # Start button
+        # Draws lower background for info
         self.fill_rect(
             V(
                 self.screen_left.x + (150 * self.scale),
                 self.screen_top.y - (150 * self.scale),
-            ),
+                ),
             V(self.screen_right.x, self.screen_bottom.y),
             Color(0, 0, 0),
         )
-        # Draw god selection list
+        # Draws the 'Select Your God' label
         self.draw_text(
             "Select Your God",
             V(
                 self.screen_left.x + (75 * self.scale),
                 self.screen_top.y - (15 * self.scale),
-            ),
+                ),
             self.main_font.new_size(int(23 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
@@ -977,7 +901,7 @@ class App(Window):
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (30 * self.scale),
-                ),
+                    ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
@@ -985,7 +909,7 @@ class App(Window):
                     - (i * 25 * self.scale)
                     - (25 * self.scale)
                     - (30 * self.scale),
-                ),
+                    ),
             )
             if hover and self.new_game_selected_god == i:
                 color = Color(60, 60, 60)
@@ -995,6 +919,7 @@ class App(Window):
                 color = Color(50, 50, 50)
             else:
                 color = Color(40, 40, 40)
+            # Draws the god selection button background
             self.fill_rect(
                 V(
                     self.screen_left.x + (1 * self.scale),
@@ -1002,7 +927,7 @@ class App(Window):
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (30 * self.scale),
-                ),
+                    ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
@@ -1010,23 +935,24 @@ class App(Window):
                     - (i * 25 * self.scale)
                     - (25 * self.scale)
                     - (30 * self.scale),
-                ),
+                    ),
                 color,
             )
+            # Draws the god name label
             self.draw_text(
                 god.name,
                 V(
                     self.screen_left.x + (75 * self.scale),
                     self.screen_top.y - (25 * self.scale * i) - (30 * self.scale),
-                ),
+                    ),
                 self.main_font.new_size(int(23 * self.scale)),
                 Color(200, 220, 200),
                 Origin.TOP,
             )
-        # Draw god details if selected
         if self.new_game_selected_god is not None:
             selected_god = self.gods[self.new_game_selected_god]
             try:
+                # Draws the selected god image
                 self.draw_image(
                     Image(
                         get_asset_path(
@@ -1036,37 +962,34 @@ class App(Window):
                     V(
                         self.screen_right.x - (65 * self.scale),
                         self.screen_top.y - (75 * self.scale),
-                    ),
+                        ),
                     origin=Origin.CENTER,
                     scale_x=self.scale
-                    * 1.5
-                    * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
+                            * 1.5
+                            * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
                     scale_y=self.scale * 1.5,
                     antialiasing=True,
                 )
             except Exception:
-                raise Exception(f"Failed to load image for god '{
-                    selected_god.name}' at path: {
-                    get_asset_path(
-                        f'images/god/{
-                            selected_god.image}/{
-                            selected_god.image}.png')}")
+                raise Exception(f"Failed to load image for god '{selected_god.name}' at path: {get_asset_path(f'images/god/{selected_god.image}/{selected_god.image}.png')}")
+            # Draws the selected god name label
             self.draw_text(
                 selected_god.name,
                 V(
                     self.screen_left.x + (155 * self.scale) + (3 * self.scale),
                     self.screen_top.y + (5 * self.scale),
-                ),
+                    ),
                 self.heading_font.new_size(int(40 * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOP_LEFT,
             )
+            # Draws the selected god info text
             self.draw_text_word_wrap(
                 selected_god.info,
                 V(
                     self.screen_left.x + (155 * self.scale) + (3 * self.scale),
                     self.screen_top.y - (155 * self.scale) + (3 * self.scale),
-                ),
+                    ),
                 self.main_font.new_size(int(30 * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOP_LEFT,
@@ -1074,62 +997,58 @@ class App(Window):
                     self.screen_left.x
                     - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
                 )
-                * 2,
+                              * 2,
             )
-        # Draw Start Game button
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
         )
         button_enabled = self.new_game_selected_god is not None
         button_color = (
             Color(40, 40, 40) if hover and button_enabled else Color(30, 30, 30)
         )
         if not button_enabled:
-            button_color = Color(20, 20, 20)  # Even darker if disabled
+            button_color = Color(20, 20, 20)
+        # Draws the 'Start Game' button background
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-            ),
+                ),
             button_color,
             int(2 * self.scale),
             Color(50, 50, 50),
             top_left_roundness=10 * self.scale,
             steps=10,
         )
+        # Draws the 'Start Game' button label
         self.draw_text(
             "Start Game",
             V(
                 self.screen_right.x - (65 * self.scale),
                 self.screen_bottom.y + (20 * self.scale),
-            ),
+                ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255) if button_enabled else Color(120, 120, 120),
             Origin.CENTER,
         )
 
     def _draw_load_game_menu(self):
-        """
-        Draw the load game menu when accessed from the main menu or paused state.
-        """
+        """Draw load game menu screen."""
         self._draw_load_game(False)
 
     def _draw_settings_menu(self):
-        """
-        Draw the settings menu when accessed from the main menu or paused state.
-        """
+        """Draw settings menu screen."""
         self._draw_settings(False)
 
     def _draw_playing(self):
-        """
-        Draw the playing state, including the game world and UI elements.
-        """
+        """Draw playing screen, including current story and choices."""
+        # Draws the background scene image
         self.draw_image(
             self.trees_scene,
             V(0 * self.scale, 110 * self.scale),
@@ -1159,6 +1078,7 @@ class App(Window):
             if current_screen is not None
             else "Main text"
         )
+        # Draws the heading text for the current screen
         self.draw_text(
             heading_text,
             V(-230 * self.scale, 40 * self.scale),
@@ -1166,6 +1086,7 @@ class App(Window):
             color=Color(255, 255, 255),
             origin=Origin.TOP_LEFT,
         )
+        # Draws the main story text and choices
         self.draw_text_word_wrap(
             main_text,
             V(-230 * self.scale, 10 * self.scale),
@@ -1177,39 +1098,40 @@ class App(Window):
             ),
         )
         hover = (
-            distance(
-                self.mouse_pos,
-                V(
-                    self.screen_left.x + (15 * self.scale),
-                    self.screen_bottom.y + (15 * self.scale),
-                ),
-            )
-            < 10 * self.scale
+                distance(
+                    self.mouse_pos,
+                    V(
+                        self.screen_left.x + (15 * self.scale),
+                        self.screen_bottom.y + (15 * self.scale),
+                        ),
+                )
+                < 10 * self.scale
         )
+        # Draws the pause button circle
         self.fill_circle(
             V(
                 self.screen_left.x + (15 * self.scale),
                 self.screen_bottom.y + (15 * self.scale),
-            ),
+                ),
             10 * self.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
-        )
+            )
+        # Draws the pause button label
         self.draw_text(
             "||",
             V(
                 self.screen_left.x + (15 * self.scale),
                 self.screen_bottom.y + (15 * self.scale),
-            ),
+                ),
             self.main_font.new_size(int(17 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
 
     def _draw_paused(self):
-        """
-        Draw the pause menu, allowing the player to resume, load, save, or change settings.
-        """
+        """Draw paused screen with overlay and buttons."""
         if "--remove-transparency" not in self.argv:
+            # Draws the background overlay for paused state
             self._draw_playing()
             self.fill_rect(
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -1218,21 +1140,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                self.screen_top.y
-                - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
+                    self.screen_top.y
+                    - (
+                            (
+                                    self.button_list_button_top_offset
+                                    + self.button_list_button_height / 2
+                            )
+                            + (
+                                    i
+                                    * (
+                                            self.button_list_button_height
+                                            + self.button_list_button_padding
+                                    )
+                            )
                     )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
-                )
-                * self.scale
+                    * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -1241,6 +1163,7 @@ class App(Window):
             bx = x + width / 2
             by = y + height / 2
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
+            # Draws the paused menu button background
             self.fill_rounded_rect(
                 V(ax, ay),
                 V(bx, by),
@@ -1256,7 +1179,8 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 self.button_list_button_roundness * self.scale,
                 1,
-            )
+                )
+            # Draws the paused menu button label
             self.draw_text(
                 button,
                 V(x, y),
@@ -1266,12 +1190,13 @@ class App(Window):
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
+        # Draws the 'Paused' title
         self.draw_text(
             "Paused",
             V(
                 self.screen_center.x,
                 self.screen_top.y - (self.button_list_title_top_offset * self.scale),
-            ),
+                ),
             self.button_list_title_font.new_size(
                 self.button_list_title_font.size * self.scale
             ),
@@ -1280,20 +1205,18 @@ class App(Window):
         )
 
     def _draw_load_game_playing(self):
-        """
-        Draw the load game menu when accessed from the playing state.
-        """
+        """Draw load game while playing screen."""
         self._draw_load_game(True)
 
     def _draw_settings_playing(self):
-        """
-        Draw the settings menu when accessed from the playing state.
-        """
+        """Draw settings while playing screen."""
         self._draw_settings(True)
 
     def draw(self):
+        """Main draw loop. Renders current state screen."""
         self.clear(Color(0, 0, 0))
         try:
+            # State machine for drawing
             if self.state == State.INTRO:
                 self._draw_intro()
             elif self.state == State.CREDITS:
@@ -1319,20 +1242,20 @@ class App(Window):
             else:
                 raise Exception(f"Unknown state: {self.state} in draw")
         except Exception:
-            pass
+            logging.error("Error during draw:", exc_info=True)
 
     def on_quit(self):
-        """
-        Cleanup actions on quitting the application, like stopping sounds.
-        """
+        """Handle application quit event."""
         if "--disable-sound" not in self.argv:
             try:
                 self.intro_boom_sound.stop()
             except Exception:
                 pass
+        logging.info("Quitting application...")
 
 
 def main():
+    """Main entry point. Starts the application."""
     App().start()
 
 
