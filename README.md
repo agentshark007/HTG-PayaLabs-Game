@@ -4,7 +4,7 @@
 ## Description
 Fate of the Gods is an open-source project currently in development. It is developed by PayaLabs, led by Andru Cupala.
 
-When you run the game, it opens a window and displays a the main menu. From there, you can start a new game, load a saved game, or access the settings.
+When you run the game, it opens a window and displays the main menu. From there, you can start a new game, load a saved game, or access the settings.
 
 ## Project Structure
 
