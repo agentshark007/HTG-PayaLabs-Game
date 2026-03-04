@@ -80,6 +80,7 @@ def get_asset_path(path):
 
 class State(Enum):
     """Game state enumeration."""
+
     INTRO = 1
     CREDITS = 2
     QUIT = 3
@@ -95,6 +96,7 @@ class State(Enum):
 
 class Link:
     """Represents a link/choice in a game screen tree."""
+
     def __init__(self, target, label):
         self.target = target
         self.label = label
@@ -102,6 +104,7 @@ class Link:
 
 class Screen:
     """Represents a screen in the game tree."""
+
     def __init__(self, encoded: str, screen_id: str = None):
         self.id = screen_id
         lines = split_nonempty_lines(encoded)
@@ -127,6 +130,7 @@ class Screen:
 
 class Tree:
     """Represents the decision tree for a god's story."""
+
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         screens = []
@@ -159,6 +163,7 @@ class Tree:
 
 class God:
     """Represents a god character loaded from data."""
+
     def __init__(self, encoded: str):
         lines = split_nonempty_lines(encoded)
         for line in lines:
@@ -176,6 +181,7 @@ class God:
 
 class Game:
     """Represents a game session for a selected god."""
+
     def __init__(self, god: God):
         self.god = god
         self.current_screen_index = god.start_screen_index
@@ -187,6 +193,7 @@ class App(Window):
     Handles initialization, state management, asset loading, main loop, and rendering.
     Inherits from Window (pgiud).
     """
+
     def __init__(self):
         """Initialize the App window and game state."""
         super().__init__(
@@ -250,6 +257,7 @@ class App(Window):
 
     def _initialize_logging(self, log_level=None):
         """Set up logging handlers and formatters."""
+
         def decode_level(level_str):
             level_str = level_str.upper()
             if level_str == "DEBUG":
@@ -315,7 +323,10 @@ class App(Window):
                 self.gods.append(God(god_text))
             except Exception as e:
                 file_name = god_files[i] if i < len(god_files) else "unknown"
-                logging.error(f"Failed to parse god text from file '{file_name}': {e}", exc_info=True)
+                logging.error(
+                    f"Failed to parse god text from file '{file_name}': {e}",
+                    exc_info=True,
+                )
         logging.info("Data loaded.")
 
     def _initialize_intro(self):
@@ -361,7 +372,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
         )
         if hover:
             if self.mouse_pressed:
@@ -378,7 +389,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
         )
         if hover:
             if self.mouse_pressed:
@@ -436,21 +447,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                    self.screen_top.y
-                    - (
-                            (
-                                    self.button_list_button_top_offset
-                                    + self.button_list_button_height / 2
-                            )
-                            + (
-                                    i
-                                    * (
-                                            self.button_list_button_height
-                                            + self.button_list_button_padding
-                                    )
-                            )
+                self.screen_top.y
+                - (
+                    (
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
-                    * self.scale
+                    + (
+                        i
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
+                    )
+                )
+                * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -475,7 +486,7 @@ class App(Window):
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (30 * self.scale),
-                    ),
+                ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
@@ -483,7 +494,7 @@ class App(Window):
                     - (i * 25 * self.scale)
                     - (25 * self.scale)
                     - (30 * self.scale),
-                    ),
+                ),
             )
             if hover and self.mouse_pressed:
                 self.new_game_selected_god = i
@@ -493,7 +504,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
         )
         if hover and self.mouse_pressed and self.new_game_selected_god is not None:
             self.game = Game(self.gods[self.new_game_selected_god])
@@ -510,14 +521,14 @@ class App(Window):
     def _update_playing(self):
         """Update playing state, handle user input and game progression."""
         hover = (
-                distance(
-                    self.mouse_pos,
-                    V(
-                        self.screen_left.x + (15 * self.scale),
-                        self.screen_bottom.y + (15 * self.scale),
-                        ),
-                )
-                < 10 * self.scale
+            distance(
+                self.mouse_pos,
+                V(
+                    self.screen_left.x + (15 * self.scale),
+                    self.screen_bottom.y + (15 * self.scale),
+                ),
+            )
+            < 10 * self.scale
         )
         if hover:
             if self.mouse_pressed:
@@ -561,21 +572,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                    self.screen_top.y
-                    - (
-                            (
-                                    self.button_list_button_top_offset
-                                    + self.button_list_button_height / 2
-                            )
-                            + (
-                                    i
-                                    * (
-                                            self.button_list_button_height
-                                            + self.button_list_button_padding
-                                    )
-                            )
+                self.screen_top.y
+                - (
+                    (
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
-                    * self.scale
+                    + (
+                        i
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
+                    )
+                )
+                * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -599,7 +610,7 @@ class App(Window):
         """Main update loop. Handles state transitions and input."""
         prev_state = getattr(self, "state", None)
         self.mouse_pressed = (
-                self.mouse_down_primary and not self.mouse_down_primary_last_frame
+            self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
@@ -661,7 +672,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
         )
         # Draws the 'Back' button background
         self.fill_rounded_rect(
@@ -669,7 +680,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
@@ -682,7 +693,7 @@ class App(Window):
             V(
                 self.screen_right.x - (65 * self.scale),
                 self.screen_bottom.y + (20 * self.scale),
-                ),
+            ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
@@ -703,7 +714,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
         )
         # Draws the 'Back' button background
         self.fill_rounded_rect(
@@ -711,7 +722,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
@@ -724,7 +735,7 @@ class App(Window):
             V(
                 self.screen_right.x - (65 * self.scale),
                 self.screen_bottom.y + (20 * self.scale),
-                ),
+            ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
@@ -778,21 +789,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                    self.screen_top.y
-                    - (
-                            (
-                                    self.button_list_button_top_offset
-                                    + self.button_list_button_height / 2
-                            )
-                            + (
-                                    i
-                                    * (
-                                            self.button_list_button_height
-                                            + self.button_list_button_padding
-                                    )
-                            )
+                self.screen_top.y
+                - (
+                    (
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
-                    * self.scale
+                    + (
+                        i
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
+                    )
+                )
+                * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -817,7 +828,7 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 self.button_list_button_roundness * self.scale,
                 1,
-                )
+            )
             # Draws the main menu button label
             self.draw_text(
                 button,
@@ -834,7 +845,7 @@ class App(Window):
             V(
                 self.screen_center.x,
                 self.screen_top.y - (self.button_list_title_top_offset * self.scale),
-                ),
+            ),
             self.button_list_title_font.new_size(
                 self.button_list_title_font.size * self.scale
             ),
@@ -858,7 +869,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_top.y - (150 * self.scale),
-                ),
+            ),
             Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
@@ -869,7 +880,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_top.y - (150 * self.scale),
-                ),
+            ),
             Color(0, 0, 0),
         )
         # Draws lower background for info
@@ -877,7 +888,7 @@ class App(Window):
             V(
                 self.screen_left.x + (150 * self.scale),
                 self.screen_top.y - (150 * self.scale),
-                ),
+            ),
             V(self.screen_right.x, self.screen_bottom.y),
             Color(0, 0, 0),
         )
@@ -887,7 +898,7 @@ class App(Window):
             V(
                 self.screen_left.x + (75 * self.scale),
                 self.screen_top.y - (15 * self.scale),
-                ),
+            ),
             self.main_font.new_size(int(23 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
@@ -901,7 +912,7 @@ class App(Window):
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (30 * self.scale),
-                    ),
+                ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
@@ -909,7 +920,7 @@ class App(Window):
                     - (i * 25 * self.scale)
                     - (25 * self.scale)
                     - (30 * self.scale),
-                    ),
+                ),
             )
             if hover and self.new_game_selected_god == i:
                 color = Color(60, 60, 60)
@@ -927,7 +938,7 @@ class App(Window):
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
                     - (30 * self.scale),
-                    ),
+                ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
@@ -935,7 +946,7 @@ class App(Window):
                     - (i * 25 * self.scale)
                     - (25 * self.scale)
                     - (30 * self.scale),
-                    ),
+                ),
                 color,
             )
             # Draws the god name label
@@ -944,7 +955,7 @@ class App(Window):
                 V(
                     self.screen_left.x + (75 * self.scale),
                     self.screen_top.y - (25 * self.scale * i) - (30 * self.scale),
-                    ),
+                ),
                 self.main_font.new_size(int(23 * self.scale)),
                 Color(200, 220, 200),
                 Origin.TOP,
@@ -962,23 +973,28 @@ class App(Window):
                     V(
                         self.screen_right.x - (65 * self.scale),
                         self.screen_top.y - (75 * self.scale),
-                        ),
+                    ),
                     origin=Origin.CENTER,
                     scale_x=self.scale
-                            * 1.5
-                            * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
+                    * 1.5
+                    * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
                     scale_y=self.scale * 1.5,
                     antialiasing=True,
                 )
             except Exception:
-                raise Exception(f"Failed to load image for god '{selected_god.name}' at path: {get_asset_path(f'images/god/{selected_god.image}/{selected_god.image}.png')}")
+                raise Exception(f"Failed to load image for god '{
+                        selected_god.name}' at path: {
+                        get_asset_path(
+                            f'images/god/{
+                                selected_god.image}/{
+                                selected_god.image}.png')}")
             # Draws the selected god name label
             self.draw_text(
                 selected_god.name,
                 V(
                     self.screen_left.x + (155 * self.scale) + (3 * self.scale),
                     self.screen_top.y + (5 * self.scale),
-                    ),
+                ),
                 self.heading_font.new_size(int(40 * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOP_LEFT,
@@ -989,7 +1005,7 @@ class App(Window):
                 V(
                     self.screen_left.x + (155 * self.scale) + (3 * self.scale),
                     self.screen_top.y - (155 * self.scale) + (3 * self.scale),
-                    ),
+                ),
                 self.main_font.new_size(int(30 * self.scale)),
                 Color(255, 255, 255),
                 Origin.TOP_LEFT,
@@ -997,7 +1013,7 @@ class App(Window):
                     self.screen_left.x
                     - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
                 )
-                              * 2,
+                * 2,
             )
         hover = is_point_in_rect(
             self.mouse_pos,
@@ -1005,7 +1021,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
         )
         button_enabled = self.new_game_selected_god is not None
         button_color = (
@@ -1019,7 +1035,7 @@ class App(Window):
             V(
                 self.screen_right.x - (130 * self.scale),
                 self.screen_bottom.y + (40 * self.scale),
-                ),
+            ),
             button_color,
             int(2 * self.scale),
             Color(50, 50, 50),
@@ -1032,7 +1048,7 @@ class App(Window):
             V(
                 self.screen_right.x - (65 * self.scale),
                 self.screen_bottom.y + (20 * self.scale),
-                ),
+            ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255) if button_enabled else Color(120, 120, 120),
             Origin.CENTER,
@@ -1098,31 +1114,31 @@ class App(Window):
             ),
         )
         hover = (
-                distance(
-                    self.mouse_pos,
-                    V(
-                        self.screen_left.x + (15 * self.scale),
-                        self.screen_bottom.y + (15 * self.scale),
-                        ),
-                )
-                < 10 * self.scale
+            distance(
+                self.mouse_pos,
+                V(
+                    self.screen_left.x + (15 * self.scale),
+                    self.screen_bottom.y + (15 * self.scale),
+                ),
+            )
+            < 10 * self.scale
         )
         # Draws the pause button circle
         self.fill_circle(
             V(
                 self.screen_left.x + (15 * self.scale),
                 self.screen_bottom.y + (15 * self.scale),
-                ),
+            ),
             10 * self.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
-            )
+        )
         # Draws the pause button label
         self.draw_text(
             "||",
             V(
                 self.screen_left.x + (15 * self.scale),
                 self.screen_bottom.y + (15 * self.scale),
-                ),
+            ),
             self.main_font.new_size(int(17 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
@@ -1140,21 +1156,21 @@ class App(Window):
         for i, button in enumerate(buttons):
             x = 0
             y = (
-                    self.screen_top.y
-                    - (
-                            (
-                                    self.button_list_button_top_offset
-                                    + self.button_list_button_height / 2
-                            )
-                            + (
-                                    i
-                                    * (
-                                            self.button_list_button_height
-                                            + self.button_list_button_padding
-                                    )
-                            )
+                self.screen_top.y
+                - (
+                    (
+                        self.button_list_button_top_offset
+                        + self.button_list_button_height / 2
                     )
-                    * self.scale
+                    + (
+                        i
+                        * (
+                            self.button_list_button_height
+                            + self.button_list_button_padding
+                        )
+                    )
+                )
+                * self.scale
             )
             width = self.button_list_button_width * self.scale
             height = self.button_list_button_height * self.scale
@@ -1179,7 +1195,7 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 self.button_list_button_roundness * self.scale,
                 1,
-                )
+            )
             # Draws the paused menu button label
             self.draw_text(
                 button,
@@ -1196,7 +1212,7 @@ class App(Window):
             V(
                 self.screen_center.x,
                 self.screen_top.y - (self.button_list_title_top_offset * self.scale),
-                ),
+            ),
             self.button_list_title_font.new_size(
                 self.button_list_title_font.size * self.scale
             ),
