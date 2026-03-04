@@ -516,14 +516,18 @@ class App(Window):
                 self.mouse_pos,
                 V(
                     self.screen_left.x + (1 * self.scale),
-                    self.screen_top.y - (1 * self.scale) - (i * 25 * self.scale),
+                    self.screen_top.y
+                    - (1 * self.scale)
+                    - (i * 25 * self.scale)
+                    - (30 * self.scale),
                 ),
                 V(
                     self.screen_left.x + (149 * self.scale),
                     self.screen_top.y
                     - (1 * self.scale)
                     - (i * 25 * self.scale)
-                    - (25 * self.scale),
+                    - (25 * self.scale)
+                    - (30 * self.scale),
                 ),
             )
             if hover and self.mouse_pressed:
@@ -888,7 +892,9 @@ class App(Window):
             self.draw_text(
                 button,
                 V(x, y),
-                self.button_list_button_text_font,
+                self.button_list_button_text_font.new_size(
+                    self.button_list_button_text_font.size * self.scale
+                ),
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
@@ -898,7 +904,9 @@ class App(Window):
                 self.screen_center.x,
                 self.screen_top.y - (self.button_list_title_top_offset * self.scale),
             ),
-            self.button_list_title_font,
+            self.button_list_title_font.new_size(
+                self.button_list_title_font.size * self.scale
+            ),
             self.button_list_button_text_color,
             Origin.CENTER,
         )
@@ -907,6 +915,7 @@ class App(Window):
         """
         Draw the new game screen, including god selection and start game button.
         """
+        # God list
         self.fill_rect(
             V(self.screen_left.x, self.screen_top.y),
             V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
@@ -914,6 +923,7 @@ class App(Window):
             int(2 * self.scale),
             Color(50, 50, 50),
         )
+        # God image
         self.fill_rect(
             V(self.screen_right.x, self.screen_top.y),
             V(
@@ -924,6 +934,7 @@ class App(Window):
             int(2 * self.scale),
             Color(50, 50, 50),
         )
+        # IDK what this is but it looks weird without it so here we are
         self.fill_rect(
             V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
             V(
@@ -932,6 +943,7 @@ class App(Window):
             ),
             Color(0, 0, 0),
         )
+        # Start button
         self.fill_rect(
             V(
                 self.screen_left.x + (150 * self.scale),
@@ -1243,7 +1255,9 @@ class App(Window):
             self.draw_text(
                 button,
                 V(x, y),
-                self.button_list_button_text_font,
+                self.button_list_button_text_font.new_size(
+                    self.button_list_button_text_font.size * self.scale
+                ),
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
@@ -1253,7 +1267,9 @@ class App(Window):
                 self.screen_center.x,
                 self.screen_top.y - (self.button_list_title_top_offset * self.scale),
             ),
-            self.button_list_title_font,
+            self.button_list_title_font.new_size(
+                self.button_list_title_font.size * self.scale
+            ),
             self.button_list_button_text_color,
             Origin.CENTER,
         )
