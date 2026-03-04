@@ -233,7 +233,8 @@ class App(Window):
         self.intro_payalabs_logo = Image(get_asset_path("images/intro/payalabs.png"))
         self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
         self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
-        self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
+        if "--disable-sound" not in self.argv:
+            self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
 
     def _load_data(self):
         """
@@ -362,23 +363,23 @@ class App(Window):
             if self.intro_current_logo_time > self.intro_pre_delay:
                 self.intro_current_logo_index = 1
                 self.intro_current_logo_time = 0
-                try:
-                    if self.intro_boom_sound:
-                        if "--disable-sound" not in self.argv:
+                if "--disable-sound" not in self.argv:
+                    try:
+                        if self.intro_boom_sound:
                             self.intro_boom_sound.play()
-                except Exception:
-                    pass
+                    except Exception:
+                        pass
         elif 1 <= self.intro_current_logo_index <= num_logos:
             if self.intro_current_logo_time > self.intro_logo_time:
                 self.intro_current_logo_index += 1
                 self.intro_current_logo_time = 0
                 if 1 <= self.intro_current_logo_index <= num_logos:
-                    try:
-                        if self.intro_boom_sound:
-                            if "--disable-sound" not in self.argv:
+                    if "--disable-sound" not in self.argv:
+                        try:
+                            if self.intro_boom_sound:
                                 self.intro_boom_sound.play()
-                    except Exception:
-                        pass
+                        except Exception:
+                            pass
         elif self.intro_current_logo_index == num_logos + 1:
             if self.intro_current_logo_time > self.intro_post_delay:
                 self.state = State.MAIN_MENU
@@ -1203,10 +1204,11 @@ class App(Window):
         """
         Cleanup actions on quitting the application, like stopping sounds.
         """
-        try:
-            self.intro_boom_sound.stop()
-        except Exception:
-            pass
+        if "--disable-sound" not in self.argv:
+            try:
+                self.intro_boom_sound.stop()
+            except Exception:
+                pass
 
 
 def main():
