@@ -9,8 +9,8 @@ from colorlog import ColoredFormatter
 
 from pgiud import *
 
-LOG_FORMAT = "%(asctime)s [%(levelname)s]: %(message)s"
-LOG_FILE = "game.log"
+log_format = "%(asctime)s [%(levelname)s]: %(message)s"
+log_file = "game.log"
 log_level = logging.DEBUG
 console_handler = logging.StreamHandler(sys.stdout)
 console_formatter = ColoredFormatter(
@@ -26,9 +26,9 @@ console_formatter = ColoredFormatter(
 )
 console_handler.setFormatter(console_formatter)
 file_handler = logging.handlers.RotatingFileHandler(
-    LOG_FILE, maxBytes=2 * 1024 * 1024, backupCount=3
+    log_file, maxBytes=2 * 1024 * 1024, backupCount=3
 )
-file_handler.setFormatter(logging.Formatter(LOG_FORMAT, datefmt="%Y-%m-%d %H:%M:%S"))
+file_handler.setFormatter(logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S"))
 logging.basicConfig(
     level=log_level, handlers=[console_handler, file_handler], force=True
 )
@@ -206,8 +206,8 @@ class App(Window):
 
     def set_state(self, new_state: State):
         """Set the current game state."""
-        self.state = new_state
         logging.info(f"State changed from {self.state} to {new_state}.")
+        self.state = new_state
 
     def _find_arg_with_prefix(self, prefix):
         """Find command-line argument with given prefix."""
@@ -229,9 +229,9 @@ class App(Window):
     def _setup_state(self):
         """Set up initial game state based on arguments."""
         if "--skip-intro" in self.argv:
-            self.set_state(State.MAIN_MENU)
+            self.state = State.MAIN_MENU
         else:
-            self.set_state(State.INTRO)
+            self.state = State.INTRO
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
@@ -608,7 +608,6 @@ class App(Window):
 
     def update(self):
         """Main update loop. Handles state transitions and input."""
-        prev_state = getattr(self, "state", None)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
@@ -644,8 +643,6 @@ class App(Window):
                 raise Exception(f"Unknown state: {self.state}")
         except Exception:
             logging.error("Error during update:", exc_info=True)
-        if prev_state != self.state:
-            self.mouse_down_primary_last_frame = self.mouse_down_primary
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
@@ -656,6 +653,7 @@ class App(Window):
             if self.keydown(key_enum):
                 new_keys.add(key_enum)
         self.keys_down_last_frame = new_keys
+        self.mouse_down_primary_last_frame = self.mouse_down_primary
 
     def _draw_settings(self, from_game: bool):
         """Draw settings menu."""
@@ -983,11 +981,11 @@ class App(Window):
                 )
             except Exception:
                 raise Exception(f"Failed to load image for god '{
-                        selected_god.name}' at path: {
-                        get_asset_path(
-                            f'images/god/{
-                                selected_god.image}/{
-                                selected_god.image}.png')}")
+                    selected_god.name}' at path: {
+                    get_asset_path(
+                        f'images/god/{
+                            selected_god.image}/{
+                            selected_god.image}.png')}")
             # Draws the selected god name label
             self.draw_text(
                 selected_god.name,
@@ -1133,15 +1131,29 @@ class App(Window):
             Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
         # Draws the pause button label
-        self.draw_text(
-            "||",
+        self.draw_line(
             V(
-                self.screen_left.x + (15 * self.scale),
-                self.screen_bottom.y + (15 * self.scale),
+                (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (-5 * self.scale),
             ),
-            self.main_font.new_size(int(17 * self.scale)),
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (5 * self.scale),
+            ),
             Color(255, 255, 255),
-            Origin.CENTER,
+            int(2 * self.scale),
+        )
+        self.draw_line(
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (-5 * self.scale),
+            ),
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (5 * self.scale),
+            ),
+            Color(255, 255, 255),
+            int(2 * self.scale),
         )
 
     def _draw_paused(self):
