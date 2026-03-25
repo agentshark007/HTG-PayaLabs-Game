@@ -5,6 +5,7 @@ import os
 import sys
 from enum import Enum
 
+from black.nodes import first_leaf
 from colorlog import ColoredFormatter
 
 from pgiud import *
@@ -248,6 +249,7 @@ class App(Window):
             self._load_assets()
             self._initialize_intro()
             self._initialize_button_list_settings()
+            self._initialize_settings()
             self._load_data()
             self._initialize_new_game()
         except Exception:
@@ -359,6 +361,10 @@ class App(Window):
         self.button_list_button_text_font = self.main_font.new_size(
             int(40 * self.scale)
         )
+
+    def _initialize_settings(self):
+        self.volume = 1
+        self.potato_mode = False
 
     def _initialize_new_game(self):
         """Initialize new game selection state."""
@@ -680,7 +686,7 @@ class App(Window):
                 self.screen_bottom.y + (40 * self.scale),
             ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
-            int(2 * self.scale),
+            int(1 * self.scale),
             Color(50, 50, 50),
             top_left_roundness=10 * self.scale,
             steps=10,
@@ -693,6 +699,45 @@ class App(Window):
                 self.screen_bottom.y + (20 * self.scale),
             ),
             self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
+        # Draw delete all saves button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(
+                (self.width / -2) + (20 * self.scale),
+                (self.height / 2) - (20 * self.scale),
+            ),
+            V(
+                (self.width / -2) + (150 * self.scale),
+                (self.height / 2) - (70 * self.scale),
+            ),
+        )
+        self.fill_rounded_rect(
+            V(
+                (self.width / -2) + (20 * self.scale),
+                (self.height / 2) - (20 * self.scale),
+            ),
+            V(
+                (self.width / -2) + (150 * self.scale),
+                (self.height / 2) - (70 * self.scale),
+            ),
+            Color(40, 40, 40) if hover else Color(30, 30, 30),
+            int(1 * self.scale),
+            Color(50, 50, 50),
+            top_left_roundness=int(5 * self.scale),
+            top_right_roundness=int(5 * self.scale),
+            bottom_left_roundness=int(5 * self.scale),
+            bottom_right_roundness=int(5 * self.scale),
+        )
+        self.draw_text(
+            "text",
+            V(
+                (self.width / -2) + (85 * self.scale),
+                (self.height / 2) - (45 * self.scale),
+            ),
+            self.button_list_button_text_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
