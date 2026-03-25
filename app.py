@@ -420,8 +420,12 @@ class App(Window):
             ),
         )
         if hover and self.mouse_pressed:
-            pass
-            # TODO: Delete all saves on button press
+            folder_path = os.path.join(data_directory, "saves")
+            for filename in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, filename)
+
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
 
     def _update_load_game(self, from_game: bool):
         """Update load game menu state."""
