@@ -298,7 +298,16 @@ class App(Window):
             for file_name in file_names:
                 logging.info(f"Loading scene image: {file_name}")
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(
-                    get_asset_path(file_name)
+                    get_asset_path(os.path.join("images/scene", file_name))
+                )
+
+            logging.info("Loading god images...")
+            file_names = os.listdir(get_asset_path("images/god"))
+            self.god_images = {}
+            for file_name in file_names:
+                logging.info(f"Loading god image: {file_name}")
+                self.god_images[os.path.splitext(file_name)[0]] = Image(
+                    get_asset_path(os.path.join("images/god", file_name))
                 )
 
             logging.info("Loading fonts...")
@@ -1048,11 +1057,7 @@ class App(Window):
             try:
                 # Draws the selected god image
                 self.draw_image(
-                    Image(
-                        get_asset_path(
-                            f"images/god/{selected_god.image}/{selected_god.image}.png"
-                        )
-                    ),
+                    self.god_images[selected_god.image],
                     V(
                         self.screen_right.x - (65 * self.scale),
                         self.screen_top.y - (75 * self.scale),
