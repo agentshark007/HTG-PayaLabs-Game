@@ -5,7 +5,6 @@ import os
 import sys
 from enum import Enum
 
-from black.nodes import first_leaf
 from colorlog import ColoredFormatter
 
 from pgiud import *
@@ -387,6 +386,22 @@ class App(Window):
                 else:
                     self.set_state(State.MAIN_MENU)
 
+        # Delete all saves button
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(
+                (self.width / -2) + (20 * self.scale),
+                (self.height / 2) - (20 * self.scale),
+            ),
+            V(
+                (self.width / -2) + (250 * self.scale),
+                (self.height / 2) - (70 * self.scale),
+            ),
+        )
+        if hover and self.mouse_pressed:
+            pass
+            # TODO: Delete all saves on button press
+
     def _update_load_game(self, from_game: bool):
         """Update load game menu state."""
         hover = is_point_in_rect(
@@ -710,7 +725,7 @@ class App(Window):
                 (self.height / 2) - (20 * self.scale),
             ),
             V(
-                (self.width / -2) + (150 * self.scale),
+                (self.width / -2) + (250 * self.scale),
                 (self.height / 2) - (70 * self.scale),
             ),
         )
@@ -720,7 +735,7 @@ class App(Window):
                 (self.height / 2) - (20 * self.scale),
             ),
             V(
-                (self.width / -2) + (150 * self.scale),
+                (self.width / -2) + (250 * self.scale),
                 (self.height / 2) - (70 * self.scale),
             ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
@@ -732,9 +747,9 @@ class App(Window):
             bottom_right_roundness=int(5 * self.scale),
         )
         self.draw_text(
-            "text",
+            "Delete All Saves",
             V(
-                (self.width / -2) + (85 * self.scale),
+                (self.width / -2) + (135 * self.scale),
                 (self.height / 2) - (45 * self.scale),
             ),
             self.button_list_button_text_font.new_size(int(30 * self.scale)),
