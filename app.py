@@ -243,6 +243,7 @@ class App(Window):
 
     def initialize(self):
         """Initialize game assets, state, and data."""
+        logging.debug("App.initialize() called.")
         self._parse_argv()
         log_level = self._parse_log_level()
         self._initialize_logging(log_level)
@@ -250,12 +251,19 @@ class App(Window):
         try:
             self.scale = 1.0
             self._setup_state()
+            logging.debug("State setup complete.")
             self._load_assets()
+            logging.debug("Assets loaded.")
             self._initialize_intro()
+            logging.debug("Intro initialized.")
             self._initialize_button_list_settings()
+            logging.debug("Button list settings initialized.")
             self._initialize_settings()
+            logging.debug("Settings initialized.")
             self._load_data()
+            logging.debug("Data loaded.")
             self._initialize_new_game()
+            logging.debug("New game initialized.")
         except Exception:
             logging.error("Initialization failed with an error:", exc_info=True)
         finally:
@@ -292,23 +300,23 @@ class App(Window):
         """Load game assets (images, sounds, fonts)."""
         logging.info("Loading assets...")
         try:
-            logging.info("Loading scene images...")
+            logging.info("Loading scene images from 'images/scene'...")
             file_names = os.listdir(get_asset_path("images/scene"))
             self.scene_images = {}
             for file_name in file_names:
-                logging.info(f"Loading scene image: {file_name}")
-                self.scene_images[os.path.splitext(file_name)[0]] = Image(
-                    get_asset_path(os.path.join("images/scene", file_name))
-                )
+                logging.debug(f"Loading scene image: {file_name}")
+                img_path = get_asset_path(os.path.join("images/scene", file_name))
+                self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
+                logging.info(f"Loaded scene image: {file_name} from {img_path}")
 
-            logging.info("Loading god images...")
+            logging.info("Loading god images from 'images/god'...")
             file_names = os.listdir(get_asset_path("images/god"))
             self.god_images = {}
             for file_name in file_names:
-                logging.info(f"Loading god image: {file_name}")
-                self.god_images[os.path.splitext(file_name)[0]] = Image(
-                    get_asset_path(os.path.join("images/god", file_name))
-                )
+                logging.debug(f"Loading god image: {file_name}")
+                img_path = get_asset_path(os.path.join("images/god", file_name))
+                self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
+                logging.info(f"Loaded god image: {file_name} from {img_path}")
 
             logging.info("Loading fonts...")
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
@@ -331,7 +339,7 @@ class App(Window):
 
     def _load_data(self):
         """Load game data for gods from files."""
-        logging.info("Loading data...")
+        logging.info("Loading god data from 'data/gods'...")
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         god_files = []
@@ -344,21 +352,25 @@ class App(Window):
                     with open(path, "r", encoding="utf-8") as f:
                         self.gods_text.append(f.read())
                         god_files.append(name)
+                    logging.info(f"God loaded from file: {name}.")
                 except Exception:
-                    logging.error("Failed to load god from file:", exc_info=True)
-                logging.info(f"God loaded from file: {name}.")
+                    logging.error(
+                        f"Failed to load god from file: {name}", exc_info=True
+                    )
 
         self.gods = []
         for i, god_text in enumerate(self.gods_text):
             try:
                 self.gods.append(God(god_text))
+                logging.info(f"Parsed god data for file: {
+                    god_files[i] if i < len(god_files) else 'unknown'}.")
             except Exception as e:
                 file_name = god_files[i] if i < len(god_files) else "unknown"
                 logging.error(
                     f"Failed to parse god text from file '{file_name}': {e}",
                     exc_info=True,
                 )
-        logging.info("Data loaded.")
+        logging.info("God data loaded.")
 
     def _initialize_intro(self):
         """Initialize intro screen assets and state."""
@@ -1153,14 +1165,28 @@ class App(Window):
     def _draw_playing(self):
         """Draw playing screen, including current story and choices."""
         # Draws the background scene image
-        self.draw_image(
-            self.game.god.tree.screens[self.game.current_screen_index].image,
-            V(0 * self.scale, 110 * self.scale),
-            origin=Origin.CENTER,
-            scale_x=self.scale,
-            scale_y=self.scale,
-            antialiasing=False,
-        )
+        # Get the image name from the current screen
+        image_name = self.game.god.tree.screens[self.game.current_screen_index].image
+        scene_img = self.scene_images.get(image_name)
+        if scene_img is None:
+            if image_name:
+                logging.warning(
+                    f"Scene image '{image_name}' not found in scene_images. Using fallback."
+                )
+            else:
+                logging.warning(
+                    "No scene image specified for this screen. Using fallback."
+                )
+            scene_img = next(iter(self.scene_images.values()), None)
+        if scene_img is not None:
+            self.draw_image(
+                scene_img,
+                V(0 * self.scale, 110 * self.scale),
+                origin=Origin.CENTER,
+                scale_x=self.scale,
+                scale_y=self.scale,
+                antialiasing=False,
+            )
         if self.game is not None:
             try:
                 current_screen = self.game.god.tree.screens[
@@ -1374,7 +1400,13 @@ class App(Window):
 
 def main():
     """Main entry point. Starts the application."""
-    App().start()
+    logging.info("Starting application from main entry point.")
+    try:
+        App().start()
+        logging.info("Application exited normally.")
+    except Exception as e:
+        logging.exception("Unhandled exception in main entry point:")
+        raise
 
 
 if __name__ == "__main__":
