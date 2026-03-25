@@ -292,22 +292,30 @@ class App(Window):
         """Load game assets (images, sounds, fonts)."""
         logging.info("Loading assets...")
         try:
+            logging.info("Loading scene images...")
             file_names = os.listdir(get_asset_path("images/scene"))
             self.scene_images = {}
             for file_name in file_names:
+                logging.info(f"Loading scene image: {file_name}")
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(
                     get_asset_path(file_name)
                 )
 
+            logging.info("Loading fonts...")
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
+
+            logging.info("Loading logos...")
             self.intro_payalabs_logo = Image(
                 get_asset_path("images/intro/payalabs.png")
             )
             self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
+
+            logging.info("Loading sound...")
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
+
         except Exception:
             logging.error("Error loading assets:", exc_info=True)
         logging.info("Assets loaded.")
@@ -318,6 +326,7 @@ class App(Window):
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         god_files = []
+
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
@@ -329,6 +338,7 @@ class App(Window):
                 except Exception:
                     logging.error("Failed to load god from file:", exc_info=True)
                 logging.info(f"God loaded from file: {name}.")
+
         self.gods = []
         for i, god_text in enumerate(self.gods_text):
             try:
