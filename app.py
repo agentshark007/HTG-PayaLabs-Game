@@ -296,7 +296,7 @@ class App(Window):
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
-        except Exception as e:
+        except Exception:
             logging.error("Error loading assets:", exc_info=True)
         logging.info("Assets loaded.")
 
@@ -314,7 +314,7 @@ class App(Window):
                     with open(path, "r", encoding="utf-8") as f:
                         self.gods_text.append(f.read())
                         god_files.append(name)
-                except Exception as e:
+                except Exception:
                     logging.error("Failed to load god from file:", exc_info=True)
                 logging.info(f"God loaded from file: {name}.")
         self.gods = []
