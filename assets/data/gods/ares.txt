@@ -8,15 +8,19 @@ image: ares
 ##a1
 title: Welcome as Ares!
 text: You have just begun as the god Ares! What would you like to do?
+image: trees
 b1: Fight a war
 b2: Go to sleep
 b3: Kill somebody
 
 ##b1
 title: You are fighting a war!
+image: trees
 
 ##b2
 title: You are sleeping.
+image: trees
 
 ##b3
 title: You have been assigned the judge to find the killer, which is you.
+image: test-scene

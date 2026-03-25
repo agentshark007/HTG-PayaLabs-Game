@@ -9,6 +9,8 @@ from colorlog import ColoredFormatter
 
 from pgiud import *
 
+data_directory = "data/"
+
 log_format = "%(asctime)s [%(levelname)s]: %(message)s"
 log_file = "game.log"
 log_level = logging.DEBUG
@@ -111,11 +113,14 @@ class Screen:
         links = []
         self.title = ""
         self.text = ""
+        self.image = ""
         for line in lines:
             if line.startswith("title: "):
                 self.title = line[len("title: ") :].strip()
             elif line.startswith("text: "):
                 self.text = line[len("text: ") :].strip()
+            elif line.startswith("image: "):
+                self.image = line[len("image: ") :].strip()
             else:
                 if ": " in line:
                     target, _, link_text = line.partition(": ")
@@ -287,7 +292,13 @@ class App(Window):
         """Load game assets (images, sounds, fonts)."""
         logging.info("Loading assets...")
         try:
-            self.trees_scene = Image(get_asset_path("images/scene/trees.png"))
+            file_names = os.listdir(get_asset_path("images/scene"))
+            self.scene_images = {}
+            for file_name in file_names:
+                self.scene_images[os.path.splitext(file_name)[0]] = Image(
+                    get_asset_path(file_name)
+                )
+
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
             self.intro_payalabs_logo = Image(
@@ -1124,7 +1135,7 @@ class App(Window):
         """Draw playing screen, including current story and choices."""
         # Draws the background scene image
         self.draw_image(
-            self.trees_scene,
+            self.game.god.tree.screens[self.game.current_screen_index].image,
             V(0 * self.scale, 110 * self.scale),
             origin=Origin.CENTER,
             scale_x=self.scale,
