@@ -1,39 +1,24 @@
+
+# --- Logging enabled ---
 import logging
-import logging.handlers
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger("FateOfTheGods")
+
+
 import math
 import os
 import sys
 from enum import Enum
 
-from colorlog import ColoredFormatter
+# from colorlog import ColoredFormatter  # Unused, remove if not needed
 
 from pgiud import *
 
 data_directory = "data/"
-
-log_format = "%(asctime)s [%(levelname)s]: %(message)s"
-log_file = "game.log"
-log_level = logging.DEBUG
-console_handler = logging.StreamHandler(sys.stdout)
-console_formatter = ColoredFormatter(
-    "%(log_color)s%(asctime)s [%(levelname)s]: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    log_colors={
-        "DEBUG": "cyan",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "bold_red",
-    },
-)
-console_handler.setFormatter(console_formatter)
-file_handler = logging.handlers.RotatingFileHandler(
-    log_file, maxBytes=2 * 1024 * 1024, backupCount=3
-)
-file_handler.setFormatter(logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S"))
-logging.basicConfig(
-    level=log_level, handlers=[console_handler, file_handler], force=True
-)
 
 
 def is_between(x, a, b):
@@ -201,6 +186,7 @@ class App(Window):
 
     def __init__(self):
         """Initialize the App window and game state."""
+        logger.debug("App.__init__ called.")
         super().__init__(
             width=480,
             height=360,
@@ -211,135 +197,120 @@ class App(Window):
 
     def set_state(self, new_state: State):
         """Set the current game state."""
-        logging.info(f"State changed from {self.state} to {new_state}.")
+        logger.info(f"State changed from {getattr(self, 'state', None)} to {new_state}.")
         self.state = new_state
 
     def _find_arg_with_prefix(self, prefix):
         """Find command-line argument with given prefix."""
         result = next((s for s in self.argv if s.startswith(prefix)), None)
+        logger.debug(f"_find_arg_with_prefix({prefix}) -> {result}")
         return result
 
     def _parse_argv(self):
         """Parse command-line arguments."""
         self.argv = sys.argv[1:]
+        logger.debug(f"Parsed argv: {self.argv}")
 
     def _parse_log_level(self):
         """Parse log level from command-line arguments."""
         level_arg = self._find_arg_with_prefix("--level=")
         if level_arg:
             result = level_arg.split("=", 1)[1]
+            logger.debug(f"Log level argument found: {result}")
             return result
+        logger.debug("No log level argument found.")
         return None
 
     def _setup_state(self):
         """Set up initial game state based on arguments."""
         if "--skip-intro" in self.argv:
             self.state = State.MAIN_MENU
+            logger.info("Skipping intro, setting state to MAIN_MENU.")
         else:
             self.state = State.INTRO
+            logger.info("Starting with intro, setting state to INTRO.")
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
 
     def initialize(self):
         """Initialize game assets, state, and data."""
-        logging.debug("App.initialize() called.")
+        logger.debug("App.initialize() called.")
         self._parse_argv()
-        log_level = self._parse_log_level()
-        self._initialize_logging(log_level)
-        logging.info("Initializing...")
+        # log_level = self._parse_log_level()
+        # self._initialize_logging(log_level)
+        logger.info("Initializing application...")
         try:
             self.scale = 1.0
             self._setup_state()
-            logging.debug("State setup complete.")
+            logger.debug("State setup complete.")
             self._load_assets()
-            logging.debug("Assets loaded.")
+            logger.debug("Assets loaded.")
             self._initialize_intro()
-            logging.debug("Intro initialized.")
+            logger.debug("Intro initialized.")
             self._initialize_button_list_settings()
-            logging.debug("Button list settings initialized.")
+            logger.debug("Button list settings initialized.")
             self._initialize_settings()
-            logging.debug("Settings initialized.")
+            logger.debug("Settings initialized.")
             self._load_data()
-            logging.debug("Data loaded.")
+            logger.debug("Data loaded.")
             self._initialize_new_game()
-            logging.debug("New game initialized.")
-        except Exception:
-            logging.error("Initialization failed with an error:", exc_info=True)
+            logger.debug("New game initialized.")
+        except Exception as e:
+            logger.error("Initialization failed with an error:", exc_info=True)
+            raise
         finally:
-            logging.info("Initialization complete.")
+            logger.info("Initialization complete.")
 
     def _initialize_logging(self, log_level=None):
-        """Set up logging handlers and formatters."""
-
-        def decode_level(level_str):
-            level_str = level_str.upper()
-            if level_str == "DEBUG":
-                return logging.DEBUG
-            elif level_str == "INFO":
-                return logging.INFO
-            elif level_str == "WARN":
-                return logging.WARNING
-            elif level_str == "ERROR":
-                return logging.ERROR
-            elif level_str == "CRITICAL":
-                return logging.CRITICAL
-            else:
-                raise ValueError(f"Invalid log level: {level_str}")
-
-        logger = logging.getLogger()
-        if log_level:
-            try:
-                logger.setLevel(decode_level(log_level))
-            except Exception:
-                logger.setLevel(logging.WARN)
-        else:
-            logger.setLevel(logging.WARN)
+        """Stub for logging setup (removed)."""
+        logger.debug(f"_initialize_logging called with log_level={log_level}")
 
     def _load_assets(self):
         """Load game assets (images, sounds, fonts)."""
-        logging.info("Loading assets...")
+        logger.info("Loading assets...")
         try:
-            logging.info("Loading scene images from 'images/scene'...")
+            logger.info("Loading scene images from 'images/scene'...")
             file_names = os.listdir(get_asset_path("images/scene"))
             self.scene_images = {}
             for file_name in file_names:
-                logging.debug(f"Loading scene image: {file_name}")
+                logger.debug(f"Loading scene image: {file_name}")
                 img_path = get_asset_path(os.path.join("images/scene", file_name))
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
-                logging.info(f"Loaded scene image: {file_name} from {img_path}")
+                logger.info(f"Loaded scene image: {file_name} from {img_path}")
 
-            logging.info("Loading god images from 'images/god'...")
+            logger.info("Loading god images from 'images/god'...")
             file_names = os.listdir(get_asset_path("images/god"))
             self.god_images = {}
             for file_name in file_names:
-                logging.debug(f"Loading god image: {file_name}")
+                logger.debug(f"Loading god image: {file_name}")
                 img_path = get_asset_path(os.path.join("images/god", file_name))
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
-                logging.info(f"Loaded god image: {file_name} from {img_path}")
+                logger.info(f"Loaded god image: {file_name} from {img_path}")
 
-            logging.info("Loading fonts...")
+            logger.info("Loading fonts...")
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
 
-            logging.info("Loading logos...")
+            logger.info("Loading logos...")
             self.intro_payalabs_logo = Image(
                 get_asset_path("images/intro/payalabs.png")
             )
             self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
 
-            logging.info("Loading sound...")
+            logger.info("Loading sound...")
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
 
         except Exception:
-            logging.error("Error loading assets:", exc_info=True)
-        logging.info("Assets loaded.")
+            logger.error("Error loading assets:", exc_info=True)
+            raise
+        logger.info("Assets loaded.")
 
     def _load_data(self):
         """Load game data for gods from files."""
-        logging.info("Loading god data from 'data/gods'...")
+        logger.info("Loading god data from 'data/gods'...")
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         god_files = []
@@ -347,30 +318,26 @@ class App(Window):
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
-                logging.info(f"Loading god from file: {name}...")
+                logger.info(f"Loading god from file: {name}...")
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         self.gods_text.append(f.read())
                         god_files.append(name)
-                    logging.info(f"God loaded from file: {name}.")
+                    logger.info(f"God loaded from file: {name}.")
                 except Exception:
-                    logging.error(
-                        f"Failed to load god from file: {name}", exc_info=True
-                    )
+                    logger.error(f"Failed to load god from file: {name}", exc_info=True)
+                    continue
 
         self.gods = []
         for i, god_text in enumerate(self.gods_text):
             try:
                 self.gods.append(God(god_text))
-                logging.info(f"Parsed god data for file: {
-                    god_files[i] if i < len(god_files) else 'unknown'}.")
+                logger.info(f"Parsed god data for file: {god_files[i] if i < len(god_files) else 'unknown' }.")
             except Exception as e:
                 file_name = god_files[i] if i < len(god_files) else "unknown"
-                logging.error(
-                    f"Failed to parse god text from file '{file_name}': {e}",
-                    exc_info=True,
-                )
-        logging.info("God data loaded.")
+                logger.error(f"Failed to parse god text from file '{file_name}': {e}")
+                continue
+        logger.info("God data loaded.")
 
     def _initialize_intro(self):
         """Initialize intro screen assets and state."""
@@ -675,6 +642,7 @@ class App(Window):
 
     def update(self):
         """Main update loop. Handles state transitions and input."""
+        logger.debug(f"App.update() called. State: {getattr(self, 'state', None)}")
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
@@ -685,31 +653,43 @@ class App(Window):
         try:
             # State machine for game update
             if self.state == State.INTRO:
+                logger.debug("Updating INTRO state.")
                 self._update_intro()
             elif self.state == State.CREDITS:
+                logger.debug("Updating CREDITS state.")
                 self._update_credits()
             elif self.state == State.QUIT:
+                logger.debug("Updating QUIT state.")
                 self._update_quit()
             elif self.state == State.MAIN_MENU:
+                logger.debug("Updating MAIN_MENU state.")
                 self._update_main_menu()
             elif self.state == State.NEW_GAME:
+                logger.debug("Updating NEW_GAME state.")
                 self._update_new_game()
             elif self.state == State.LOAD_GAME_MENU:
+                logger.debug("Updating LOAD_GAME_MENU state.")
                 self._update_load_game_menu()
             elif self.state == State.SETTINGS_MENU:
+                logger.debug("Updating SETTINGS_MENU state.")
                 self._update_settings_menu()
             elif self.state == State.PLAYING:
+                logger.debug("Updating PLAYING state.")
                 self._update_playing()
             elif self.state == State.PAUSED:
+                logger.debug("Updating PAUSED state.")
                 self._update_paused()
             elif self.state == State.LOAD_GAME_PLAYING:
+                logger.debug("Updating LOAD_GAME_PLAYING state.")
                 self._update_load_game_playing()
             elif self.state == State.SETTINGS_PLAYING:
+                logger.debug("Updating SETTINGS_PLAYING state.")
                 self._update_settings_playing()
             else:
+                logger.error(f"Unknown state: {self.state}")
                 raise Exception(f"Unknown state: {self.state}")
         except Exception:
-            logging.error("Error during update:", exc_info=True)
+            logger.error("Error during update:", exc_info=True)
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
@@ -1169,14 +1149,10 @@ class App(Window):
         image_name = self.game.god.tree.screens[self.game.current_screen_index].image
         scene_img = self.scene_images.get(image_name)
         if scene_img is None:
-            if image_name:
-                logging.warning(
-                    f"Scene image '{image_name}' not found in scene_images. Using fallback."
-                )
-            else:
-                logging.warning(
-                    "No scene image specified for this screen. Using fallback."
-                )
+            # if image_name:
+            #     logger.warning(f"Scene image '{image_name}' not found in scene_images. Using fallback.")
+            # else:
+            #     logger.warning("No scene image specified for this screen. Using fallback.")
             scene_img = next(iter(self.scene_images.values()), None)
         if scene_img is not None:
             self.draw_image(
@@ -1358,35 +1334,48 @@ class App(Window):
 
     def draw(self):
         """Main draw loop. Renders current state screen."""
+        logger.debug(f"App.draw() called. State: {getattr(self, 'state', None)}")
         self.clear(Color(0, 0, 0))
         try:
             # State machine for drawing
             if self.state == State.INTRO:
+                logger.debug("Drawing INTRO state.")
                 self._draw_intro()
             elif self.state == State.CREDITS:
+                logger.debug("Drawing CREDITS state.")
                 self._draw_credits()
             elif self.state == State.QUIT:
+                logger.debug("Drawing QUIT state.")
                 self._draw_quit()
             elif self.state == State.MAIN_MENU:
+                logger.debug("Drawing MAIN_MENU state.")
                 self._draw_main_menu()
             elif self.state == State.NEW_GAME:
+                logger.debug("Drawing NEW_GAME state.")
                 self._draw_new_game()
             elif self.state == State.LOAD_GAME_MENU:
+                logger.debug("Drawing LOAD_GAME_MENU state.")
                 self._draw_load_game_menu()
             elif self.state == State.SETTINGS_MENU:
+                logger.debug("Drawing SETTINGS_MENU state.")
                 self._draw_settings_menu()
             elif self.state == State.PLAYING:
+                logger.debug("Drawing PLAYING state.")
                 self._draw_playing()
             elif self.state == State.PAUSED:
+                logger.debug("Drawing PAUSED state.")
                 self._draw_paused()
             elif self.state == State.LOAD_GAME_PLAYING:
+                logger.debug("Drawing LOAD_GAME_PLAYING state.")
                 self._draw_load_game_playing()
             elif self.state == State.SETTINGS_PLAYING:
+                logger.debug("Drawing SETTINGS_PLAYING state.")
                 self._draw_settings_playing()
             else:
+                logger.error(f"Unknown state: {self.state} in draw")
                 raise Exception(f"Unknown state: {self.state} in draw")
         except Exception:
-            logging.error("Error during draw:", exc_info=True)
+            logger.error("Error during draw:", exc_info=True)
 
     def on_quit(self):
         """Handle application quit event."""
@@ -1395,17 +1384,17 @@ class App(Window):
                 self.intro_boom_sound.stop()
             except Exception:
                 pass
-        logging.info("Quitting application...")
+        # logger.info("Quitting application...")
 
 
 def main():
     """Main entry point. Starts the application."""
-    logging.info("Starting application from main entry point.")
+    logger.info("Starting application from main entry point.")
     try:
         App().start()
-        logging.info("Application exited normally.")
+        logger.info("Application exited normally.")
     except Exception as e:
-        logging.exception("Unhandled exception in main entry point:")
+        logger.exception("Unhandled exception in main entry point:")
         raise
 
 
