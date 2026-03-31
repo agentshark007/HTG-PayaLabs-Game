@@ -1,53 +1,49 @@
 import logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s %(levelname)s %(name)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger("FateOfTheGods")
-
-
 import math
 import os
 import sys
 from enum import Enum
 
-
-
 from pgiud import *
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("FateOfTheGods")
+
 
 data_directory = "data/"
 
 
 def is_between(x, a, b):
+    """True if x is strictly between a and b (exclusive), or equal if a == b == x."""
     if a == b:
-        if x == a:
-            return True
-        else:
-            return False
+        # Special case: all values are equal
+        return x == a
     elif a > b:
-        if b < x < a:
-            return True
-        else:
-            return False
+        # A is greater than B
+        return b < x < a
     elif a < b:
-        if a < x < b:
-            return True
-        else:
-            return False
+        # A is less than B
+        return a < x < b
     else:
         return False
 
 
 def is_point_in_rect(point, a, b):
+    """True if point (x, y) is inside the rectangle defined by a and b."""
     return is_between(point.x, a.x, b.x) and is_between(point.y, a.y, b.y)
 
 
 def split_nonempty_lines(text: str):
+    """Split text into non-empty, stripped lines."""
     return [line for line in text.splitlines() if line.strip()]
 
 
 def distance(a, b):
+    """Euclidean distance between two points a and b (with x, y attributes)."""
     return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
 
@@ -55,10 +51,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_asset_path(path):
+    """Absolute path to an asset given its relative path within the assets directory."""
     return str(os.path.join(BASE_DIR, "assets", path))
 
 
 class State(Enum):
+    # Application/game states
 
     INTRO = 1
     CREDITS = 2
@@ -74,14 +72,14 @@ class State(Enum):
 
 
 class Link:
-
+    # Navigational link between screens in the game tree
     def __init__(self, target, label):
-        self.target = target
-        self.label = label
+        self.target = target  # Target screen id
+        self.label = label  # Link text
 
 
 class Screen:
-
+    # Single screen/page in the game tree
     def __init__(self, encoded: str, screen_id: str = None):
         self.id = screen_id
         lines = split_nonempty_lines(encoded)
@@ -89,6 +87,7 @@ class Screen:
         self.title = ""
         self.text = ""
         self.image = ""
+        # Parse each line for screen attributes or links
         for line in lines:
             if line.startswith("title: "):
                 self.title = line[len("title: ") :].strip()
@@ -98,9 +97,11 @@ class Screen:
                 self.image = line[len("image: ") :].strip()
             else:
                 if ": " in line:
+                    # Parse link: "target: label"
                     target, _, link_text = line.partition(": ")
                     links.append(Link(target.strip(), link_text.strip()))
                 else:
+                    # Additional text lines
                     if self.text:
                         self.text += "\n" + line.strip()
                     else:
@@ -109,7 +110,7 @@ class Screen:
 
 
 class Tree:
-
+    # Tree of screens (story nodes) for a god
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         screens = []
@@ -117,6 +118,7 @@ class Tree:
         screen_text = ""
         screen_id = None
         first_screen_index = None
+        # Parse the tree structure from encoded text
         for line in lines:
             if line.startswith("#tree"):
                 ready = True
@@ -124,6 +126,7 @@ class Tree:
             if not ready:
                 continue
             if line.startswith("##"):
+                # New screen node
                 if screen_id is not None:
                     screens.append(Screen(screen_text, screen_id))
                 screen_id = line.removeprefix("##").strip()
@@ -135,15 +138,17 @@ class Tree:
         if screen_id is not None and screen_text:
             screens.append(Screen(screen_text, screen_id))
         self.screens = screens
+        # Index of the first screen in the tree
         self.first_screen_index = (
             first_screen_index if first_screen_index is not None else 0
         )
 
 
 class God:
-
+    # God character, including name, info, image, and story tree
     def __init__(self, encoded: str):
         lines = split_nonempty_lines(encoded)
+        # Parse god attributes from encoded text
         for line in lines:
             if line.startswith("name: "):
                 self.name = line.removeprefix("name: ")
@@ -158,14 +163,14 @@ class God:
 
 
 class Game:
-
+    # Game session for a selected god
     def __init__(self, god: God):
         self.god = god
         self.current_screen_index = god.start_screen_index
 
 
 class App(Window):
-
+    # Main application class for Fate of the Gods
     def __init__(self):
         logger.debug("App.__init__ called.")
         super().__init__(
@@ -177,19 +182,35 @@ class App(Window):
         )
 
     def set_state(self, new_state: State):
-        logger.info(f"State changed from {getattr(self, 'state', None)} to {new_state}.")
+        """
+        Change the application state and log the transition.
+        """
+        logger.info(f"State changed from {
+            getattr(
+                    self,
+                    'state',
+                    None)} to {new_state}.")
         self.state = new_state
 
     def _find_arg_with_prefix(self, prefix):
+        """
+        Find the first command-line argument with the given prefix.
+        """
         result = next((s for s in self.argv if s.startswith(prefix)), None)
         logger.debug(f"_find_arg_with_prefix({prefix}) -> {result}")
         return result
 
     def _parse_argv(self):
+        """
+        Parse command-line arguments (excluding script name).
+        """
         self.argv = sys.argv[1:]
         logger.debug(f"Parsed argv: {self.argv}")
 
     def _parse_log_level(self):
+        """
+        Parse log level from command-line arguments.
+        """
         level_arg = self._find_arg_with_prefix("--level=")
         if level_arg:
             result = level_arg.split("=", 1)[1]
@@ -199,6 +220,9 @@ class App(Window):
         return None
 
     def _setup_state(self):
+        """
+        Set initial state based on command-line arguments.
+        """
         if "--skip-intro" in self.argv:
             self.state = State.MAIN_MENU
             logger.info("Skipping intro, setting state to MAIN_MENU.")
@@ -210,6 +234,9 @@ class App(Window):
         self.keys_down_last_frame = set()
 
     def initialize(self):
+        """
+        Main initialization routine for the application. Loads assets, data, and sets up state.
+        """
         logger.debug("App.initialize() called.")
         self._parse_argv()
         logger.info("Initializing application...")
@@ -236,11 +263,16 @@ class App(Window):
             logger.info("Initialization complete.")
 
     def _initialize_logging(self, log_level=None):
+        """
+        Placeholder for custom logging setup if needed.
+        """
         logger.debug(f"_initialize_logging called with log_level={log_level}")
 
     def _load_assets(self):
+        # Load all required assets: images, fonts, sounds, etc.
         logger.info("Loading assets...")
         try:
+            # Load scene images
             logger.info("Loading scene images from 'images/scene'...")
             file_names = os.listdir(get_asset_path("images/scene"))
             self.scene_images = {}
@@ -250,6 +282,7 @@ class App(Window):
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
                 logger.info(f"Loaded scene image: {file_name} from {img_path}")
 
+            # Load god images
             logger.info("Loading god images from 'images/god'...")
             file_names = os.listdir(get_asset_path("images/god"))
             self.god_images = {}
@@ -259,10 +292,12 @@ class App(Window):
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
                 logger.info(f"Loaded god image: {file_name} from {img_path}")
 
+            # Load fonts
             logger.info("Loading fonts...")
             self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
 
+            # Load intro logos
             logger.info("Loading logos...")
             self.intro_payalabs_logo = Image(
                 get_asset_path("images/intro/payalabs.png")
@@ -270,6 +305,7 @@ class App(Window):
             self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
 
+            # Load intro sound (if not disabled)
             logger.info("Loading sound...")
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
@@ -280,11 +316,13 @@ class App(Window):
         logger.info("Assets loaded.")
 
     def _load_data(self):
+        # Load god data from text files in the data/gods directory
         logger.info("Loading god data from 'data/gods'...")
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         god_files = []
 
+        # Read all god .txt files
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
@@ -298,11 +336,13 @@ class App(Window):
                     logger.error(f"Failed to load god from file: {name}", exc_info=True)
                     continue
 
+        # Parse god objects from loaded text
         self.gods = []
         for i, god_text in enumerate(self.gods_text):
             try:
                 self.gods.append(God(god_text))
-                logger.info(f"Parsed god data for file: {god_files[i] if i < len(god_files) else 'unknown' }.")
+                logger.info(f"Parsed god data for file: {
+                    god_files[i] if i < len(god_files) else 'unknown'}.")
             except Exception as e:
                 file_name = god_files[i] if i < len(god_files) else "unknown"
                 logger.error(f"Failed to parse god text from file '{file_name}': {e}")
@@ -310,6 +350,7 @@ class App(Window):
         logger.info("God data loaded.")
 
     def _initialize_intro(self):
+        # Set up intro logo sequence timing and images
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
@@ -322,6 +363,7 @@ class App(Window):
         ]
 
     def _initialize_button_list_settings(self):
+        # UI layout and style settings for button lists
         self.button_list_title_top_offset = 25
         self.button_list_title_font = self.heading_font.new_size(int(40 * self.scale))
         self.button_list_button_top_offset = 60
@@ -339,13 +381,17 @@ class App(Window):
         )
 
     def _initialize_settings(self):
+        # Default settings for volume and graphics mode
         self.volume = 1
         self.potato_mode = False
 
     def _initialize_new_game(self):
+        # Track selected god for new game
         self.new_game_selected_god = None
 
     def _update_settings(self, from_game: bool):
+        # Handles updates for the settings menu or in-game settings overlay
+        # Check if mouse is over the settings button (bottom right)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -361,6 +407,7 @@ class App(Window):
                 else:
                     self.set_state(State.MAIN_MENU)
 
+        # Check if mouse is over the "clear saves" area (top left)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(
@@ -376,11 +423,11 @@ class App(Window):
             folder_path = os.path.join(data_directory, "saves")
             for filename in os.listdir(folder_path):
                 file_path = os.path.join(folder_path, filename)
-
                 if os.path.isfile(file_path):
                     os.remove(file_path)
 
     def _update_load_game(self, from_game: bool):
+        # Handles updates for the load game menu or in-game load overlay
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -397,9 +444,12 @@ class App(Window):
                     self.set_state(State.MAIN_MENU)
 
     def _update_intro(self):
+        # Handles the intro logo sequence and transitions to the main menu
+        # after delays
         self.intro_current_logo_time += self.deltatime
         num_logos = len(self.intro_logos)
         if self.intro_current_logo_index == 0:
+            # Wait for pre-delay, then show first logo and play sound
             if self.intro_current_logo_time > self.intro_pre_delay:
                 self.intro_current_logo_index = 1
                 self.intro_current_logo_time = 0
@@ -410,6 +460,7 @@ class App(Window):
                     except Exception:
                         pass
         elif 1 <= self.intro_current_logo_index <= num_logos:
+            # Show each logo for a set time, then advance and play sound
             if self.intro_current_logo_time > self.intro_logo_time:
                 self.intro_current_logo_index += 1
                 self.intro_current_logo_time = 0
@@ -421,16 +472,20 @@ class App(Window):
                         except Exception:
                             pass
         elif self.intro_current_logo_index == num_logos + 1:
+            # After last logo, wait for post-delay then go to main menu
             if self.intro_current_logo_time > self.intro_post_delay:
                 self.set_state(State.MAIN_MENU)
 
     def _update_credits(self):
+        # Handles updates for the credits screen (currently a placeholder)
         pass
 
     def _update_quit(self):
+        # Handles quit action for the application
         quit()
 
     def _update_main_menu(self):
+        # Handles updates for the main menu, including button hover/click logic
         buttons = [
             State.NEW_GAME,
             State.LOAD_GAME_MENU,
@@ -440,6 +495,7 @@ class App(Window):
         ]
         for i, button in enumerate(buttons):
             x = 0
+            # Calculate y position for each button in the menu
             y = (
                 self.screen_top.y
                 - (
@@ -463,6 +519,7 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
+            # Check if mouse is over this button
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
                 self.set_state(button)
@@ -470,7 +527,10 @@ class App(Window):
                     self.new_game_selected_god = None
 
     def _update_new_game(self):
+        # Handles updates for the new game screen, including god selection and
+        # starting the game
         for i, god in enumerate(self.gods):
+            # Calculate bounding box for each god selection button
             hover = is_point_in_rect(
                 self.mouse_pos,
                 V(
@@ -491,6 +551,7 @@ class App(Window):
             )
             if hover and self.mouse_pressed:
                 self.new_game_selected_god = i
+        # Check if mouse is over the "start game" button (bottom right)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -504,12 +565,17 @@ class App(Window):
             self.set_state(State.PLAYING)
 
     def _update_load_game_menu(self):
+        # Handles updates for the load game menu (wrapper for
+        # _update_load_game)
         self._update_load_game(False)
 
     def _update_settings_menu(self):
+        # Handles updates for the settings menu (wrapper for _update_settings)
         self._update_settings(False)
 
     def _update_playing(self):
+        # Handles updates for the main gameplay state, including pause button and link selection
+        # Check if mouse is over the pause button (bottom left)
         hover = (
             distance(
                 self.mouse_pos,
@@ -523,6 +589,7 @@ class App(Window):
         if hover:
             if self.mouse_pressed:
                 self.set_state(State.PAUSED)
+        # Get the current screen for the selected god
         if self.game is not None:
             try:
                 current_screen = self.game.god.tree.screens[
@@ -532,6 +599,7 @@ class App(Window):
                 current_screen = None
         else:
             current_screen = None
+        # Handle clickable links on the current screen
         if current_screen is not None and current_screen.links:
             for i, link in enumerate(current_screen.links):
                 if i >= 26:
@@ -551,15 +619,18 @@ class App(Window):
                             break
 
     def _update_paused(self):
+        # Handles updates for the paused state, including pause menu button
+        # logic
         buttons = [
-            State.PLAYING,
-            State.LOAD_GAME_PLAYING,
-            State.LOAD_GAME_PLAYING,
-            State.SETTINGS_PLAYING,
-            State.MAIN_MENU,
+            State.PLAYING,  # Resume
+            State.LOAD_GAME_PLAYING,  # Load game (in-game)
+            State.LOAD_GAME_PLAYING,  # (duplicate, possibly for layout)
+            State.SETTINGS_PLAYING,  # Settings (in-game)
+            State.MAIN_MENU,  # Return to main menu
         ]
         for i, button in enumerate(buttons):
             x = 0
+            # Calculate y position for each pause menu button
             y = (
                 self.screen_top.y
                 - (
@@ -583,26 +654,37 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
+            # Check if mouse is over this button
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
                 self.set_state(button)
 
     def _update_load_game_playing(self):
+        # Handles updates for the in-game load game overlay
         self._update_load_game(True)
 
     def _update_settings_playing(self):
+        # Handles updates for the in-game settings overlay
         self._update_settings(True)
 
     def update(self):
-        logger.debug(f"App.update() called. State: {getattr(self, 'state', None)}")
+        # Main update loop for the application
+        logger.debug(f"App.update() called. State: {
+            getattr(
+                self,
+                'state',
+                None)}")
+        # Detect mouse click (primary button pressed this frame)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
+        # Update scale based on window size
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
         self.seconds_since_start += self.deltatime
         try:
+            # State machine: call update method for current state
             if self.state == State.INTRO:
                 logger.debug("Updating INTRO state.")
                 self._update_intro()
@@ -641,6 +723,7 @@ class App(Window):
                 raise Exception(f"Unknown state: {self.state}")
         except Exception:
             logger.error("Error during update:", exc_info=True)
+        # Track which keys are currently pressed (A-Z)
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
@@ -654,12 +737,15 @@ class App(Window):
         self.mouse_down_primary_last_frame = self.mouse_down_primary
 
     def _draw_settings(self, from_game: bool):
+        # Draw the settings overlay/menu
         if from_game:
             if "--remove-transparency" not in self.argv:
+                # Draw gameplay screen faded out behind settings
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
                 )
+        # Draw the "Back" button (bottom right)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -690,6 +776,7 @@ class App(Window):
             Color(255, 255, 255),
             Origin.CENTER,
         )
+        # Draw the "Delete All Saves" button (top left)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(
@@ -730,12 +817,15 @@ class App(Window):
         )
 
     def _draw_load_game(self, from_game: bool):
+        # Draw the load game overlay/menu
         if from_game:
             if "--remove-transparency" not in self.argv:
+                # Draw gameplay screen faded out behind load game overlay
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
                 )
+        # Draw the "Back" button (bottom right)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -768,6 +858,7 @@ class App(Window):
         )
 
     def _draw_intro(self):
+        # Draw the intro logo sequence with fade-in and fade-out effects
         num_logos = len(self.intro_logos)
         idx = self.intro_current_logo_index
         if 1 <= idx <= num_logos:
@@ -775,6 +866,7 @@ class App(Window):
             total = self.intro_logo_time
             t = self.intro_current_logo_time
             fade = min(0.3, total / 2.0)
+            # Calculate alpha for fade-in/out
             if total <= 0 or t <= 0:
                 alpha = 255
             elif t < fade:
@@ -801,15 +893,19 @@ class App(Window):
             pass
 
     def _draw_credits(self):
+        # Draw the credits screen (currently a placeholder)
         pass
 
     def _draw_quit(self):
+        # Draw the quit screen (currently a placeholder)
         pass
 
     def _draw_main_menu(self):
+        # Draw the main menu with buttons for each major action
         buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
         for i, button in enumerate(buttons):
             x = 0
+            # Calculate y position for each button
             y = (
                 self.screen_top.y
                 - (
@@ -833,6 +929,7 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
+            # Draw button background and outline
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             self.fill_rounded_rect(
                 V(ax, ay),
@@ -850,6 +947,7 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 1,
             )
+            # Draw button label
             self.draw_text(
                 button,
                 V(x, y),
@@ -859,6 +957,7 @@ class App(Window):
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
+        # Draw the game title at the center top
         self.draw_text(
             "Fate of the Gods",
             V(
@@ -873,6 +972,8 @@ class App(Window):
         )
 
     def _draw_new_game(self):
+        # Draw the new game screen, including god selection list, god info, and the start button
+        # Draw left panel for god selection
         self.fill_rect(
             V(self.screen_left.x, self.screen_top.y),
             V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
@@ -880,6 +981,7 @@ class App(Window):
             int(2 * self.scale),
             Color(50, 50, 50),
         )
+        # Draw right panel for god image/info
         self.fill_rect(
             V(self.screen_right.x, self.screen_top.y),
             V(
@@ -890,6 +992,7 @@ class App(Window):
             int(2 * self.scale),
             Color(50, 50, 50),
         )
+        # Draw center panel for god info
         self.fill_rect(
             V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
             V(
@@ -898,6 +1001,7 @@ class App(Window):
             ),
             Color(0, 0, 0),
         )
+        # Draw lower panel for god info
         self.fill_rect(
             V(
                 self.screen_left.x + (150 * self.scale),
@@ -906,6 +1010,7 @@ class App(Window):
             V(self.screen_right.x, self.screen_bottom.y),
             Color(0, 0, 0),
         )
+        # Draw title
         self.draw_text(
             "Select Your God",
             V(
@@ -916,7 +1021,9 @@ class App(Window):
             Color(255, 255, 255),
             Origin.CENTER,
         )
+        # Draw god selection buttons
         for i, god in enumerate(self.gods):
+            # Calculate bounding box for each god selection
             hover = is_point_in_rect(
                 self.mouse_pos,
                 V(
@@ -935,6 +1042,7 @@ class App(Window):
                     - (30 * self.scale),
                 ),
             )
+            # Highlight selection/hover
             if hover and self.new_game_selected_god == i:
                 color = Color(60, 60, 60)
             elif hover:
@@ -961,6 +1069,7 @@ class App(Window):
                 ),
                 color,
             )
+            # Draw god name
             self.draw_text(
                 god.name,
                 V(
@@ -971,9 +1080,11 @@ class App(Window):
                 Color(200, 220, 200),
                 Origin.TOP,
             )
+        # Draw selected god info and image
         if self.new_game_selected_god is not None:
             selected_god = self.gods[self.new_game_selected_god]
             try:
+                # Draw god image with animation
                 self.draw_image(
                     self.god_images[selected_god.image],
                     V(
@@ -988,7 +1099,13 @@ class App(Window):
                     antialiasing=True,
                 )
             except Exception:
-                raise Exception(f"Failed to load image for god '{selected_god.name}' at path: {get_asset_path(f'images/god/{selected_god.image}/{selected_god.image}.png')}")
+                raise Exception(f"Failed to load image for god '{
+                    selected_god.name}' at path: {
+                    get_asset_path(
+                        f'images/god/{
+                            selected_god.image}/{
+                            selected_god.image}.png')}")
+            # Draw god name
             self.draw_text(
                 selected_god.name,
                 V(
@@ -999,6 +1116,7 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.TOP_LEFT,
             )
+            # Draw god info (word-wrapped)
             self.draw_text_word_wrap(
                 selected_god.info,
                 V(
@@ -1014,6 +1132,7 @@ class App(Window):
                 )
                 * 2,
             )
+        # Draw the "Start" button (bottom right)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -1058,6 +1177,8 @@ class App(Window):
         self._draw_settings(False)
 
     def _draw_playing(self):
+        # Draw the main gameplay screen
+        # Draw background scene image for the current screen
         image_name = self.game.god.tree.screens[self.game.current_screen_index].image
         scene_img = self.scene_images.get(image_name)
         if scene_img is None:
@@ -1071,6 +1192,7 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
+        # Get current screen object
         if self.game is not None:
             try:
                 current_screen = self.game.god.tree.screens[
@@ -1080,6 +1202,7 @@ class App(Window):
                 current_screen = None
         else:
             current_screen = None
+        # Draw heading and main text with links
         heading_text = (
             current_screen.title if current_screen is not None else "Heading text"
         )
@@ -1109,6 +1232,7 @@ class App(Window):
                 self.screen_right.x - (-230 * self.scale) + (-10 * self.scale)
             ),
         )
+        # Draw pause button (bottom left)
         hover = (
             distance(
                 self.mouse_pos,
@@ -1127,6 +1251,7 @@ class App(Window):
             10 * self.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
+        # Draw pause icon (two vertical lines)
         self.draw_line(
             V(
                 (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
@@ -1153,14 +1278,18 @@ class App(Window):
         )
 
     def _draw_paused(self):
+        # Draw the paused overlay/menu
         if "--remove-transparency" not in self.argv:
+            # Draw gameplay screen faded out behind pause menu
             self._draw_playing()
             self.fill_rect(
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
             )
+        # Draw pause menu buttons
         buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
         for i, button in enumerate(buttons):
             x = 0
+            # Calculate y position for each button
             y = (
                 self.screen_top.y
                 - (
@@ -1184,6 +1313,7 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
+            # Draw button background and outline
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             self.fill_rounded_rect(
                 V(ax, ay),
@@ -1201,6 +1331,7 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 1,
             )
+            # Draw button label
             self.draw_text(
                 button,
                 V(x, y),
@@ -1230,7 +1361,11 @@ class App(Window):
         self._draw_settings(True)
 
     def draw(self):
-        logger.debug(f"App.draw() called. State: {getattr(self, 'state', None)}")
+        logger.debug(f"App.draw() called. State: {
+                getattr(
+                    self,
+                    'state',
+                    None)}")
         self.clear(Color(0, 0, 0))
         try:
             if self.state == State.INTRO:
