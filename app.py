@@ -1362,10 +1362,10 @@ class App(Window):
 
     def draw(self):
         logger.debug(f"App.draw() called. State: {
-                getattr(
-                    self,
-                    'state',
-                    None)}")
+            getattr(
+                self,
+                'state',
+                None)}")
         self.clear(Color(0, 0, 0))
         try:
             if self.state == State.INTRO:
