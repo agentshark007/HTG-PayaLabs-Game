@@ -2,18 +2,21 @@
 # Fate of the Gods
 
 ## Description
+
 Fate of the Gods is an open-source project currently in development. It is developed by PayaLabs, led by Andru Cupala.
 
-When you run the game, it opens a window and displays the main menu. From there, you can start a new game, load a saved game, or access the settings.
+Fate of the Gods is a choose-your-own-adventure style game where the player takes on the role of a greek god and makes decisions that affect their fate and the fate of their followers. The game is designed to be replayable, with multiple paths and endings based on the player's choices.
+
+When the game is run, a window is shown with a main menu. From there, the player can start a new game and make a series of decisions to decide the fate of the god they chose.
 
 ## Project Structure
 
 * `main.py` – Entry point for game.
 * `app.py` – Main game class.
 * `pgiud.py` – Graphics engine.
-* `remove_blank_lines.py` - Format assist program to clear blank lines.
 * `format.sh` - Formats the code for a commit.
 * `assets/` – Assets folder containing images, fonts, sounds, and other resources.
+* `data/` - Data folder containing saves and settings. Included in .gitignore, so it is not tracked by git.
 
 ## Usage
 
@@ -26,6 +29,7 @@ When you run the game, it opens a window and displays the main menu. From there,
 `pgiud` version `1.3` is included in the repository, so you do not need to install it separately.
 
 ## Developers
+
 All developers listed here are part of PayaLabs.
 
 - Game designer: Aislinn Haist
