@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import random
+import shutil
 import string
 import sys
 from enum import Enum
@@ -15,7 +16,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("FateOfTheGods")
-data_directory = "data/"
 
 
 def is_between(x, a, b):
@@ -81,15 +81,18 @@ def distance(a, b):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def get_asset_path(path):
+def get_absolute_path(path):
     """
     Get the absolute file path to an asset file.
     Args:
-        path: Relative path within the assets directory (e.g., "images/god/ares.png")
+        path: Relative path within the assets directory (e.g., "assets/images/god/ares.png")
     Returns:
         Absolute path to the asset file
     """
-    return str(os.path.join(BASE_DIR, "assets", path))
+    return str(os.path.join(BASE_DIR, path))
+
+
+data_directory = get_absolute_path("data/")
 
 
 class State(Enum):
@@ -285,6 +288,43 @@ class App(Window):
         logger.debug("No log level argument found.")
         return None
 
+    def _initialize_saving(self):
+        """
+        Ensure data_directory has exactly a saves folder and settings.txt file.
+        If structure is missing or has extras, reset the directory and restore defaults.
+        """
+        expected_entries = {"saves", "settings.txt"}
+        data_dir_exists = os.path.isdir(data_directory)
+        current_entries = set(os.listdir(data_directory)) if data_dir_exists else set()
+        valid_structure = (
+            data_dir_exists
+            and current_entries == expected_entries
+            and os.path.isdir(os.path.join(data_directory, "saves"))
+            and os.path.isfile(os.path.join(data_directory, "settings.txt"))
+        )
+        if valid_structure:
+            logger.debug("Saving directory structure is valid.")
+            return
+        logger.warning(
+            "Invalid save data structure detected in '%s'. Resetting data directory.",
+            data_directory,
+        )
+        os.makedirs(data_directory, exist_ok=True)
+        for name in os.listdir(data_directory):
+            path = os.path.join(data_directory, name)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+        os.makedirs(os.path.join(data_directory, "saves"), exist_ok=True)
+        default_settings_path = get_absolute_path("assets/default_settings.txt")
+        settings_path = os.path.join(data_directory, "settings.txt")
+        with open(default_settings_path, "r", encoding="utf-8") as src, open(
+            settings_path, "w", encoding="utf-8"
+        ) as dst:
+            dst.write(src.read())
+        logger.info("Save data directory reset and defaults restored.")
+
     def _setup_state(self):
         """
         Set initial state based on command-line arguments.
@@ -308,10 +348,12 @@ class App(Window):
         logger.info("Initializing application...")
         try:
             self.scale = 1.0
+            self._initialize_saving()
+            logger.debug("Saving initialization complete.")
             self._setup_state()
             logger.debug("State setup complete.")
             self._load_assets()
-            logger.debug("Assets loaded.")
+            logger.debug("Assets loaded successfully.")
             self._initialize_intro()
             logger.debug("Intro initialized.")
             self._initialize_button_list_settings()
@@ -342,39 +384,51 @@ class App(Window):
         logger.info("Loading assets...")
         try:
             # Load scene background images
-            logger.info("Loading scene images from 'images/scene'...")
-            file_names = os.listdir(get_asset_path("images/scene"))
+            logger.info("Loading scene images from 'assets/images/scene'...")
+            file_names = os.listdir(get_absolute_path("assets/images/scene"))
             self.scene_images = {}
             for file_name in file_names:
                 logger.debug(f"Loading scene image: {file_name}")
-                img_path = get_asset_path(os.path.join("images/scene", file_name))
+                img_path = get_absolute_path(
+                    os.path.join("assets/images/scene", file_name)
+                )
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
                 logger.info(f"Loaded scene image: {file_name} from {img_path}")
             # Load god character portrait images
-            logger.info("Loading god images from 'images/god'...")
-            file_names = os.listdir(get_asset_path("images/god"))
+            logger.info("Loading god images from 'assets/images/god'...")
+            file_names = os.listdir(get_absolute_path("assets/images/god"))
             self.god_images = {}
             for file_name in file_names:
                 logger.debug(f"Loading god image: {file_name}")
-                img_path = get_asset_path(os.path.join("images/god", file_name))
+                img_path = get_absolute_path(
+                    os.path.join("assets/images/god", file_name)
+                )
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
                 logger.info(f"Loaded god image: {file_name} from {img_path}")
             # Load fonts for UI text rendering
             logger.info("Loading fonts...")
-            self.heading_font = Font(get_asset_path("fonts/Silkscene-Regular.ttf"))
-            self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
+            self.heading_font = Font(
+                get_absolute_path("assets/fonts/Silkscreen-Regular.ttf")
+            )
+            self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
             # Load intro sequence logos
             logger.info("Loading logos...")
             self.intro_payalabs_logo = Image(
-                get_asset_path("images/intro/payalabs.png")
+                get_absolute_path("assets/images/intro/payalabs.png")
             )
-            self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
-            self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
+            self.intro_pgiud_logo = Image(
+                get_absolute_path("assets/images/intro/pgiud.png")
+            )
+            self.intro_pygame_logo = Image(
+                get_absolute_path("assets/images/intro/pygame.png")
+            )
             # Load intro sequence sound effect (can be disabled via
             # --disable-sound)
             logger.info("Loading sound...")
             if "--disable-sound" not in self.argv:
-                self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
+                self.intro_boom_sound = Sound(
+                    get_absolute_path("assets/sounds/intro_boom.mp3")
+                )
         except Exception:
             logger.error("Error loading assets:", exc_info=True)
             raise
@@ -382,11 +436,11 @@ class App(Window):
 
     def _load_data(self):
         """
-        Load god character data from text files in the data/gods directory.
+        Load god character data from text files in the assets/data/gods directory.
         Parses god metadata and story trees for all available characters.
         """
-        logger.info("Loading god data from 'data/gods'...")
-        gods_folder = get_asset_path("data/gods")
+        logger.info("Loading god data from 'assets/data/gods'...")
+        gods_folder = get_absolute_path("assets/data/gods")
         self.gods_text = []
         god_files = []
         # Read all god .txt files from the data directory
@@ -612,7 +666,7 @@ class App(Window):
     def _update_credits(self):
         """
         Handle updates for the credits scene.
-        Currently a placeholder for future credits implementation.
+        Currently, a placeholder for future credits implementation.
         """
         pass
 
@@ -1254,8 +1308,8 @@ class App(Window):
             except Exception:
                 raise Exception(f"Failed to load image for god '{
                     selected_god.name}' at path: {
-                    get_asset_path(
-                        f'images/god/{
+                    get_absolute_path(
+                        f'assets/images/god/{
                             selected_god.image}/{
                             selected_god.image}.png')}")
             # Draw god name
