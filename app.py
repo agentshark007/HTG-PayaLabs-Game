@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import random
 import string
 import sys
 from enum import Enum
@@ -388,6 +389,51 @@ class App(Window):
         # Track selected god for new game
         self.new_game_selected_god = None
 
+    def _parse_weighted_targets(self, raw_target: str):
+        """
+        Parse target lists like "b3, b4*2, b5" into [("b3", 1.0), ("b4", 2.0), ("b5", 1.0)].
+        """
+        parsed_targets = []
+        for token in raw_target.split(","):
+            option = token.strip()
+            if not option:
+                continue
+
+            target_id = option
+            weight = 1.0
+
+            # Weight syntax: target_id*weight (e.g. b4*3)
+            if "*" in option:
+                target_part, weight_part = option.rsplit("*", 1)
+                target_id = target_part.strip()
+                try:
+                    weight = float(weight_part.strip())
+                except ValueError:
+                    logger.warning(f"Invalid weight '{
+                            weight_part.strip()}' in target option '{option}'.")
+                    continue
+
+            if not target_id:
+                logger.warning(f"Empty target id in option '{option}'.")
+                continue
+            if weight <= 0:
+                logger.warning(
+                    f"Weight must be greater than zero for target '{target_id}', got {weight}."
+                )
+                continue
+
+            parsed_targets.append((target_id, weight))
+
+        return parsed_targets
+
+    def _choose_target_id(self, raw_target: str):
+        weighted_targets = self._parse_weighted_targets(raw_target)
+        if not weighted_targets:
+            return None
+        target_ids = [target_id for target_id, _ in weighted_targets]
+        weights = [weight for _, weight in weighted_targets]
+        return random.choices(target_ids, weights=weights, k=1)[0]
+
     def _update_settings(self, from_game: bool):
         # Handles updates for the settings menu or in-game settings overlay
         # Check if mouse is over the settings button (bottom right)
@@ -612,11 +658,19 @@ class App(Window):
                 pressed_now = self.keydown(key_enum)
                 was_pressed = key_enum in self.keys_down_last_frame
                 if pressed_now and not was_pressed:
-                    target_id = link.target
+                    target_id = self._choose_target_id(link.target)
+                    if target_id is None:
+                        continue
+                    found_target = False
                     for idx, scene in enumerate(current_game.god.tree.scenes):
                         if scene.id == target_id:
                             current_game.current_scene_index = idx
+                            found_target = True
                             break
+                    if not found_target:
+                        logger.warning(
+                            f"Link target '{target_id}' was not found in scene tree."
+                        )
 
     def _update_paused(self):
         # Handles updates for the paused state, including pause menu button
