@@ -86,14 +86,11 @@ class Scene:
         self.id = scene_id
         lines = split_nonempty_lines(encoded)
         links = []
-        self.title = ""
         self.text = ""
         self.image = ""
         # Parse each line for scene attributes or links
         for line in lines:
-            if line.startswith("title: "):
-                self.title = line[len("title: ") :].strip()
-            elif line.startswith("text: "):
+            if line.startswith("text: "):
                 self.text = line[len("text: ") :].strip()
             elif line.startswith("image: "):
                 self.image = line[len("image: ") :].strip()
@@ -1194,10 +1191,7 @@ class App(Window):
                 current_scene = None
         else:
             current_scene = None
-        # Draw heading and main text with links
-        heading_text = (
-            current_scene.title if current_scene is not None else "Heading text"
-        )
+        # Draw text with links
         links = []
         current_links = current_scene.links if current_scene is not None else []
         for i, link in enumerate(current_links):
@@ -1206,18 +1200,11 @@ class App(Window):
         main_text = (
             f"{current_scene.text}\nPress:\n{links_text}"
             if current_scene is not None
-            else "Main text"
-        )
-        self.draw_text(
-            heading_text,
-            V(-230 * self.scale, 40 * self.scale),
-            font=self.heading_font.new_size(int(self.heading_font.size * self.scale)),
-            color=Color(255, 255, 255),
-            origin=Origin.TOP_LEFT,
+            else "*No scene data*"
         )
         self.draw_text_word_wrap(
             main_text,
-            V(-230 * self.scale, 10 * self.scale),
+            V(-230 * self.scale, 35 * self.scale),
             self.main_font.new_size(int(self.main_font.size * self.scale)),
             Color(255, 255, 255),
             Origin.TOP_LEFT,

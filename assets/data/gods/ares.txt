@@ -6,7 +6,6 @@ image: ares
 #tree
 
 ##a1
-title: Welcome as Ares!
 text: You have just begun as the god Ares! What would you like to do?
 image: trees
 b1: Fight a war
@@ -14,13 +13,13 @@ b2: Go to sleep
 b3: Kill somebody
 
 ##b1
-title: You are fighting a war!
+text: You have chosen to fight a war!
 image: trees
 
 ##b2
-title: You are sleeping.
+text: You have chosen to go to sleep! You wake up and find that you have been replaced by another god. You lose!
 image: trees
 
 ##b3
-title: You have been assigned the judge to find the killer, which is you.
+text: You have chosen to kill somebody! You have killed a random person, but they were actually a potato. You lose!
 image: test-scene
