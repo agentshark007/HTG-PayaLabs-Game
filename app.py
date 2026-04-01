@@ -15,8 +15,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("FateOfTheGods")
-
-
 data_directory = "data/"
 
 
@@ -24,12 +22,10 @@ def is_between(x, a, b):
     """
     Check if a value is strictly between two bounds (exclusive), or equal if all are the same.
     Works correctly regardless of whether a > b or a < b.
-
     Args:
         x: The value to check
         a: First bound
         b: Second bound
-
     Returns:
         True if x is between a and b, or equal if a == b == x
     """
@@ -49,12 +45,10 @@ def is_between(x, a, b):
 def is_point_in_rect(point, a, b):
     """
     Check if a point is inside a rectangle defined by two corners.
-
     Args:
         point: A point object with x and y attributes
         a: First corner of the rectangle
         b: Second corner of the rectangle (can be diagonal)
-
     Returns:
         True if the point is inside the rectangle
     """
@@ -64,10 +58,8 @@ def is_point_in_rect(point, a, b):
 def split_nonempty_lines(text: str):
     """
     Split text into non-empty lines with whitespace stripped.
-
     Args:
         text: Input text to split
-
     Returns:
         List of non-empty, stripped lines
     """
@@ -77,11 +69,9 @@ def split_nonempty_lines(text: str):
 def distance(a, b):
     """
     Calculate the Euclidean distance between two points.
-
     Args:
         a: First point (must have x and y attributes)
         b: Second point (must have x and y attributes)
-
     Returns:
         Euclidean distance between the two points
     """
@@ -94,10 +84,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 def get_asset_path(path):
     """
     Get the absolute file path to an asset file.
-
     Args:
         path: Relative path within the assets directory (e.g., "images/god/ares.png")
-
     Returns:
         Absolute path to the asset file
     """
@@ -138,7 +126,6 @@ class Scene:
     """
     Represents a single scene/node in the game's story tree.
     Each scene contains text content, an optional background image, and links to other scenes.
-
     Format (text):
         text: "The scene narrative content"
         image: "image_name_without_extension"
@@ -363,7 +350,6 @@ class App(Window):
                 img_path = get_asset_path(os.path.join("images/scene", file_name))
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
                 logger.info(f"Loaded scene image: {file_name} from {img_path}")
-
             # Load god character portrait images
             logger.info("Loading god images from 'images/god'...")
             file_names = os.listdir(get_asset_path("images/god"))
@@ -373,12 +359,10 @@ class App(Window):
                 img_path = get_asset_path(os.path.join("images/god", file_name))
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
                 logger.info(f"Loaded god image: {file_name} from {img_path}")
-
             # Load fonts for UI text rendering
             logger.info("Loading fonts...")
             self.heading_font = Font(get_asset_path("fonts/Silkscene-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
-
             # Load intro sequence logos
             logger.info("Loading logos...")
             self.intro_payalabs_logo = Image(
@@ -386,13 +370,11 @@ class App(Window):
             )
             self.intro_pgiud_logo = Image(get_asset_path("images/intro/pgiud.png"))
             self.intro_pygame_logo = Image(get_asset_path("images/intro/pygame.png"))
-
             # Load intro sequence sound effect (can be disabled via
             # --disable-sound)
             logger.info("Loading sound...")
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(get_asset_path("sounds/intro_boom.mp3"))
-
         except Exception:
             logger.error("Error loading assets:", exc_info=True)
             raise
@@ -407,7 +389,6 @@ class App(Window):
         gods_folder = get_asset_path("data/gods")
         self.gods_text = []
         god_files = []
-
         # Read all god .txt files from the data directory
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
@@ -421,7 +402,6 @@ class App(Window):
                 except Exception:
                     logger.error(f"Failed to load god from file: {name}", exc_info=True)
                     continue
-
         # Parse god objects from loaded text
         self.gods = []
         for i, god_text in enumerate(self.gods_text):
@@ -496,10 +476,8 @@ class App(Window):
             option = token.strip()
             if not option:
                 continue
-
             target_id = option
             weight = 1.0
-
             # Weight syntax: target_id*weight (e.g. b4*3)
             if "*" in option:
                 target_part, weight_part = option.rsplit("*", 1)
@@ -510,7 +488,6 @@ class App(Window):
                     logger.warning(f"Invalid weight '{
                         weight_part.strip()}' in target option '{option}'.")
                     continue
-
             if not target_id:
                 logger.warning(f"Empty target id in option '{option}'.")
                 continue
@@ -519,9 +496,7 @@ class App(Window):
                     f"Weight must be greater than zero for target '{target_id}', got {weight}."
                 )
                 continue
-
             parsed_targets.append((target_id, weight))
-
         return parsed_targets
 
     def _choose_target_id(self, raw_target: str):
@@ -536,7 +511,6 @@ class App(Window):
         """
         Handle updates for the settings menu or in-game settings overlay.
         Manages settings button interactions and save file clearing.
-
         Args:
             from_game: True if called during gameplay (overlay), False from main menu
         """
@@ -556,7 +530,6 @@ class App(Window):
                     self.set_state(State.PAUSED)
                 else:
                     self.set_state(State.MAIN_MENU)
-
         # Check if mouse is over the "clear saves" button (top left area)
         hover = is_point_in_rect(
             self.mouse_pos,
@@ -581,7 +554,6 @@ class App(Window):
         """
         Handle updates for the load game menu or in-game load overlay.
         Manages navigation and returning to previous state.
-
         Args:
             from_game: True if called during gameplay (overlay), False from main menu
         """
