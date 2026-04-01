@@ -33,6 +33,7 @@ run_command() {
 echo -e "${BLUE}[START]: Formatting started${RESET}"
 
 # Run the commands with quiet output and error logging
+run_command "python rbl.py app.py" "rbl"
 run_command "autopep8 --recursive --aggressive --in-place ." "autopep8"
 run_command "isort ." "isort"
 run_command "black ." "black"
