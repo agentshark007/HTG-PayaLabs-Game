@@ -1,8 +1,10 @@
 import logging
 import math
 import os
+import string
 import sys
 from enum import Enum
+from typing import Optional
 
 from pgiud import *
 
@@ -72,22 +74,22 @@ class State(Enum):
 
 
 class Link:
-    # Navigational link between screens in the game tree
+    # Navigational link between scenes in the game tree
     def __init__(self, target, label):
-        self.target = target  # Target screen id
+        self.target = target  # Target scene id
         self.label = label  # Link text
 
 
-class Screen:
-    # Single screen/page in the game tree
-    def __init__(self, encoded: str, screen_id: str = None):
-        self.id = screen_id
+class Scene:
+    # Single scene in the game tree
+    def __init__(self, encoded: str, scene_id: str = None):
+        self.id = scene_id
         lines = split_nonempty_lines(encoded)
         links = []
         self.title = ""
         self.text = ""
         self.image = ""
-        # Parse each line for screen attributes or links
+        # Parse each line for scene attributes or links
         for line in lines:
             if line.startswith("title: "):
                 self.title = line[len("title: ") :].strip()
@@ -110,14 +112,14 @@ class Screen:
 
 
 class Tree:
-    # Tree of screens (story nodes) for a god
+    # Tree of scenes (story nodes) for a god
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
-        screens = []
+        scenes = []
         ready = False
-        screen_text = ""
-        screen_id = None
-        first_screen_index = None
+        scene_text = ""
+        scene_id = None
+        first_scene_index = None
         # Parse the tree structure from encoded text
         for line in lines:
             if line.startswith("#tree"):
@@ -126,21 +128,21 @@ class Tree:
             if not ready:
                 continue
             if line.startswith("##"):
-                # New screen node
-                if screen_id is not None:
-                    screens.append(Screen(screen_text, screen_id))
-                screen_id = line.removeprefix("##").strip()
-                screen_text = ""
-                if first_screen_index is None:
-                    first_screen_index = len(screens)
+                # New scene node
+                if scene_id is not None:
+                    scenes.append(Scene(scene_text, scene_id))
+                scene_id = line.removeprefix("##").strip()
+                scene_text = ""
+                if first_scene_index is None:
+                    first_scene_index = len(scenes)
             else:
-                screen_text += line + "\n"
-        if screen_id is not None and screen_text:
-            screens.append(Screen(screen_text, screen_id))
-        self.screens = screens
-        # Index of the first screen in the tree
-        self.first_screen_index = (
-            first_screen_index if first_screen_index is not None else 0
+                scene_text += line + "\n"
+        if scene_id is not None and scene_text:
+            scenes.append(Scene(scene_text, scene_id))
+        self.scenes = scenes
+        # Index of the first scene in the tree
+        self.first_scene_index = (
+            first_scene_index if first_scene_index is not None else 0
         )
 
 
@@ -159,14 +161,14 @@ class God:
             elif line == "#tree":
                 break
         self.tree = Tree(encoded)
-        self.start_screen_index = self.tree.first_screen_index
+        self.start_scene_index = self.tree.first_scene_index
 
 
 class Game:
     # Game session for a selected god
     def __init__(self, god: God):
         self.god = god
-        self.current_screen_index = god.start_screen_index
+        self.current_scene_index = god.start_scene_index
 
 
 class App(Window):
@@ -256,7 +258,7 @@ class App(Window):
             logger.debug("Data loaded.")
             self._initialize_new_game()
             logger.debug("New game initialized.")
-        except Exception as e:
+        except Exception:
             logger.error("Initialization failed with an error:", exc_info=True)
             raise
         finally:
@@ -294,7 +296,7 @@ class App(Window):
 
             # Load fonts
             logger.info("Loading fonts...")
-            self.heading_font = Font(get_asset_path("fonts/Silkscreen-Regular.ttf"))
+            self.heading_font = Font(get_asset_path("fonts/Silkscene-Regular.ttf"))
             self.main_font = Font(get_asset_path("fonts/VT323-Regular.ttf"))
 
             # Load intro logos
@@ -477,7 +479,7 @@ class App(Window):
                 self.set_state(State.MAIN_MENU)
 
     def _update_credits(self):
-        # Handles updates for the credits screen (currently a placeholder)
+        # Handles updates for the credits scene (currently a placeholder)
         pass
 
     def _update_quit(self):
@@ -527,7 +529,7 @@ class App(Window):
                     self.new_game_selected_god = None
 
     def _update_new_game(self):
-        # Handles updates for the new game screen, including god selection and
+        # Handles updates for the new game scene, including god selection and
         # starting the game
         for i, god in enumerate(self.gods):
             # Calculate bounding box for each god selection button
@@ -589,19 +591,20 @@ class App(Window):
         if hover:
             if self.mouse_pressed:
                 self.set_state(State.PAUSED)
-        # Get the current screen for the selected god
-        if self.game is not None:
+        # Get the current scene for the selected god
+        current_game = self.game
+        if current_game is not None:
             try:
-                current_screen = self.game.god.tree.screens[
-                    self.game.current_screen_index
+                current_scene: Optional[Scene] = current_game.god.tree.scenes[
+                    current_game.current_scene_index
                 ]
             except Exception:
-                current_screen = None
+                current_scene = None
         else:
-            current_screen = None
-        # Handle clickable links on the current screen
-        if current_screen is not None and current_screen.links:
-            for i, link in enumerate(current_screen.links):
+            current_scene = None
+        # Handle clickable links on the current scene
+        if current_scene is not None and current_scene.links:
+            for i, link in enumerate(current_scene.links):
                 if i >= 26:
                     break
                 key_name = chr(ord("A") + i)
@@ -613,9 +616,9 @@ class App(Window):
                 was_pressed = key_enum in self.keys_down_last_frame
                 if pressed_now and not was_pressed:
                     target_id = link.target
-                    for idx, screen in enumerate(self.game.god.tree.screens):
-                        if screen.id == target_id:
-                            self.game.current_screen_index = idx
+                    for idx, scene in enumerate(current_game.god.tree.scenes):
+                        if scene.id == target_id:
+                            current_game.current_scene_index = idx
                             break
 
     def _update_paused(self):
@@ -669,11 +672,6 @@ class App(Window):
 
     def update(self):
         # Main update loop for the application
-        logger.debug(f"App.update() called. State: {
-            getattr(
-                self,
-                'state',
-                None)}")
         # Detect mouse click (primary button pressed this frame)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
@@ -686,37 +684,26 @@ class App(Window):
         try:
             # State machine: call update method for current state
             if self.state == State.INTRO:
-                logger.debug("Updating INTRO state.")
                 self._update_intro()
             elif self.state == State.CREDITS:
-                logger.debug("Updating CREDITS state.")
                 self._update_credits()
             elif self.state == State.QUIT:
-                logger.debug("Updating QUIT state.")
                 self._update_quit()
             elif self.state == State.MAIN_MENU:
-                logger.debug("Updating MAIN_MENU state.")
                 self._update_main_menu()
             elif self.state == State.NEW_GAME:
-                logger.debug("Updating NEW_GAME state.")
                 self._update_new_game()
             elif self.state == State.LOAD_GAME_MENU:
-                logger.debug("Updating LOAD_GAME_MENU state.")
                 self._update_load_game_menu()
             elif self.state == State.SETTINGS_MENU:
-                logger.debug("Updating SETTINGS_MENU state.")
                 self._update_settings_menu()
             elif self.state == State.PLAYING:
-                logger.debug("Updating PLAYING state.")
                 self._update_playing()
             elif self.state == State.PAUSED:
-                logger.debug("Updating PAUSED state.")
                 self._update_paused()
             elif self.state == State.LOAD_GAME_PLAYING:
-                logger.debug("Updating LOAD_GAME_PLAYING state.")
                 self._update_load_game_playing()
             elif self.state == State.SETTINGS_PLAYING:
-                logger.debug("Updating SETTINGS_PLAYING state.")
                 self._update_settings_playing()
             else:
                 logger.error(f"Unknown state: {self.state}")
@@ -740,7 +727,7 @@ class App(Window):
         # Draw the settings overlay/menu
         if from_game:
             if "--remove-transparency" not in self.argv:
-                # Draw gameplay screen faded out behind settings
+                # Draw gameplay scene faded out behind settings
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -820,7 +807,7 @@ class App(Window):
         # Draw the load game overlay/menu
         if from_game:
             if "--remove-transparency" not in self.argv:
-                # Draw gameplay screen faded out behind load game overlay
+                # Draw gameplay scene faded out behind load game overlay
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -893,11 +880,11 @@ class App(Window):
             pass
 
     def _draw_credits(self):
-        # Draw the credits screen (currently a placeholder)
+        # Draw the credits scene (currently a placeholder)
         pass
 
     def _draw_quit(self):
-        # Draw the quit screen (currently a placeholder)
+        # Draw the quit scene (currently a placeholder)
         pass
 
     def _draw_main_menu(self):
@@ -972,7 +959,7 @@ class App(Window):
         )
 
     def _draw_new_game(self):
-        # Draw the new game screen, including god selection list, god info, and the start button
+        # Draw the new game scene, including god selection list, god info, and the start button
         # Draw left panel for god selection
         self.fill_rect(
             V(self.screen_left.x, self.screen_top.y),
@@ -1177,9 +1164,14 @@ class App(Window):
         self._draw_settings(False)
 
     def _draw_playing(self):
-        # Draw the main gameplay screen
-        # Draw background scene image for the current screen
-        image_name = self.game.god.tree.screens[self.game.current_screen_index].image
+        # Draw the main gameplay scene
+        # Draw background scene image for the current scene
+        current_game = self.game
+        if current_game is None:
+            return
+        image_name = current_game.god.tree.scenes[
+            current_game.current_scene_index
+        ].image
         scene_img = self.scene_images.get(image_name)
         if scene_img is None:
             scene_img = next(iter(self.scene_images.values()), None)
@@ -1192,27 +1184,28 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
-        # Get current screen object
-        if self.game is not None:
+        # Get current scene object
+        if current_game is not None:
             try:
-                current_screen = self.game.god.tree.screens[
-                    self.game.current_screen_index
+                current_scene: Optional[Scene] = current_game.god.tree.scenes[
+                    current_game.current_scene_index
                 ]
             except Exception:
-                current_screen = None
+                current_scene = None
         else:
-            current_screen = None
+            current_scene = None
         # Draw heading and main text with links
         heading_text = (
-            current_screen.title if current_screen is not None else "Heading text"
+            current_scene.title if current_scene is not None else "Heading text"
         )
         links = []
-        for i, link in enumerate(current_screen.links):
-            links.append(f"{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]}: {link.label}")
+        current_links = current_scene.links if current_scene is not None else []
+        for i, link in enumerate(current_links):
+            links.append(f"{string.ascii_uppercase[i]}: {link.label}")
         links_text = "\n".join(links)
         main_text = (
-            f"{current_screen.text}\nPress:\n{links_text}"
-            if current_screen is not None
+            f"{current_scene.text}\nPress:\n{links_text}"
+            if current_scene is not None
             else "Main text"
         )
         self.draw_text(
@@ -1280,7 +1273,7 @@ class App(Window):
     def _draw_paused(self):
         # Draw the paused overlay/menu
         if "--remove-transparency" not in self.argv:
-            # Draw gameplay screen faded out behind pause menu
+            # Draw gameplay scene faded out behind pause menu
             self._draw_playing()
             self.fill_rect(
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -1361,45 +1354,29 @@ class App(Window):
         self._draw_settings(True)
 
     def draw(self):
-        logger.debug(f"App.draw() called. State: {
-            getattr(
-                self,
-                'state',
-                None)}")
         self.clear(Color(0, 0, 0))
         try:
             if self.state == State.INTRO:
-                logger.debug("Drawing INTRO state.")
                 self._draw_intro()
             elif self.state == State.CREDITS:
-                logger.debug("Drawing CREDITS state.")
                 self._draw_credits()
             elif self.state == State.QUIT:
-                logger.debug("Drawing QUIT state.")
                 self._draw_quit()
             elif self.state == State.MAIN_MENU:
-                logger.debug("Drawing MAIN_MENU state.")
                 self._draw_main_menu()
             elif self.state == State.NEW_GAME:
-                logger.debug("Drawing NEW_GAME state.")
                 self._draw_new_game()
             elif self.state == State.LOAD_GAME_MENU:
-                logger.debug("Drawing LOAD_GAME_MENU state.")
                 self._draw_load_game_menu()
             elif self.state == State.SETTINGS_MENU:
-                logger.debug("Drawing SETTINGS_MENU state.")
                 self._draw_settings_menu()
             elif self.state == State.PLAYING:
-                logger.debug("Drawing PLAYING state.")
                 self._draw_playing()
             elif self.state == State.PAUSED:
-                logger.debug("Drawing PAUSED state.")
                 self._draw_paused()
             elif self.state == State.LOAD_GAME_PLAYING:
-                logger.debug("Drawing LOAD_GAME_PLAYING state.")
                 self._draw_load_game_playing()
             elif self.state == State.SETTINGS_PLAYING:
-                logger.debug("Drawing SETTINGS_PLAYING state.")
                 self._draw_settings_playing()
             else:
                 logger.error(f"Unknown state: {self.state} in draw")
@@ -1420,7 +1397,7 @@ def main():
     try:
         App().start()
         logger.info("Application exited normally.")
-    except Exception as e:
+    except Exception:
         logger.exception("Unhandled exception in main entry point:")
         raise
 
