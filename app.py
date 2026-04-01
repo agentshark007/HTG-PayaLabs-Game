@@ -410,7 +410,7 @@ class App(Window):
                     weight = float(weight_part.strip())
                 except ValueError:
                     logger.warning(f"Invalid weight '{
-                            weight_part.strip()}' in target option '{option}'.")
+                        weight_part.strip()}' in target option '{option}'.")
                     continue
 
             if not target_id:
