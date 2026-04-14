@@ -411,8 +411,7 @@ class App(Window):
         for i, god_text in enumerate(self.gods_text):
             try:
                 self.gods.append(God(god_text))
-            except Exception as e:
-                file_name = god_files[i] if i < len(god_files) else "unknown"
+            except Exception:
                 continue
 
     def _initialize_intro(self):
@@ -466,6 +465,7 @@ class App(Window):
         Tracks which god the player has selected for a new playthrough.
         """
         self.new_game_selected_god: Optional[int] = None
+        self.game: Optional[Game] = None
 
     def _parse_weighted_targets(self, raw_target: str):
         """
@@ -736,15 +736,14 @@ class App(Window):
             if self.mouse_pressed:
                 self.set_state(State.PAUSED)
         # Get the current scene for the selected god
-        current_game = self.game
-        if current_game is not None:
-            try:
-                current_scene: Optional[Scene] = current_game.god.tree.scenes[
-                    current_game.current_scene_index
-                ]
-            except Exception:
-                current_scene = None
-        else:
+        current_game: Optional[Game] = self.game
+        if current_game is None:
+            return
+        try:
+            current_scene: Optional[Scene] = current_game.god.tree.scenes[
+                current_game.current_scene_index
+            ]
+        except Exception:
             current_scene = None
         # Handle clickable links on the current scene (keys A-Z trigger links)
         if current_scene is not None and current_scene.links:
@@ -1323,7 +1322,7 @@ class App(Window):
     def _draw_playing(self):
         # Draw the main gameplay scene
         # Draw background scene image for the current scene
-        current_game = self.game
+        current_game: Optional[Game] = self.game
         if current_game is None:
             return
         image_name = current_game.god.tree.scenes[
