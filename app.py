@@ -12,16 +12,6 @@ from pgiud import *
 
 
 def is_between(x, a, b):
-    """
-    Check if a value is strictly between two bounds (exclusive), or equal if all are the same.
-    Works correctly regardless of whether a > b or a < b.
-    Args:
-        x: The value to check
-        a: First bound
-        b: Second bound
-    Returns:
-        True if x is between a and b, or equal if a == b == x
-    """
     if a == b:
         return x == a
     elif a > b:
@@ -33,38 +23,14 @@ def is_between(x, a, b):
 
 
 def is_point_in_rect(point, a, b):
-    """
-    Check if a point is inside a rectangle defined by two corners.
-    Args:
-        point: A point object with x and y attributes
-        a: First corner of the rectangle
-        b: Second corner of the rectangle (can be diagonal)
-    Returns:
-        True if the point is inside the rectangle
-    """
     return is_between(point.x, a.x, b.x) and is_between(point.y, a.y, b.y)
 
 
 def split_nonempty_lines(text: str):
-    """
-    Split text into non-empty lines with whitespace stripped.
-    Args:
-        text: Input text to split
-    Returns:
-        List of non-empty, stripped lines
-    """
     return [line for line in text.splitlines() if line.strip()]
 
 
 def distance(a, b):
-    """
-    Calculate the Euclidean distance between two points.
-    Args:
-        a: First point (must have x and y attributes)
-        b: Second point (must have x and y attributes)
-    Returns:
-        Euclidean distance between the two points
-    """
     return math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2)
 
 
@@ -72,13 +38,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def get_absolute_path(path):
-    """
-    Get the absolute file path to an asset file.
-    Args:
-        path: Relative path within the assets directory (e.g., "assets/images/god/ares.png")
-    Returns:
-        Absolute path to the asset file
-    """
     return str(os.path.join(BASE_DIR, path))
 
 
@@ -86,11 +45,6 @@ data_directory = get_absolute_path("data/")
 
 
 class State(Enum):
-    """
-    Enumeration of all possible application and game states.
-    Controls the flow between different screens and game modes.
-    """
-
     INTRO = 1
     CREDITS = 2
     QUIT = 3
@@ -105,26 +59,12 @@ class State(Enum):
 
 
 class Link:
-    """
-    Represents a navigational link between scenes in the game story tree.
-    Players can click on links to navigate to different story branches.
-    """
-
     def __init__(self, target, label):
         self.target = target
         self.label = label
 
 
 class Scene:
-    """
-    Represents a single scene/node in the game's story tree.
-    Each scene contains text content, an optional background image, and links to other scenes.
-    Format (text):
-        text: "The scene narrative content"
-        image: "image_name_without_extension"
-        target_scene_id: "Link label text"
-    """
-
     def __init__(self, encoded: str, scene_id: str = None):
         self.id = scene_id
         lines = split_nonempty_lines(encoded)
@@ -149,11 +89,6 @@ class Scene:
 
 
 class Tree:
-    """
-    Represents the complete story tree for a god character.
-    Parses a structured text format containing multiple scenes and organizes them sequentially.
-    """
-
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         scenes = []
@@ -185,11 +120,6 @@ class Tree:
 
 
 class God:
-    """
-    Represents a selectable god character with their biographical information and story.
-    Each god has a name, description, portrait image, and a complete story tree.
-    """
-
     def __init__(self, encoded: str):
         self.name: str = ""
         self.info: str = ""
@@ -209,11 +139,6 @@ class God:
 
 
 class Game:
-    """
-    Represents an active game session for a selected god.
-    Tracks the current scene within the god's story tree during gameplay.
-    """
-
     def __init__(
         self, god: God, scene_id: str = None, seed: int = None, rng_draws: int = 0
     ):
@@ -234,12 +159,6 @@ class Game:
 
 
 class App(Window):
-    """
-    Main application class for "Fate of the Gods" interactive fiction game.
-    Inherits from Window to manage game rendering, input, and state transitions.
-    Coordinates all game systems including story progression, UI, audio, and saves.
-    """
-
     def __init__(self):
         super().__init__(
             width=480,
@@ -250,28 +169,16 @@ class App(Window):
         )
 
     def set_state(self, new_state: State):
-        """
-        Change the application state and log the transition.
-        """
         self.state = new_state
 
     def _find_arg_with_prefix(self, prefix):
-        """
-        Find the first command-line argument with the given prefix.
-        """
         result = next((s for s in self.argv if s.startswith(prefix)), None)
         return result
 
     def _parse_argv(self):
-        """
-        Parse command-line arguments (excluding script name).
-        """
         self.argv = sys.argv[1:]
 
     def _parse_log_level(self):
-        """
-        Parse log level from command-line arguments.
-        """
         level_arg = self._find_arg_with_prefix("--level=")
         if level_arg:
             result = level_arg.split("=", 1)[1]
@@ -279,10 +186,6 @@ class App(Window):
         return None
 
     def _initialize_saving(self):
-        """
-        Ensure data_directory has exactly a saves folder and settings.txt file.
-        If structure is missing or has extras, reset the directory and restore defaults.
-        """
         expected_entries = {"saves", "settings.txt"}
         data_dir_exists = os.path.isdir(data_directory)
         current_entries = set(os.listdir(data_directory)) if data_dir_exists else set()
@@ -310,9 +213,6 @@ class App(Window):
             dst.write(src.read())
 
     def _setup_state(self):
-        """
-        Set initial state based on command-line arguments.
-        """
         if "--skip-intro" in self.argv:
             self.state = State.MAIN_MENU
         else:
@@ -322,9 +222,6 @@ class App(Window):
         self.keys_down_last_frame = set()
 
     def initialize(self):
-        """
-        Main initialization routine for the application. Loads assets, data, and sets up state.
-        """
         self._parse_argv()
         try:
             self.scale = 1.0
@@ -343,16 +240,9 @@ class App(Window):
             pass
 
     def _initialize_logging(self, log_level=None):
-        """
-        Placeholder for custom logging setup if needed.
-        """
         pass
 
     def _load_assets(self):
-        """
-        Load all required game assets: images, fonts, and sounds.
-        Assets are organized into directories for scenes, gods, fonts, and audio.
-        """
         try:
             file_names = os.listdir(get_absolute_path("assets/images/scene"))
             self.scene_images = {}
@@ -389,10 +279,6 @@ class App(Window):
             raise
 
     def _load_data(self):
-        """
-        Load god character data from text files in the assets/data/gods directory.
-        Parses god metadata and story trees for all available characters.
-        """
         gods_folder = get_absolute_path("assets/data/gods")
         self.gods_text: list[str] = []
         god_files: list[str] = []
@@ -413,10 +299,6 @@ class App(Window):
                 continue
 
     def _initialize_intro(self):
-        """
-        Set up intro logo sequence timing and images.
-        Configures the sequence of logos displayed at game startup.
-        """
         self.intro_pre_delay = 1.5
         self.intro_logo_time = 1.0
         self.intro_post_delay = 2.0
@@ -429,10 +311,6 @@ class App(Window):
         ]
 
     def _initialize_button_list_settings(self):
-        """
-        Initialize UI layout and style settings for button lists used in menus.
-        Configures button positioning, colors, fonts, and visual styling.
-        """
         self.button_list_title_top_offset = 25
         self.button_list_title_font = self.heading_font.new_size(int(40 * self.scale))
         self.button_list_button_top_offset = 60
@@ -450,10 +328,6 @@ class App(Window):
         )
 
     def _initialize_settings(self):
-        """
-        Initialize default settings for volume and graphics mode.
-        These settings can be modified through the settings menu.
-        """
         self.volume = 1
         self.potato_mode = False
         self.save_seed_enabled = True
@@ -473,17 +347,10 @@ class App(Window):
             pass
 
     def _initialize_new_game(self):
-        """
-        Initialize tracking for new game state.
-        Tracks which god the player has selected for a new playthrough.
-        """
         self.new_game_selected_god: Optional[int] = None
         self.game: Optional[Game] = None
 
     def _initialize_load_game(self):
-        """
-        Initialize tracking for the load-game menu selection.
-        """
         self.load_game_selected_save: Optional[int] = None
         self.load_game_rename_mode = False
         self.load_game_rename_buffer = ""
@@ -491,9 +358,6 @@ class App(Window):
         self.load_game_rename_path: Optional[str] = None
 
     def _selection_item_rect(self, index: int):
-        """
-        Get the left-panel list item bounds used by the selection screens.
-        """
         return (
             V(
                 self.screen_left.x + (1 * self.scale),
@@ -513,9 +377,6 @@ class App(Window):
         )
 
     def _action_button_rect(self, index: int, from_game: bool):
-        """
-        Get the right-side action button bounds used by the load menu.
-        """
         button_width = 180 * self.scale
         button_height = 28 * self.scale
         list_right_x = self.screen_left.x + (149 * self.scale)
@@ -575,9 +436,6 @@ class App(Window):
         item_label,
         empty_text: str,
     ):
-        """
-        Draw the shared left-side selector layout used by list-based menus.
-        """
         self.fill_rect(
             V(self.screen_left.x, self.screen_top.y),
             V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
@@ -631,9 +489,6 @@ class App(Window):
             )
 
     def _update_selection_list(self, items, selected_index: Optional[int]):
-        """
-        Update shared selector state and return the clicked item index, if any.
-        """
         for i, _item in enumerate(items):
             a, b = self._selection_item_rect(i)
             hover = is_point_in_rect(self.mouse_pos, a, b)
@@ -642,9 +497,6 @@ class App(Window):
         return selected_index
 
     def _load_save_entries(self):
-        """
-        Scan data/saves for save files and return their display metadata.
-        """
         saves_folder = get_absolute_path("data/saves")
         save_entries = []
         if not os.path.isdir(saves_folder):
@@ -702,9 +554,6 @@ class App(Window):
         return save_entries
 
     def _find_god_by_name(self, god_name: str):
-        """
-        Find the loaded God object with the given display name.
-        """
         for god in getattr(self, "gods", []):
             if god.name == god_name:
                 return god
@@ -950,9 +799,6 @@ class App(Window):
         return keys
 
     def _draw_god_detail_panel(self, god: God):
-        """
-        Draw the right-side portrait/info panel used by god-based menus.
-        """
         self.fill_rect(
             V(self.screen_right.x, self.screen_top.y),
             V(
@@ -1022,9 +868,6 @@ class App(Window):
         )
 
     def _parse_weighted_targets(self, raw_target: str):
-        """
-        Parse target lists like "b3, b4*2, b5" into [("b3", 1.0), ("b4", 2.0), ("b5", 1.0)].
-        """
         parsed_targets = []
         for token in raw_target.split(","):
             option = token.strip()
@@ -1067,12 +910,6 @@ class App(Window):
         return weighted_targets[-1][0]
 
     def _update_settings(self, from_game: bool):
-        """
-        Handle updates for the settings menu or in-game settings overlay.
-        Manages settings button interactions and save file clearing.
-        Args:
-            from_game: True if called during gameplay (overlay), False from main menu
-        """
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -1089,12 +926,6 @@ class App(Window):
                     self.set_state(State.MAIN_MENU)
 
     def _update_load_game(self, from_game: bool):
-        """
-        Handle updates for the load game menu or in-game load overlay.
-        Manages navigation and returning to previous state.
-        Args:
-            from_game: True if called during gameplay (overlay), False from main menu
-        """
         save_entries = self._load_save_entries()
         if self.load_game_rename_mode:
             self._update_rename_mode(save_entries)
@@ -1164,10 +995,6 @@ class App(Window):
                     self.set_state(State.MAIN_MENU)
 
     def _update_intro(self):
-        """
-        Handle the intro logo sequence and transitions to the main menu.
-        Manages timing for showing each logo with delays and sound effects.
-        """
         self.intro_current_logo_time += self.deltatime
         num_logos = len(self.intro_logos)
         if self.intro_current_logo_index == 0:
@@ -1196,23 +1023,12 @@ class App(Window):
                 self.set_state(State.MAIN_MENU)
 
     def _update_credits(self):
-        """
-        Handle updates for the credits scene.
-        Currently, a placeholder for future credits implementation.
-        """
         pass
 
     def _update_quit(self):
-        """
-        Handle the quit action and close the application.
-        """
         quit()
 
     def _update_main_menu(self):
-        """
-        Handle updates for the main menu, including button hover and click logic.
-        Displays the main menu with navigation buttons for different game states.
-        """
         buttons = [
             State.NEW_GAME,
             State.LOAD_GAME_MENU,
@@ -1252,10 +1068,6 @@ class App(Window):
                     self.new_game_selected_god = None
 
     def _update_new_game(self):
-        """
-        Handle updates for the new game scene, including god selection and game start.
-        Displays available gods and allows the player to select one and begin gameplay.
-        """
         self.new_game_selected_god = self._update_selection_list(
             self.gods, self.new_game_selected_god
         )
@@ -1272,24 +1084,12 @@ class App(Window):
             self.set_state(State.PLAYING)
 
     def _update_load_game_menu(self):
-        """
-        Handle updates for the load game menu.
-        Wrapper method that calls the common load game handler for non-gameplay context.
-        """
         self._update_load_game(False)
 
     def _update_settings_menu(self):
-        """
-        Handle updates for the settings menu.
-        Wrapper method that calls the common settings handler for non-gameplay context.
-        """
         self._update_settings(False)
 
     def _update_playing(self):
-        """
-        Handle updates for the main gameplay state.
-        Manages pause button detection and clickable story links for scene navigation.
-        """
         hover = (
             distance(
                 self.mouse_pos,
@@ -1337,11 +1137,6 @@ class App(Window):
                         pass
 
     def _update_paused(self):
-        """
-        Handle updates for the paused state.
-        Displays pause menu with options to resume, load, adjust settings,
-        return to main menu, or exit.
-        """
         actions = [
             ("resume", State.PLAYING),
             ("load", State.LOAD_GAME_PLAYING),
@@ -1387,11 +1182,6 @@ class App(Window):
         self._update_settings(True)
 
     def update(self):
-        """
-        Main update routine called every frame.
-        Handles state transitions, input processing, and scale calculations.
-        Coordinates all game logic via state machine dispatch.
-        """
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
@@ -1872,11 +1662,6 @@ class App(Window):
         )
 
     def _draw_paused(self):
-        """
-        Draw the paused menu overlay with gameplay scene faded in the background.
-        Shows pause menu buttons with resume, load, settings, main menu,
-        and exit options.
-        """
         if "--remove-transparency" not in self.argv:
             self._draw_playing()
             self.fill_rect(
@@ -1948,24 +1733,12 @@ class App(Window):
         )
 
     def _draw_load_game_playing(self):
-        """
-        Draw the load game overlay during gameplay.
-        Calls the common load game renderer with in-game context.
-        """
         self._draw_load_game(True)
 
     def _draw_settings_playing(self):
-        """
-        Draw the settings overlay during gameplay.
-        Calls the common settings renderer with in-game context.
-        """
         self._draw_settings(True)
 
     def draw(self):
-        """
-        Main draw routine called every frame.
-        Clears the screen and renders the appropriate UI based on the current game state.
-        """
         self.clear(Color(0, 0, 0))
         try:
             if self.state == State.INTRO:
@@ -2004,11 +1777,6 @@ class App(Window):
 
 
 def main():
-    """
-    Main entry point for the Fate of the Gods application.
-    Initializes the game app and starts the main game loop.
-    Handles and logs any exceptions that occur during execution.
-    """
     try:
         App().start()
     except Exception:

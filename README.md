@@ -7,7 +7,7 @@
 
 The player takes on the role of a Greek god and makes decisions that affect the god's fate and the fate of their followers. The game is designed to be replayable, with multiple paths and endings based on the player's choices.
 
-When the game starts, a window opens to the main menu. From there, the player can start a new game, load a save, change settings, or view the available story paths.
+When the game starts, a window opens to the intro screen, then the main menu. From there, the player can start a new game, load a save, change settings if any, or close the app.
 
 ## Project structure
 
@@ -58,22 +58,16 @@ Supported command-line options:
 - `--skip-intro` – Skip the intro sequence and go directly to the main menu.
 - `--remove-transparency` – Remove transparency from certain UI overlays for better visibility.
 - `--disable-sound` – Disable all sound effects and music.
+- 
+## Modding
 
-Notes:
+Modding the project is limited, only including adding new gods. To create a new god, follow these instructions:
 
-- Logging is currently initialized at `DEBUG` level in `app.py`.
-- `--level=X` is not currently wired up by the runtime, so it is not documented as a supported option.
-
-## Runtime data
-
-- The `data/` folder is used for saves and settings and must remain writable.
-- Save files can be cleared from the in-game settings menu.
-- Story content is loaded from `assets/data/gods/` at startup.
-
-## Notes
-
-- The codebase is regularly formatted with `format.sh`.
-- The repository currently contains a font file named `assets/fonts/Silkscreen-Regular.ttf`, while `app.py` references `assets/fonts/Silkscene-Regular.ttf` for the heading font. If startup fails while loading fonts, check that filename first.
+1. Create a new file in `assets/data/gods/` with the name of the god (e.g., `zeus.txt`).
+2. Follow the format of existing god files to define the story, choices, and outcomes for the new god. Each god file should include sections for the god's name, description, and a series of story nodes with choices that lead to different outcomes.
+3. Add an image asset in `assets/images/god/` for the new god's portrait, following the naming convention (e.g., `zeus.png`).
+4. In the god file, include a reference to the portrait image so that it can be displayed in the game when the god is selected.
+5. The app will automatically register the new god and include it in the main menu for selection when starting a new game.
 
 ## Developers
 
