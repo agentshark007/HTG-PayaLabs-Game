@@ -1,4 +1,3 @@
-import logging
 import math
 import os
 import random
@@ -9,13 +8,6 @@ from enum import Enum
 from typing import Optional
 
 from pgiud import *
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = logging.getLogger("FateOfTheGods")
 
 
 def is_between(x, a, b):
@@ -207,6 +199,9 @@ class God:
     """
 
     def __init__(self, encoded: str):
+        self.name: str = ""
+        self.info: str = ""
+        self.image: str = ""
         lines = split_nonempty_lines(encoded)
         # Parse god attributes from encoded text (before #tree marker)
         for line in lines:
@@ -241,7 +236,6 @@ class App(Window):
     """
 
     def __init__(self):
-        logger.debug("App.__init__ called.")
         super().__init__(
             width=480,
             height=360,
@@ -254,11 +248,6 @@ class App(Window):
         """
         Change the application state and log the transition.
         """
-        logger.info(f"State changed from {
-            getattr(
-                    self,
-                    'state',
-                    None)} to {new_state}.")
         self.state = new_state
 
     def _find_arg_with_prefix(self, prefix):
@@ -266,7 +255,6 @@ class App(Window):
         Find the first command-line argument with the given prefix.
         """
         result = next((s for s in self.argv if s.startswith(prefix)), None)
-        logger.debug(f"_find_arg_with_prefix({prefix}) -> {result}")
         return result
 
     def _parse_argv(self):
@@ -274,7 +262,6 @@ class App(Window):
         Parse command-line arguments (excluding script name).
         """
         self.argv = sys.argv[1:]
-        logger.debug(f"Parsed argv: {self.argv}")
 
     def _parse_log_level(self):
         """
@@ -283,9 +270,7 @@ class App(Window):
         level_arg = self._find_arg_with_prefix("--level=")
         if level_arg:
             result = level_arg.split("=", 1)[1]
-            logger.debug(f"Log level argument found: {result}")
             return result
-        logger.debug("No log level argument found.")
         return None
 
     def _initialize_saving(self):
@@ -303,12 +288,7 @@ class App(Window):
             and os.path.isfile(os.path.join(data_directory, "settings.txt"))
         )
         if valid_structure:
-            logger.debug("Saving directory structure is valid.")
             return
-        logger.warning(
-            "Invalid save data structure detected in '%s'. Resetting data directory.",
-            data_directory,
-        )
         os.makedirs(data_directory, exist_ok=True)
         for name in os.listdir(data_directory):
             path = os.path.join(data_directory, name)
@@ -323,7 +303,6 @@ class App(Window):
             settings_path, "w", encoding="utf-8"
         ) as dst:
             dst.write(src.read())
-        logger.info("Save data directory reset and defaults restored.")
 
     def _setup_state(self):
         """
@@ -331,10 +310,8 @@ class App(Window):
         """
         if "--skip-intro" in self.argv:
             self.state = State.MAIN_MENU
-            logger.info("Skipping intro, setting state to MAIN_MENU.")
         else:
             self.state = State.INTRO
-            logger.info("Starting with intro, setting state to INTRO.")
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
@@ -343,76 +320,56 @@ class App(Window):
         """
         Main initialization routine for the application. Loads assets, data, and sets up state.
         """
-        logger.debug("App.initialize() called.")
         self._parse_argv()
-        logger.info("Initializing application...")
         try:
             self.scale = 1.0
             self._initialize_saving()
-            logger.debug("Saving initialization complete.")
             self._setup_state()
-            logger.debug("State setup complete.")
             self._load_assets()
-            logger.debug("Assets loaded successfully.")
             self._initialize_intro()
-            logger.debug("Intro initialized.")
             self._initialize_button_list_settings()
-            logger.debug("Button list settings initialized.")
             self._initialize_settings()
-            logger.debug("Settings initialized.")
             self._load_data()
-            logger.debug("Data loaded.")
             self._initialize_new_game()
-            logger.debug("New game initialized.")
         except Exception:
-            logger.error("Initialization failed with an error:", exc_info=True)
             raise
         finally:
-            logger.info("Initialization complete.")
+            pass
 
     def _initialize_logging(self, log_level=None):
         """
         Placeholder for custom logging setup if needed.
         """
-        logger.debug(f"_initialize_logging called with log_level={log_level}")
+        pass
 
     def _load_assets(self):
         """
         Load all required game assets: images, fonts, and sounds.
         Assets are organized into directories for scenes, gods, fonts, and audio.
         """
-        logger.info("Loading assets...")
         try:
             # Load scene background images
-            logger.info("Loading scene images from 'assets/images/scene'...")
             file_names = os.listdir(get_absolute_path("assets/images/scene"))
             self.scene_images = {}
             for file_name in file_names:
-                logger.debug(f"Loading scene image: {file_name}")
                 img_path = get_absolute_path(
                     os.path.join("assets/images/scene", file_name)
                 )
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
-                logger.info(f"Loaded scene image: {file_name} from {img_path}")
             # Load god character portrait images
-            logger.info("Loading god images from 'assets/images/god'...")
             file_names = os.listdir(get_absolute_path("assets/images/god"))
             self.god_images = {}
             for file_name in file_names:
-                logger.debug(f"Loading god image: {file_name}")
                 img_path = get_absolute_path(
                     os.path.join("assets/images/god", file_name)
                 )
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
-                logger.info(f"Loaded god image: {file_name} from {img_path}")
             # Load fonts for UI text rendering
-            logger.info("Loading fonts...")
             self.heading_font = Font(
                 get_absolute_path("assets/fonts/Silkscreen-Regular.ttf")
             )
             self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
             # Load intro sequence logos
-            logger.info("Loading logos...")
             self.intro_payalabs_logo = Image(
                 get_absolute_path("assets/images/intro/payalabs.png")
             )
@@ -424,50 +381,39 @@ class App(Window):
             )
             # Load intro sequence sound effect (can be disabled via
             # --disable-sound)
-            logger.info("Loading sound...")
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(
                     get_absolute_path("assets/sounds/intro_boom.mp3")
                 )
         except Exception:
-            logger.error("Error loading assets:", exc_info=True)
             raise
-        logger.info("Assets loaded.")
 
     def _load_data(self):
         """
         Load god character data from text files in the assets/data/gods directory.
         Parses god metadata and story trees for all available characters.
         """
-        logger.info("Loading god data from 'assets/data/gods'...")
         gods_folder = get_absolute_path("assets/data/gods")
-        self.gods_text = []
-        god_files = []
+        self.gods_text: list[str] = []
+        god_files: list[str] = []
         # Read all god .txt files from the data directory
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
-                logger.info(f"Loading god from file: {name}...")
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         self.gods_text.append(f.read())
                         god_files.append(name)
-                    logger.info(f"God loaded from file: {name}.")
                 except Exception:
-                    logger.error(f"Failed to load god from file: {name}", exc_info=True)
                     continue
         # Parse god objects from loaded text
-        self.gods = []
+        self.gods: list[God] = []
         for i, god_text in enumerate(self.gods_text):
             try:
                 self.gods.append(God(god_text))
-                logger.info(f"Parsed god data for file: {
-                    god_files[i] if i < len(god_files) else 'unknown'}.")
             except Exception as e:
                 file_name = god_files[i] if i < len(god_files) else "unknown"
-                logger.error(f"Failed to parse god text from file '{file_name}': {e}")
                 continue
-        logger.info("God data loaded.")
 
     def _initialize_intro(self):
         """
@@ -519,7 +465,7 @@ class App(Window):
         Initialize tracking for new game state.
         Tracks which god the player has selected for a new playthrough.
         """
-        self.new_game_selected_god = None
+        self.new_game_selected_god: Optional[int] = None
 
     def _parse_weighted_targets(self, raw_target: str):
         """
@@ -539,16 +485,10 @@ class App(Window):
                 try:
                     weight = float(weight_part.strip())
                 except ValueError:
-                    logger.warning(f"Invalid weight '{
-                        weight_part.strip()}' in target option '{option}'.")
                     continue
             if not target_id:
-                logger.warning(f"Empty target id in option '{option}'.")
                 continue
             if weight <= 0:
-                logger.warning(
-                    f"Weight must be greater than zero for target '{target_id}', got {weight}."
-                )
                 continue
             parsed_targets.append((target_id, weight))
         return parsed_targets
@@ -832,9 +772,7 @@ class App(Window):
                             found_target = True
                             break
                     if not found_target:
-                        logger.warning(
-                            f"Link target '{target_id}' was not found in scene tree."
-                        )
+                        pass
 
     def _update_paused(self):
         """
@@ -927,10 +865,9 @@ class App(Window):
             elif self.state == State.SETTINGS_PLAYING:
                 self._update_settings_playing()
             else:
-                logger.error(f"Unknown state: {self.state}")
                 raise Exception(f"Unknown state: {self.state}")
         except Exception:
-            logger.error("Error during update:", exc_info=True)
+            pass
         # Track which keys are currently pressed (A-Z) for next frame
         # comparison
         new_keys = set()
@@ -1289,7 +1226,7 @@ class App(Window):
             )
         # Draw selected god info and image
         if self.new_game_selected_god is not None:
-            selected_god = self.gods[self.new_game_selected_god]
+            selected_god: God = self.gods[self.new_game_selected_god]
             try:
                 # Draw god image with animation
                 self.draw_image(
@@ -1605,10 +1542,9 @@ class App(Window):
             elif self.state == State.SETTINGS_PLAYING:
                 self._draw_settings_playing()
             else:
-                logger.error(f"Unknown state: {self.state} in draw")
                 raise Exception(f"Unknown state: {self.state} in draw")
         except Exception:
-            logger.error("Error during draw:", exc_info=True)
+            pass
 
     def on_quit(self):
         if "--disable-sound" not in self.argv:
@@ -1624,12 +1560,9 @@ def main():
     Initializes the game app and starts the main game loop.
     Handles and logs any exceptions that occur during execution.
     """
-    logger.info("Starting application from main entry point.")
     try:
         App().start()
-        logger.info("Application exited normally.")
     except Exception:
-        logger.exception("Unhandled exception in main entry point:")
         raise
 
 
