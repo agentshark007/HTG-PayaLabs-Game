@@ -4,6 +4,7 @@ import random
 import shutil
 import string
 import sys
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -22,13 +23,10 @@ def is_between(x, a, b):
         True if x is between a and b, or equal if a == b == x
     """
     if a == b:
-        # Special case: all values are equal
         return x == a
     elif a > b:
-        # A is greater than B
         return b < x < a
     elif a < b:
-        # A is less than B
         return a < x < b
     else:
         return False
@@ -133,7 +131,6 @@ class Scene:
         links = []
         self.text = ""
         self.image = ""
-        # Parse each line for scene attributes or links
         for line in lines:
             if line.startswith("text: "):
                 self.text = line[len("text: ") :].strip()
@@ -141,11 +138,9 @@ class Scene:
                 self.image = line[len("image: ") :].strip()
             else:
                 if ": " in line:
-                    # Parse link: "target: label"
                     target, _, link_text = line.partition(": ")
                     links.append(Link(target.strip(), link_text.strip()))
                 else:
-                    # Additional text lines
                     if self.text:
                         self.text += "\n" + line.strip()
                     else:
@@ -166,7 +161,6 @@ class Tree:
         scene_text = ""
         scene_id = None
         first_scene_index = None
-        # Parse the tree structure from encoded text (marked by #tree header)
         for line in lines:
             if line.startswith("#tree"):
                 ready = True
@@ -174,7 +168,6 @@ class Tree:
             if not ready:
                 continue
             if line.startswith("##"):
-                # New scene node (## marks scene boundaries)
                 if scene_id is not None:
                     scenes.append(Scene(scene_text, scene_id))
                 scene_id = line.removeprefix("##").strip()
@@ -186,7 +179,6 @@ class Tree:
         if scene_id is not None and scene_text:
             scenes.append(Scene(scene_text, scene_id))
         self.scenes = scenes
-        # Index of the first scene in the tree (starting point for the story)
         self.first_scene_index = (
             first_scene_index if first_scene_index is not None else 0
         )
@@ -203,7 +195,6 @@ class God:
         self.info: str = ""
         self.image: str = ""
         lines = split_nonempty_lines(encoded)
-        # Parse god attributes from encoded text (before #tree marker)
         for line in lines:
             if line.startswith("name: "):
                 self.name = line.removeprefix("name: ")
@@ -223,9 +214,23 @@ class Game:
     Tracks the current scene within the god's story tree during gameplay.
     """
 
-    def __init__(self, god: God):
+    def __init__(
+        self, god: God, scene_id: str = None, seed: int = None, rng_draws: int = 0
+    ):
         self.god = god
+        self.seed = (
+            seed if seed is not None else random.SystemRandom().randrange(1, 2**63)
+        )
+        self.rng_draws = int(rng_draws)
+        self.rng = random.Random(self.seed)
+        for _ in range(max(0, self.rng_draws)):
+            self.rng.random()
         self.current_scene_index = god.start_scene_index
+        if scene_id is not None:
+            for idx, scene in enumerate(god.tree.scenes):
+                if scene.id == scene_id:
+                    self.current_scene_index = idx
+                    break
 
 
 class App(Window):
@@ -331,6 +336,7 @@ class App(Window):
             self._initialize_settings()
             self._load_data()
             self._initialize_new_game()
+            self._initialize_load_game()
         except Exception:
             raise
         finally:
@@ -348,7 +354,6 @@ class App(Window):
         Assets are organized into directories for scenes, gods, fonts, and audio.
         """
         try:
-            # Load scene background images
             file_names = os.listdir(get_absolute_path("assets/images/scene"))
             self.scene_images = {}
             for file_name in file_names:
@@ -356,7 +361,6 @@ class App(Window):
                     os.path.join("assets/images/scene", file_name)
                 )
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
-            # Load god character portrait images
             file_names = os.listdir(get_absolute_path("assets/images/god"))
             self.god_images = {}
             for file_name in file_names:
@@ -364,12 +368,10 @@ class App(Window):
                     os.path.join("assets/images/god", file_name)
                 )
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
-            # Load fonts for UI text rendering
             self.heading_font = Font(
                 get_absolute_path("assets/fonts/Silkscreen-Regular.ttf")
             )
             self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
-            # Load intro sequence logos
             self.intro_payalabs_logo = Image(
                 get_absolute_path("assets/images/intro/payalabs.png")
             )
@@ -379,8 +381,6 @@ class App(Window):
             self.intro_pygame_logo = Image(
                 get_absolute_path("assets/images/intro/pygame.png")
             )
-            # Load intro sequence sound effect (can be disabled via
-            # --disable-sound)
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(
                     get_absolute_path("assets/sounds/intro_boom.mp3")
@@ -396,7 +396,6 @@ class App(Window):
         gods_folder = get_absolute_path("assets/data/gods")
         self.gods_text: list[str] = []
         god_files: list[str] = []
-        # Read all god .txt files from the data directory
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
@@ -406,7 +405,6 @@ class App(Window):
                         god_files.append(name)
                 except Exception:
                     continue
-        # Parse god objects from loaded text
         self.gods: list[God] = []
         for i, god_text in enumerate(self.gods_text):
             try:
@@ -458,6 +456,21 @@ class App(Window):
         """
         self.volume = 1
         self.potato_mode = False
+        self.save_seed_enabled = True
+        settings_path = os.path.join(data_directory, "settings.txt")
+        try:
+            with open(settings_path, "r", encoding="utf-8") as f:
+                for line in split_nonempty_lines(f.read()):
+                    if line.startswith("save-seed="):
+                        value = line.split("=", 1)[1].strip().lower()
+                        self.save_seed_enabled = value not in {
+                            "0",
+                            "false",
+                            "no",
+                            "off",
+                        }
+        except Exception:
+            pass
 
     def _initialize_new_game(self):
         """
@@ -466,6 +479,547 @@ class App(Window):
         """
         self.new_game_selected_god: Optional[int] = None
         self.game: Optional[Game] = None
+
+    def _initialize_load_game(self):
+        """
+        Initialize tracking for the load-game menu selection.
+        """
+        self.load_game_selected_save: Optional[int] = None
+        self.load_game_rename_mode = False
+        self.load_game_rename_buffer = ""
+        self.load_game_rename_index: Optional[int] = None
+        self.load_game_rename_path: Optional[str] = None
+
+    def _selection_item_rect(self, index: int):
+        """
+        Get the left-panel list item bounds used by the selection screens.
+        """
+        return (
+            V(
+                self.screen_left.x + (1 * self.scale),
+                self.screen_top.y
+                - (1 * self.scale)
+                - (index * 25 * self.scale)
+                - (30 * self.scale),
+            ),
+            V(
+                self.screen_left.x + (149 * self.scale),
+                self.screen_top.y
+                - (1 * self.scale)
+                - (index * 25 * self.scale)
+                - (25 * self.scale)
+                - (30 * self.scale),
+            ),
+        )
+
+    def _action_button_rect(self, index: int, from_game: bool):
+        """
+        Get the right-side action button bounds used by the load menu.
+        """
+        button_width = 180 * self.scale
+        button_height = 28 * self.scale
+        list_right_x = self.screen_left.x + (149 * self.scale)
+        x_center = list_right_x + (button_width / 2)
+        top_y = self.screen_top.y
+        return (
+            V(
+                x_center - (button_width / 2),
+                top_y - (index * button_height),
+            ),
+            V(
+                x_center + (button_width / 2),
+                top_y - (index * button_height) - button_height,
+            ),
+        )
+
+    def _load_game_action_items(self, from_game: bool):
+        items = [
+            ("load", "Load Game"),
+            ("save", "Save Game") if from_game else None,
+            ("duplicate", "Duplicate Game"),
+            ("delete", "Delete Game"),
+            ("rename", "Rename Game"),
+        ]
+        return [item for item in items if item is not None]
+
+    def _current_date_string(self):
+        return datetime.now().strftime("%m/%d/%y")
+
+    def _generate_save_file_name(self):
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        return f"save_{stamp}.txt"
+
+    def _save_display_name(self, save_entry: dict):
+        return save_entry.get("name") or save_entry.get("date", "")
+
+    def _write_save_record(self, path: str, record: dict):
+        lines = [
+            f"god: {record.get('god', '')}",
+            f"date: {record.get('date', '')}",
+            f"name: {record.get('name', record.get('date', ''))}",
+            f"scene: {record.get('scene', '')}",
+            f"seed: {record.get('seed', '')}",
+            f"rng_draws: {record.get('rng_draws', 0)}",
+        ]
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines).strip() + "\n")
+
+    def _save_file_path(self, file_name: str):
+        return os.path.join(get_absolute_path("data/saves"), file_name)
+
+    def _draw_selection_list(
+        self,
+        title: str,
+        items,
+        selected_index: Optional[int],
+        item_label,
+        empty_text: str,
+    ):
+        """
+        Draw the shared left-side selector layout used by list-based menus.
+        """
+        self.fill_rect(
+            V(self.screen_left.x, self.screen_top.y),
+            V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
+            Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+        )
+        self.draw_text(
+            title,
+            V(
+                self.screen_left.x + (75 * self.scale),
+                self.screen_top.y - (15 * self.scale),
+            ),
+            self.main_font.new_size(int(23 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
+        if not items:
+            self.draw_text(
+                empty_text,
+                V(
+                    self.screen_left.x + (75 * self.scale),
+                    self.screen_top.y - (55 * self.scale),
+                ),
+                self.main_font.new_size(int(18 * self.scale)),
+                Color(180, 180, 180),
+                Origin.CENTER,
+            )
+            return
+        for i, item in enumerate(items):
+            a, b = self._selection_item_rect(i)
+            hover = is_point_in_rect(self.mouse_pos, a, b)
+            if hover and selected_index == i:
+                color = Color(60, 60, 60)
+            elif hover:
+                color = Color(50, 50, 50)
+            elif selected_index == i:
+                color = Color(50, 50, 50)
+            else:
+                color = Color(40, 40, 40)
+            self.fill_rect(a, b, color)
+            self.draw_text(
+                item_label(item),
+                V(
+                    self.screen_left.x + (75 * self.scale),
+                    self.screen_top.y - (25 * self.scale * i) - (30 * self.scale),
+                ),
+                self.main_font.new_size(int(23 * self.scale)),
+                Color(200, 220, 200),
+                Origin.TOP,
+            )
+
+    def _update_selection_list(self, items, selected_index: Optional[int]):
+        """
+        Update shared selector state and return the clicked item index, if any.
+        """
+        for i, _item in enumerate(items):
+            a, b = self._selection_item_rect(i)
+            hover = is_point_in_rect(self.mouse_pos, a, b)
+            if hover and self.mouse_pressed:
+                return i
+        return selected_index
+
+    def _load_save_entries(self):
+        """
+        Scan data/saves for save files and return their display metadata.
+        """
+        saves_folder = get_absolute_path("data/saves")
+        save_entries = []
+        if not os.path.isdir(saves_folder):
+            return save_entries
+        for file_name in sorted(os.listdir(saves_folder)):
+            path = os.path.join(saves_folder, file_name)
+            if not os.path.isfile(path) or not file_name.lower().endswith(".txt"):
+                continue
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    lines = split_nonempty_lines(f.read())
+            except Exception:
+                continue
+            god_name = ""
+            save_date = ""
+            save_name = ""
+            save_scene = ""
+            save_seed = None
+            save_rng_draws = 0
+            for line in lines:
+                if line.startswith("god: "):
+                    god_name = line.removeprefix("god: ").strip()
+                elif line.startswith("date: "):
+                    save_date = line.removeprefix("date: ").strip()
+                elif line.startswith("name: "):
+                    save_name = line.removeprefix("name: ").strip()
+                elif line.startswith("scene: "):
+                    save_scene = line.removeprefix("scene: ").strip()
+                elif line.startswith("seed: "):
+                    seed_value = line.removeprefix("seed: ").strip()
+                    try:
+                        save_seed = int(seed_value)
+                    except Exception:
+                        save_seed = None
+                elif line.startswith("rng_draws: "):
+                    draws_value = line.removeprefix("rng_draws: ").strip()
+                    try:
+                        save_rng_draws = int(draws_value)
+                    except Exception:
+                        save_rng_draws = 0
+            if not god_name or not save_date:
+                continue
+            save_entries.append(
+                {
+                    "file_name": file_name,
+                    "path": path,
+                    "god": god_name,
+                    "date": save_date,
+                    "name": save_name,
+                    "scene": save_scene,
+                    "seed": save_seed,
+                    "rng_draws": save_rng_draws,
+                }
+            )
+        return save_entries
+
+    def _find_god_by_name(self, god_name: str):
+        """
+        Find the loaded God object with the given display name.
+        """
+        for god in getattr(self, "gods", []):
+            if god.name == god_name:
+                return god
+        return None
+
+    def _clamp_load_selection(self, save_entries):
+        if not save_entries:
+            self.load_game_selected_save = None
+            return
+        if self.load_game_selected_save is None:
+            self.load_game_selected_save = 0
+            return
+        self.load_game_selected_save = max(
+            0, min(self.load_game_selected_save, len(save_entries) - 1)
+        )
+
+    def _selected_save_entry(self, save_entries):
+        if self.load_game_selected_save is None:
+            return None
+        if not (0 <= self.load_game_selected_save < len(save_entries)):
+            return None
+        return save_entries[self.load_game_selected_save]
+
+    def _apply_save_to_game(self, save_entry: dict, use_seed: bool = True):
+        selected_god = self._find_god_by_name(save_entry.get("god", ""))
+        if selected_god is None:
+            return False
+        seed = (
+            save_entry.get("seed")
+            if use_seed
+            else random.SystemRandom().randrange(1, 2**63)
+        )
+        if seed is None:
+            seed = random.SystemRandom().randrange(1, 2**63)
+        self.game = Game(
+            selected_god,
+            scene_id=save_entry.get("scene") or None,
+            seed=seed,
+            rng_draws=save_entry.get("rng_draws", 0),
+        )
+        self.set_state(State.PLAYING)
+        return True
+
+    def _create_save_entry_from_game(self, game: Game, display_name: str = None):
+        current_scene = None
+        try:
+            current_scene = game.god.tree.scenes[game.current_scene_index]
+        except Exception:
+            current_scene = None
+        date_string = self._current_date_string()
+        if display_name is None:
+            display_name = date_string
+        return {
+            "god": game.god.name,
+            "date": date_string,
+            "name": display_name,
+            "scene": current_scene.id if current_scene is not None else "",
+            "seed": game.seed,
+            "rng_draws": game.rng_draws,
+        }
+
+    def _save_new_game_entry(self, game: Game, display_name: str = None):
+        record = self._create_save_entry_from_game(game, display_name)
+        file_name = self._generate_save_file_name()
+        path = self._save_file_path(file_name)
+        self._write_save_record(path, record)
+        return file_name
+
+    def _rename_save_entry(self, save_entry: dict, new_name: str):
+        record = dict(save_entry)
+        record["name"] = (
+            new_name.strip() if new_name.strip() else record.get("date", "")
+        )
+        self._write_save_record(save_entry["path"], record)
+
+    def _duplicate_save_entry(self, save_entry: dict):
+        new_record = dict(save_entry)
+        new_record["date"] = self._current_date_string()
+        new_record["name"] = new_record["date"]
+        new_file_name = self._generate_save_file_name()
+        self._write_save_record(self._save_file_path(new_file_name), new_record)
+        return new_file_name
+
+    def _delete_save_entry(self, save_entry: dict):
+        try:
+            os.remove(save_entry["path"])
+        except Exception:
+            pass
+
+    def _begin_rename_mode(self, save_entry: dict):
+        self.load_game_rename_mode = True
+        self.load_game_rename_index = self.load_game_selected_save
+        self.load_game_rename_path = save_entry.get("path")
+        self.load_game_rename_buffer = self._save_display_name(save_entry)
+
+    def _cancel_rename_mode(self):
+        self.load_game_rename_mode = False
+        self.load_game_rename_index = None
+        self.load_game_rename_path = None
+        self.load_game_rename_buffer = ""
+
+    def _rename_target_save_entry(self, save_entries):
+        if self.load_game_rename_path:
+            for save_entry in save_entries:
+                if save_entry.get("path") == self.load_game_rename_path:
+                    return save_entry
+        return self._selected_save_entry(save_entries)
+
+    def _commit_rename_mode(self, save_entries):
+        selected_entry = self._rename_target_save_entry(save_entries)
+        if selected_entry is None:
+            self._cancel_rename_mode()
+            return
+        self._rename_save_entry(selected_entry, self.load_game_rename_buffer)
+        self._cancel_rename_mode()
+
+    def _rename_text_from_key(self, key_enum):
+        shift_down = self.keydown(Key.LSHIFT) or self.keydown(Key.RSHIFT)
+        mapping = {
+            Key.SPACE: " ",
+            Key.MINUS: "_" if shift_down else "-",
+            Key.EQUALS: "+" if shift_down else "=",
+            Key.PERIOD: ">" if shift_down else ".",
+            Key.COMMA: "<" if shift_down else ",",
+            Key.SLASH: "?" if shift_down else "/",
+            Key.APOSTROPHE: '"' if shift_down else "'",
+            Key.BACKSLASH: "|" if shift_down else "\\",
+            Key.LEFTBRACKET: "{" if shift_down else "[",
+            Key.RIGHTBRACKET: "}" if shift_down else "]",
+            Key.GRAVE: "~" if shift_down else "`",
+            Key.NUM_0: "0",
+            Key.NUM_1: "1",
+            Key.NUM_2: "2",
+            Key.NUM_3: "3",
+            Key.NUM_4: "4",
+            Key.NUM_5: "5",
+            Key.NUM_6: "6",
+            Key.NUM_7: "7",
+            Key.NUM_8: "8",
+            Key.NUM_9: "9",
+        }
+        if key_enum in mapping:
+            return mapping[key_enum]
+        if key_enum.name in string.ascii_uppercase:
+            return key_enum.name if shift_down else key_enum.name.lower()
+        return None
+
+    def _update_rename_mode(self, save_entries):
+        if self.load_game_rename_index is None:
+            self._cancel_rename_mode()
+            return
+        escape_pressed = (
+            self.keydown(Key.ESCAPE) and Key.ESCAPE not in self.keys_down_last_frame
+        )
+        if escape_pressed:
+            self._cancel_rename_mode()
+            return
+        enter_keys = [Key.ENTER]
+        try:
+            enter_keys.append(Key.KP_ENTER)
+        except Exception:
+            pass
+        enter_pressed = any(
+            self.keydown(key_enum) and key_enum not in self.keys_down_last_frame
+            for key_enum in enter_keys
+        )
+        if enter_pressed:
+            self._commit_rename_mode(save_entries)
+            return
+        delete_keys = [Key.BACKSPACE]
+        try:
+            delete_keys.append(Key.DELETE)
+        except Exception:
+            pass
+        delete_pressed = any(
+            self.keydown(key_enum) and key_enum not in self.keys_down_last_frame
+            for key_enum in delete_keys
+        )
+        if delete_pressed:
+            if self.load_game_rename_buffer:
+                self.load_game_rename_buffer = self.load_game_rename_buffer[:-1]
+            return
+        tracked_keys = self._tracked_keys()
+        for key_enum in tracked_keys:
+            if key_enum in {
+                Key.BACKSPACE,
+                Key.DELETE,
+                Key.ENTER,
+                Key.KP_ENTER,
+                Key.ESCAPE,
+                Key.LSHIFT,
+                Key.RSHIFT,
+            }:
+                continue
+            if key_enum in self.keys_down_last_frame:
+                continue
+            if self.keydown(key_enum):
+                char = self._rename_text_from_key(key_enum)
+                if char is not None:
+                    self.load_game_rename_buffer += char
+
+    def _tracked_keys(self):
+        keys = []
+        for i in range(26):
+            try:
+                keys.append(Key[chr(ord("A") + i)])
+            except Exception:
+                pass
+        for name in [
+            "NUM_0",
+            "NUM_1",
+            "NUM_2",
+            "NUM_3",
+            "NUM_4",
+            "NUM_5",
+            "NUM_6",
+            "NUM_7",
+            "NUM_8",
+            "NUM_9",
+            "SPACE",
+            "MINUS",
+            "EQUALS",
+            "PERIOD",
+            "COMMA",
+            "SLASH",
+            "APOSTROPHE",
+            "BACKSLASH",
+            "LEFTBRACKET",
+            "RIGHTBRACKET",
+            "GRAVE",
+            "BACKSPACE",
+            "DELETE",
+            "ENTER",
+            "KP_ENTER",
+            "ESCAPE",
+            "LSHIFT",
+            "RSHIFT",
+        ]:
+            try:
+                keys.append(Key[name])
+            except Exception:
+                pass
+        return keys
+
+    def _draw_god_detail_panel(self, god: God):
+        """
+        Draw the right-side portrait/info panel used by god-based menus.
+        """
+        self.fill_rect(
+            V(self.screen_right.x, self.screen_top.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_top.y - (150 * self.scale),
+            ),
+            Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+        )
+        self.fill_rect(
+            V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
+            V(
+                self.screen_right.x - (130 * self.scale),
+                self.screen_top.y - (150 * self.scale),
+            ),
+            Color(0, 0, 0),
+        )
+        self.fill_rect(
+            V(
+                self.screen_left.x + (150 * self.scale),
+                self.screen_top.y - (150 * self.scale),
+            ),
+            V(self.screen_right.x, self.screen_bottom.y),
+            Color(0, 0, 0),
+        )
+        try:
+            self.draw_image(
+                self.god_images[god.image],
+                V(
+                    self.screen_right.x - (65 * self.scale),
+                    self.screen_top.y - (75 * self.scale),
+                ),
+                origin=Origin.CENTER,
+                scale_x=self.scale
+                * 1.5
+                * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
+                scale_y=self.scale * 1.5,
+                antialiasing=True,
+            )
+        except Exception:
+            pass
+        self.draw_text(
+            god.name,
+            V(
+                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                self.screen_top.y + (5 * self.scale),
+            ),
+            self.heading_font.new_size(int(40 * self.scale)),
+            Color(255, 255, 255),
+            Origin.TOP_LEFT,
+        )
+        self.draw_text_word_wrap(
+            god.info,
+            V(
+                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                self.screen_top.y - (155 * self.scale) + (3 * self.scale),
+            ),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.TOP_LEFT,
+            wrap_distance=abs(
+                self.screen_left.x
+                - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
+            )
+            * 2,
+        )
 
     def _parse_weighted_targets(self, raw_target: str):
         """
@@ -478,7 +1032,6 @@ class App(Window):
                 continue
             target_id = option
             weight = 1.0
-            # Weight syntax: target_id*weight (e.g. b4*3)
             if "*" in option:
                 target_part, weight_part = option.rsplit("*", 1)
                 target_id = target_part.strip()
@@ -497,9 +1050,21 @@ class App(Window):
         weighted_targets = self._parse_weighted_targets(raw_target)
         if not weighted_targets:
             return None
-        target_ids = [target_id for target_id, _ in weighted_targets]
-        weights = [weight for _, weight in weighted_targets]
-        return random.choices(target_ids, weights=weights, k=1)[0]
+        current_game = getattr(self, "game", None)
+        total_weight = sum(weight for _, weight in weighted_targets)
+        if total_weight <= 0:
+            return None
+        if current_game is not None:
+            roll = current_game.rng.random() * total_weight
+            current_game.rng_draws += 1
+        else:
+            roll = random.random() * total_weight
+        running = 0.0
+        for target_id, weight in weighted_targets:
+            running += weight
+            if roll < running:
+                return target_id
+        return weighted_targets[-1][0]
 
     def _update_settings(self, from_game: bool):
         """
@@ -508,7 +1073,6 @@ class App(Window):
         Args:
             from_game: True if called during gameplay (overlay), False from main menu
         """
-        # Check if mouse is over the settings button (bottom right corner)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -519,7 +1083,6 @@ class App(Window):
         )
         if hover:
             if self.mouse_pressed:
-                # Return to previous state
                 if from_game:
                     self.set_state(State.PAUSED)
                 else:
@@ -532,7 +1095,59 @@ class App(Window):
         Args:
             from_game: True if called during gameplay (overlay), False from main menu
         """
-        # Check if mouse is over the back/return button (bottom right corner)
+        save_entries = self._load_save_entries()
+        if self.load_game_rename_mode:
+            self._update_rename_mode(save_entries)
+            return
+        self.load_game_selected_save = self._update_selection_list(
+            save_entries, self.load_game_selected_save
+        )
+        self._clamp_load_selection(save_entries)
+        selected_save = self._selected_save_entry(save_entries)
+        clicked = None
+        for index, (action_key, _label) in enumerate(
+            self._load_game_action_items(from_game)
+        ):
+            a, b = self._action_button_rect(index, from_game)
+            if is_point_in_rect(self.mouse_pos, a, b) and self.mouse_pressed:
+                clicked = action_key
+                break
+        if clicked == "save" and self.game is not None:
+            new_file_name = self._save_new_game_entry(self.game)
+            save_entries = self._load_save_entries()
+            self.load_game_selected_save = next(
+                (
+                    i
+                    for i, save in enumerate(save_entries)
+                    if save["file_name"] == new_file_name
+                ),
+                self.load_game_selected_save,
+            )
+            return
+        if clicked and selected_save is not None:
+            if clicked == "load":
+                self._apply_save_to_game(selected_save, use_seed=True)
+                return
+            if clicked == "duplicate":
+                new_file_name = self._duplicate_save_entry(selected_save)
+                save_entries = self._load_save_entries()
+                self.load_game_selected_save = next(
+                    (
+                        i
+                        for i, save in enumerate(save_entries)
+                        if save["file_name"] == new_file_name
+                    ),
+                    self.load_game_selected_save,
+                )
+                return
+            if clicked == "rename":
+                self._begin_rename_mode(selected_save)
+                return
+            if clicked == "delete":
+                self._delete_save_entry(selected_save)
+                save_entries = self._load_save_entries()
+                self._clamp_load_selection(save_entries)
+                return
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -543,7 +1158,6 @@ class App(Window):
         )
         if hover:
             if self.mouse_pressed:
-                # Return to previous state
                 if from_game:
                     self.set_state(State.PAUSED)
                 else:
@@ -557,7 +1171,6 @@ class App(Window):
         self.intro_current_logo_time += self.deltatime
         num_logos = len(self.intro_logos)
         if self.intro_current_logo_index == 0:
-            # Wait for pre-delay, then show first logo and play sound
             if self.intro_current_logo_time > self.intro_pre_delay:
                 self.intro_current_logo_index = 1
                 self.intro_current_logo_time = 0
@@ -568,7 +1181,6 @@ class App(Window):
                     except Exception:
                         pass
         elif 1 <= self.intro_current_logo_index <= num_logos:
-            # Show each logo for a set time, then advance and play sound
             if self.intro_current_logo_time > self.intro_logo_time:
                 self.intro_current_logo_index += 1
                 self.intro_current_logo_time = 0
@@ -580,7 +1192,6 @@ class App(Window):
                         except Exception:
                             pass
         elif self.intro_current_logo_index == num_logos + 1:
-            # After last logo, wait for post-delay then transition to main menu
             if self.intro_current_logo_time > self.intro_post_delay:
                 self.set_state(State.MAIN_MENU)
 
@@ -611,8 +1222,6 @@ class App(Window):
         ]
         for i, button in enumerate(buttons):
             x = 0
-            # Calculate y position for each button in the menu (vertical
-            # layout)
             y = (
                 self.screen_top.y
                 - (
@@ -636,7 +1245,6 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
-            # Check if mouse is over this button
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
                 self.set_state(button)
@@ -648,29 +1256,9 @@ class App(Window):
         Handle updates for the new game scene, including god selection and game start.
         Displays available gods and allows the player to select one and begin gameplay.
         """
-        for i, god in enumerate(self.gods):
-            # Calculate bounding box for each god selection button
-            hover = is_point_in_rect(
-                self.mouse_pos,
-                V(
-                    self.screen_left.x + (1 * self.scale),
-                    self.screen_top.y
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (30 * self.scale),
-                ),
-                V(
-                    self.screen_left.x + (149 * self.scale),
-                    self.screen_top.y
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (25 * self.scale)
-                    - (30 * self.scale),
-                ),
-            )
-            if hover and self.mouse_pressed:
-                self.new_game_selected_god = i
-        # Check if mouse is over the "start game" button (bottom right)
+        self.new_game_selected_god = self._update_selection_list(
+            self.gods, self.new_game_selected_god
+        )
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -702,7 +1290,6 @@ class App(Window):
         Handle updates for the main gameplay state.
         Manages pause button detection and clickable story links for scene navigation.
         """
-        # Check if mouse is over the pause button (bottom left corner)
         hover = (
             distance(
                 self.mouse_pos,
@@ -716,7 +1303,6 @@ class App(Window):
         if hover:
             if self.mouse_pressed:
                 self.set_state(State.PAUSED)
-        # Get the current scene for the selected god
         current_game: Optional[Game] = self.game
         if current_game is None:
             return
@@ -726,12 +1312,10 @@ class App(Window):
             ]
         except Exception:
             current_scene = None
-        # Handle clickable links on the current scene (keys A-Z trigger links)
         if current_scene is not None and current_scene.links:
             for i, link in enumerate(current_scene.links):
                 if i >= 26:
                     break
-                # Map link index to keyboard key (A=0, B=1, etc.)
                 key_name = chr(ord("A") + i)
                 try:
                     key_enum = Key[key_name]
@@ -739,12 +1323,10 @@ class App(Window):
                     continue
                 pressed_now = self.keydown(key_enum)
                 was_pressed = key_enum in self.keys_down_last_frame
-                # Detect key press (pressed now but not last frame)
                 if pressed_now and not was_pressed:
                     target_id = self._choose_target_id(link.target)
                     if target_id is None:
                         continue
-                    # Find the target scene in the tree
                     found_target = False
                     for idx, scene in enumerate(current_game.god.tree.scenes):
                         if scene.id == target_id:
@@ -757,18 +1339,18 @@ class App(Window):
     def _update_paused(self):
         """
         Handle updates for the paused state.
-        Displays pause menu with options to resume, load, adjust settings, or return to main menu.
+        Displays pause menu with options to resume, load, adjust settings,
+        return to main menu, or exit.
         """
-        buttons = [
-            State.PLAYING,
-            State.LOAD_GAME_PLAYING,
-            State.LOAD_GAME_PLAYING,
-            State.SETTINGS_PLAYING,
-            State.MAIN_MENU,
+        actions = [
+            ("resume", State.PLAYING),
+            ("load", State.LOAD_GAME_PLAYING),
+            ("save", State.LOAD_GAME_PLAYING),
+            ("settings", State.SETTINGS_PLAYING),
+            ("exit", State.MAIN_MENU),
         ]
-        for i, button in enumerate(buttons):
+        for i, (_action, target_state) in enumerate(actions):
             x = 0
-            # Calculate y position for each pause menu button (vertical layout)
             y = (
                 self.screen_top.y
                 - (
@@ -792,17 +1374,16 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
-            # Check if mouse is over this button
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
-                self.set_state(button)
+                if i == 2 and self.game is not None:
+                    self._save_new_game_entry(self.game)
+                self.set_state(target_state)
 
     def _update_load_game_playing(self):
-        # Handles updates for the in-game load game overlay
         self._update_load_game(True)
 
     def _update_settings_playing(self):
-        # Handles updates for the in-game settings overlay
         self._update_settings(True)
 
     def update(self):
@@ -811,17 +1392,14 @@ class App(Window):
         Handles state transitions, input processing, and scale calculations.
         Coordinates all game logic via state machine dispatch.
         """
-        # Detect mouse click (primary button pressed this frame)
         self.mouse_pressed = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
-        # Update scale based on window size changes
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
         self.seconds_since_start += self.deltatime
         try:
-            # State machine: call update method for current state
             if self.state == State.INTRO:
                 self._update_intro()
             elif self.state == State.CREDITS:
@@ -848,8 +1426,6 @@ class App(Window):
                 raise Exception(f"Unknown state: {self.state}")
         except Exception:
             pass
-        # Track which keys are currently pressed (A-Z) for next frame
-        # comparison
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
@@ -861,17 +1437,20 @@ class App(Window):
                 new_keys.add(key_enum)
         self.keys_down_last_frame = new_keys
         self.mouse_down_primary_last_frame = self.mouse_down_primary
+        if self.load_game_rename_mode:
+            all_rename_keys = self._tracked_keys()
+            for key_enum in all_rename_keys:
+                if self.keydown(key_enum):
+                    new_keys.add(key_enum)
+            self.keys_down_last_frame = new_keys
 
     def _draw_settings(self, from_game: bool):
-        # Draw the settings overlay/menu
         if from_game:
             if "--remove-transparency" not in self.argv:
-                # Draw gameplay scene faded out behind settings
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
                 )
-        # Draw the "Back" button (bottom right)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -904,48 +1483,140 @@ class App(Window):
         )
 
     def _draw_load_game(self, from_game: bool):
-        # Draw the load game overlay/menu
         if from_game:
             if "--remove-transparency" not in self.argv:
-                # Draw gameplay scene faded out behind load game overlay
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
                 )
-        # Draw the "Back" button (bottom right)
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(self.screen_right.x, self.screen_bottom.y),
-            V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
-            ),
+        save_entries = self._load_save_entries()
+        selected_save = self._selected_save_entry(save_entries)
+        self._draw_selection_list(
+            "Load Game",
+            save_entries,
+            self.load_game_selected_save,
+            lambda save: f"{save['god']} {self._save_display_name(save)}",
+            "No saves found",
         )
-        self.fill_rounded_rect(
-            V(self.screen_right.x, self.screen_bottom.y),
-            V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
-            ),
-            Color(40, 40, 40) if hover else Color(30, 30, 30),
-            int(2 * self.scale),
-            Color(50, 50, 50),
-            top_left_roundness=10 * self.scale,
-            steps=10,
-        )
-        self.draw_text(
-            "Back",
-            V(
-                self.screen_right.x - (65 * self.scale),
-                self.screen_bottom.y + (20 * self.scale),
-            ),
-            self.main_font.new_size(int(30 * self.scale)),
-            Color(255, 255, 255),
-            Origin.CENTER,
-        )
+        if self.load_game_rename_mode:
+            rename_y_offset = 10 * self.scale
+            self.fill_rect(
+                V(self.screen_left.x, self.screen_top.y - (150 * self.scale)),
+                V(self.screen_right.x, self.screen_bottom.y),
+                Color(0, 0, 0),
+            )
+            self.draw_text(
+                "Rename Save",
+                V(
+                    self.screen_left.x + (10 * self.scale),
+                    self.screen_top.y - (170 * self.scale) + rename_y_offset,
+                ),
+                self.heading_font.new_size(int(28 * self.scale)),
+                Color(255, 255, 255),
+                Origin.TOP_LEFT,
+            )
+            self.fill_rounded_rect(
+                V(
+                    self.screen_left.x + (10 * self.scale),
+                    self.screen_top.y - (210 * self.scale) + rename_y_offset,
+                ),
+                V(
+                    self.screen_right.x - (10 * self.scale),
+                    self.screen_top.y - (240 * self.scale) + rename_y_offset,
+                ),
+                Color(40, 40, 40),
+                int(1 * self.scale),
+                Color(50, 50, 50),
+                6 * self.scale,
+                6 * self.scale,
+                6 * self.scale,
+                6 * self.scale,
+                1,
+            )
+            self.draw_text(
+                self.load_game_rename_buffer or "",
+                V(
+                    self.screen_left.x + (15 * self.scale),
+                    self.screen_top.y - (220 * self.scale) + rename_y_offset,
+                ),
+                self.main_font.new_size(int(20 * self.scale)),
+                Color(255, 255, 255),
+                Origin.TOP_LEFT,
+            )
+            self.draw_text(
+                "Enter to save, Esc to cancel",
+                V(
+                    self.screen_left.x + (10 * self.scale),
+                    self.screen_top.y - (255 * self.scale) + rename_y_offset,
+                ),
+                self.main_font.new_size(int(14 * self.scale)),
+                Color(180, 180, 180),
+                Origin.TOP_LEFT,
+            )
+        else:
+            for index, (action_key, label) in enumerate(
+                self._load_game_action_items(from_game)
+            ):
+                a, b = self._action_button_rect(index, from_game)
+                enabled = (
+                    self.game is not None
+                    if action_key == "save"
+                    else selected_save is not None
+                )
+                hover = enabled and is_point_in_rect(self.mouse_pos, a, b)
+                if hover and enabled:
+                    button_color = Color(60, 60, 60)
+                elif enabled:
+                    button_color = Color(40, 40, 40)
+                else:
+                    button_color = Color(30, 30, 30)
+                self.fill_rect(
+                    a,
+                    b,
+                    button_color,
+                    int(1 * self.scale),
+                    Color(50, 50, 50),
+                )
+                self.draw_text(
+                    label,
+                    V((a.x + b.x) / 2, (a.y + b.y) / 2),
+                    self.main_font.new_size(int(18 * self.scale)),
+                    Color(200, 220, 200) if enabled else Color(120, 120, 120),
+                    Origin.CENTER,
+                )
+        if not self.load_game_rename_mode:
+            hover = is_point_in_rect(
+                self.mouse_pos,
+                V(self.screen_right.x, self.screen_bottom.y),
+                V(
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_bottom.y + (40 * self.scale),
+                ),
+            )
+            self.fill_rounded_rect(
+                V(self.screen_right.x, self.screen_bottom.y),
+                V(
+                    self.screen_right.x - (130 * self.scale),
+                    self.screen_bottom.y + (40 * self.scale),
+                ),
+                Color(40, 40, 40) if hover else Color(30, 30, 30),
+                int(2 * self.scale),
+                Color(50, 50, 50),
+                top_left_roundness=10 * self.scale,
+                steps=10,
+            )
+            self.draw_text(
+                "Back",
+                V(
+                    self.screen_right.x - (65 * self.scale),
+                    self.screen_bottom.y + (20 * self.scale),
+                ),
+                self.main_font.new_size(int(30 * self.scale)),
+                Color(255, 255, 255),
+                Origin.CENTER,
+            )
 
     def _draw_intro(self):
-        # Draw the intro logo sequence with fade-in and fade-out effects
         num_logos = len(self.intro_logos)
         idx = self.intro_current_logo_index
         if 1 <= idx <= num_logos:
@@ -953,7 +1624,6 @@ class App(Window):
             total = self.intro_logo_time
             t = self.intro_current_logo_time
             fade = min(0.3, total / 2.0)
-            # Calculate alpha for fade-in/out
             if total <= 0 or t <= 0:
                 alpha = 255
             elif t < fade:
@@ -978,19 +1648,15 @@ class App(Window):
                 pass
 
     def _draw_credits(self):
-        # Draw the credits scene (currently a placeholder)
         pass
 
     def _draw_quit(self):
-        # Draw the quit scene (currently a placeholder)
         pass
 
     def _draw_main_menu(self):
-        # Draw the main menu with buttons for each major action
         buttons = ["New Game", "Load Game", "Settings", "Credits", "Quit"]
         for i, button in enumerate(buttons):
             x = 0
-            # Calculate y position for each button
             y = (
                 self.screen_top.y
                 - (
@@ -1014,7 +1680,6 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
-            # Draw button background and outline
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             self.fill_rounded_rect(
                 V(ax, ay),
@@ -1032,7 +1697,6 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 1,
             )
-            # Draw button label
             self.draw_text(
                 button,
                 V(x, y),
@@ -1042,7 +1706,6 @@ class App(Window):
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
-        # Draw the game title at the center top
         self.draw_text(
             "Fate of the Gods",
             V(
@@ -1057,167 +1720,16 @@ class App(Window):
         )
 
     def _draw_new_game(self):
-        # Draw the new game scene, including god selection list, god info, and the start button
-        # Draw left panel for god selection
-        self.fill_rect(
-            V(self.screen_left.x, self.screen_top.y),
-            V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
-            Color(30, 30, 30),
-            int(2 * self.scale),
-            Color(50, 50, 50),
-        )
-        # Draw right panel for god image/info
-        self.fill_rect(
-            V(self.screen_right.x, self.screen_top.y),
-            V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_top.y - (150 * self.scale),
-            ),
-            Color(30, 30, 30),
-            int(2 * self.scale),
-            Color(50, 50, 50),
-        )
-        # Draw center panel for god info
-        self.fill_rect(
-            V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
-            V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_top.y - (150 * self.scale),
-            ),
-            Color(0, 0, 0),
-        )
-        # Draw lower panel for god info
-        self.fill_rect(
-            V(
-                self.screen_left.x + (150 * self.scale),
-                self.screen_top.y - (150 * self.scale),
-            ),
-            V(self.screen_right.x, self.screen_bottom.y),
-            Color(0, 0, 0),
-        )
-        # Draw title
-        self.draw_text(
+        self._draw_selection_list(
             "Select Your God",
-            V(
-                self.screen_left.x + (75 * self.scale),
-                self.screen_top.y - (15 * self.scale),
-            ),
-            self.main_font.new_size(int(23 * self.scale)),
-            Color(255, 255, 255),
-            Origin.CENTER,
+            self.gods,
+            self.new_game_selected_god,
+            lambda god: god.name,
+            "No gods found",
         )
-        # Draw god selection buttons
-        for i, god in enumerate(self.gods):
-            # Calculate bounding box for each god selection
-            hover = is_point_in_rect(
-                self.mouse_pos,
-                V(
-                    self.screen_left.x + (1 * self.scale),
-                    self.screen_top.y
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (30 * self.scale),
-                ),
-                V(
-                    self.screen_left.x + (149 * self.scale),
-                    self.screen_top.y
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (25 * self.scale)
-                    - (30 * self.scale),
-                ),
-            )
-            # Highlight selection/hover
-            if hover and self.new_game_selected_god == i:
-                color = Color(60, 60, 60)
-            elif hover:
-                color = Color(50, 50, 50)
-            elif self.new_game_selected_god == i:
-                color = Color(50, 50, 50)
-            else:
-                color = Color(40, 40, 40)
-            self.fill_rect(
-                V(
-                    self.screen_left.x + (1 * self.scale),
-                    self.screen_top.y
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (30 * self.scale),
-                ),
-                V(
-                    self.screen_left.x + (149 * self.scale),
-                    self.screen_top.y
-                    - (1 * self.scale)
-                    - (i * 25 * self.scale)
-                    - (25 * self.scale)
-                    - (30 * self.scale),
-                ),
-                color,
-            )
-            # Draw god name
-            self.draw_text(
-                god.name,
-                V(
-                    self.screen_left.x + (75 * self.scale),
-                    self.screen_top.y - (25 * self.scale * i) - (30 * self.scale),
-                ),
-                self.main_font.new_size(int(23 * self.scale)),
-                Color(200, 220, 200),
-                Origin.TOP,
-            )
-        # Draw selected god info and image
         if self.new_game_selected_god is not None:
             selected_god: God = self.gods[self.new_game_selected_god]
-            try:
-                # Draw god image with animation
-                self.draw_image(
-                    self.god_images[selected_god.image],
-                    V(
-                        self.screen_right.x - (65 * self.scale),
-                        self.screen_top.y - (75 * self.scale),
-                    ),
-                    origin=Origin.CENTER,
-                    scale_x=self.scale
-                    * 1.5
-                    * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
-                    scale_y=self.scale * 1.5,
-                    antialiasing=True,
-                )
-            except Exception:
-                raise Exception(f"Failed to load image for god '{
-                    selected_god.name}' at path: {
-                    get_absolute_path(
-                        f'assets/images/god/{
-                            selected_god.image}/{
-                            selected_god.image}.png')}")
-            # Draw god name
-            self.draw_text(
-                selected_god.name,
-                V(
-                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top.y + (5 * self.scale),
-                ),
-                self.heading_font.new_size(int(40 * self.scale)),
-                Color(255, 255, 255),
-                Origin.TOP_LEFT,
-            )
-            # Draw god info (word-wrapped)
-            self.draw_text_word_wrap(
-                selected_god.info,
-                V(
-                    self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                    self.screen_top.y - (155 * self.scale) + (3 * self.scale),
-                ),
-                self.main_font.new_size(int(30 * self.scale)),
-                Color(255, 255, 255),
-                Origin.TOP_LEFT,
-                wrap_distance=abs(
-                    self.screen_left.x
-                    - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
-                )
-                * 2,
-            )
-        # Draw the "Start" button (bottom right)
+            self._draw_god_detail_panel(selected_god)
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -1262,8 +1774,6 @@ class App(Window):
         self._draw_settings(False)
 
     def _draw_playing(self):
-        # Draw the main gameplay scene
-        # Draw background scene image for the current scene
         current_game: Optional[Game] = self.game
         if current_game is None:
             return
@@ -1282,7 +1792,6 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
-        # Get current scene object
         if current_game is not None:
             try:
                 current_scene: Optional[Scene] = current_game.god.tree.scenes[
@@ -1292,7 +1801,6 @@ class App(Window):
                 current_scene = None
         else:
             current_scene = None
-        # Draw text with links
         links = []
         current_links = current_scene.links if current_scene is not None else []
         for i, link in enumerate(current_links):
@@ -1313,7 +1821,6 @@ class App(Window):
                 self.screen_right.x - (-230 * self.scale) + (-10 * self.scale)
             ),
         )
-        # Draw pause button (bottom left)
         hover = (
             distance(
                 self.mouse_pos,
@@ -1332,7 +1839,6 @@ class App(Window):
             10 * self.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
-        # Draw pause icon (two vertical lines)
         self.draw_line(
             V(
                 (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
@@ -1361,19 +1867,17 @@ class App(Window):
     def _draw_paused(self):
         """
         Draw the paused menu overlay with gameplay scene faded in the background.
-        Shows pause menu buttons with resume, load, save, settings, and exit options.
+        Shows pause menu buttons with resume, load, settings, main menu,
+        and exit options.
         """
         if "--remove-transparency" not in self.argv:
-            # Draw gameplay scene faded out behind pause menu
             self._draw_playing()
             self.fill_rect(
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
             )
-        # Draw pause menu buttons
         buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
         for i, button in enumerate(buttons):
             x = 0
-            # Calculate y position for each button
             y = (
                 self.screen_top.y
                 - (
@@ -1397,7 +1901,6 @@ class App(Window):
             ay = y - height / 2
             bx = x + width / 2
             by = y + height / 2
-            # Draw button background and outline
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             self.fill_rounded_rect(
                 V(ax, ay),
@@ -1415,7 +1918,6 @@ class App(Window):
                 self.button_list_button_roundness * self.scale,
                 1,
             )
-            # Draw button label
             self.draw_text(
                 button,
                 V(x, y),
@@ -1425,7 +1927,6 @@ class App(Window):
                 self.button_list_button_text_color,
                 Origin.CENTER,
             )
-        # Draw paused title
         self.draw_text(
             "Paused",
             V(
