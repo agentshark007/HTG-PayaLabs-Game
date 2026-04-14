@@ -1451,6 +1451,13 @@ class App(Window):
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
                 )
+        self.draw_text(
+            "No settings yet...",
+            self.screen_center,
+            self.main_font.new_size(int(22 * self.scale)),
+            Color(220, 220, 220),
+            Origin.CENTER,
+        )
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
