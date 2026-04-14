@@ -524,25 +524,6 @@ class App(Window):
                     self.set_state(State.PAUSED)
                 else:
                     self.set_state(State.MAIN_MENU)
-        # Check if mouse is over the "clear saves" button (top left area)
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(
-                (self.width / -2) + (20 * self.scale),
-                (self.height / 2) - (20 * self.scale),
-            ),
-            V(
-                (self.width / -2) + (250 * self.scale),
-                (self.height / 2) - (70 * self.scale),
-            ),
-        )
-        if hover and self.mouse_pressed:
-            # Delete all save files
-            folder_path = os.path.join(data_directory, "saves")
-            for filename in os.listdir(folder_path):
-                file_path = os.path.join(folder_path, filename)
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
 
     def _update_load_game(self, from_game: bool):
         """
@@ -918,45 +899,6 @@ class App(Window):
                 self.screen_bottom.y + (20 * self.scale),
             ),
             self.main_font.new_size(int(30 * self.scale)),
-            Color(255, 255, 255),
-            Origin.CENTER,
-        )
-        # Draw the "Delete All Saves" button (top left)
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(
-                (self.width / -2) + (20 * self.scale),
-                (self.height / 2) - (20 * self.scale),
-            ),
-            V(
-                (self.width / -2) + (250 * self.scale),
-                (self.height / 2) - (70 * self.scale),
-            ),
-        )
-        self.fill_rounded_rect(
-            V(
-                (self.width / -2) + (20 * self.scale),
-                (self.height / 2) - (20 * self.scale),
-            ),
-            V(
-                (self.width / -2) + (250 * self.scale),
-                (self.height / 2) - (70 * self.scale),
-            ),
-            Color(40, 40, 40) if hover else Color(30, 30, 30),
-            int(1 * self.scale),
-            Color(50, 50, 50),
-            top_left_roundness=int(5 * self.scale),
-            top_right_roundness=int(5 * self.scale),
-            bottom_left_roundness=int(5 * self.scale),
-            bottom_right_roundness=int(5 * self.scale),
-        )
-        self.draw_text(
-            "Delete All Saves",
-            V(
-                (self.width / -2) + (135 * self.scale),
-                (self.height / 2) - (45 * self.scale),
-            ),
-            self.button_list_button_text_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
