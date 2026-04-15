@@ -845,9 +845,9 @@ class App(Window):
             god.name,
             V(
                 self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                self.screen_top.y + (5 * self.scale),
+                self.screen_top.y,
             ),
-            self.heading_font.new_size(int(40 * self.scale)),
+            self.heading_font.new_size(int(25 * self.scale)),
             Color(255, 255, 255),
             Origin.TOP_LEFT,
         )
