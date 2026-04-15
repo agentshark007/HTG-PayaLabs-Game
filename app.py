@@ -416,7 +416,6 @@ class App(Window):
     def _write_save_record(self, path: str, record: dict):
         lines = [
             f"god: {record.get('god', '')}",
-            f"date: {record.get('date', '')}",
             f"name: {record.get('name', record.get('date', ''))}",
             f"scene: {record.get('scene', '')}",
             f"seed: {record.get('seed', '')}",
@@ -511,18 +510,18 @@ class App(Window):
             except Exception:
                 continue
             god_name = ""
-            save_date = ""
             save_name = ""
+            save_date = ""
             save_scene = ""
             save_seed = None
             save_rng_draws = 0
             for line in lines:
                 if line.startswith("god: "):
                     god_name = line.removeprefix("god: ").strip()
-                elif line.startswith("date: "):
-                    save_date = line.removeprefix("date: ").strip()
                 elif line.startswith("name: "):
                     save_name = line.removeprefix("name: ").strip()
+                elif line.startswith("date: "):
+                    save_date = line.removeprefix("date: ").strip()
                 elif line.startswith("scene: "):
                     save_scene = line.removeprefix("scene: ").strip()
                 elif line.startswith("seed: "):
@@ -537,15 +536,17 @@ class App(Window):
                         save_rng_draws = int(draws_value)
                     except Exception:
                         save_rng_draws = 0
-            if not god_name or not save_date:
+            if not god_name:
                 continue
+            if not save_name:
+                save_name = save_date or god_name
             save_entries.append(
                 {
                     "file_name": file_name,
                     "path": path,
                     "god": god_name,
-                    "date": save_date,
                     "name": save_name,
+                    "date": save_date,
                     "scene": save_scene,
                     "seed": save_seed,
                     "rng_draws": save_rng_draws,
@@ -605,10 +606,9 @@ class App(Window):
             current_scene = None
         date_string = self._current_date_string()
         if display_name is None:
-            display_name = date_string
+            display_name = f"{game.god.name} {date_string}".strip()
         return {
             "god": game.god.name,
-            "date": date_string,
             "name": display_name,
             "scene": current_scene.id if current_scene is not None else "",
             "seed": game.seed,
@@ -625,14 +625,16 @@ class App(Window):
     def _rename_save_entry(self, save_entry: dict, new_name: str):
         record = dict(save_entry)
         record["name"] = (
-            new_name.strip() if new_name.strip() else record.get("date", "")
+            new_name.strip() if new_name.strip() else self._save_display_name(record)
         )
         self._write_save_record(save_entry["path"], record)
 
     def _duplicate_save_entry(self, save_entry: dict):
         new_record = dict(save_entry)
-        new_record["date"] = self._current_date_string()
-        new_record["name"] = new_record["date"]
+        new_record["name"] = f"{
+            new_record.get(
+                'god', '')} {
+            self._current_date_string()}".strip()
         new_file_name = self._generate_save_file_name()
         self._write_save_record(self._save_file_path(new_file_name), new_record)
         return new_file_name
@@ -1290,7 +1292,7 @@ class App(Window):
             "Load Game",
             save_entries,
             self.load_game_selected_save,
-            lambda save: f"{save['god']} {self._save_display_name(save)}",
+            lambda save: self._save_display_name(save),
             "No saves found",
         )
         if self.load_game_rename_mode:
