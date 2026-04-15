@@ -1601,11 +1601,12 @@ class App(Window):
         for i, link in enumerate(current_links):
             links.append(f"{string.ascii_uppercase[i]}: {link.label}")
         links_text = "\n".join(links)
-        main_text = (
-            f"{current_scene.text}\nPress:\n{links_text}"
-            if current_scene is not None
-            else "*No scene data*"
-        )
+        if current_scene is not None:
+            main_text = current_scene.text
+            if links_text:
+                main_text += f"\nPress:\n{links_text}"
+        else:
+            main_text = "*No scene data*"
         self.draw_text_word_wrap(
             main_text,
             V(-230 * self.scale, 35 * self.scale),
