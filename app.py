@@ -1171,8 +1171,6 @@ class App(Window):
             by = y + height / 2
             hover = is_point_in_rect(self.mouse_pos, V(ax, ay), V(bx, by))
             if hover and self.mouse_pressed:
-                if i == 2 and self.game is not None:
-                    self._save_new_game_entry(self.game)
                 self.set_state(target_state)
 
     def _update_load_game_playing(self):
