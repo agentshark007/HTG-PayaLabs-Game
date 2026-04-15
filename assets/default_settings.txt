@@ -1,3 +1,0 @@
-save-seed=1
-potato-mode=0
-volume=0.5

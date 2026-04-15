@@ -1,0 +1,218 @@
+#info
+name: Ares New
+info: God of war and fiery temper
+image: aries
+
+#tree
+
+##a1
+text: You have decided to play as ares, god of courage, strength, and the trial of battles. Are you ready to take on the challenges
+image: testscene
+b1: Yes
+b2: No
+
+##b2
+text: You did absolutely nothing
+image: skull
+c1: Ok
+
+##c1
+text: The day passes without consequence
+image: testscene
+
+##b1
+text: Mount Olympus shines brightly with the setting sun. You think about what to do next
+image: mountolympus
+c2: See hephaestus about new weapons
+c3: Go down to a village
+
+##c3
+text: Where would you like to go
+image: testscene
+d1: Lissinth
+d2: Hephaestus
+d3: Bourorion
+
+##d1
+text: You travel toward lissinth
+image: road
+e5: Continue
+
+##e5
+text: You encounter a broken caravan
+image: road
+f5: Investigate
+f6: Ignore
+
+##f5
+text: You search the caravan and find supplies
+image: testscene
+
+##f6
+text: You move on safely
+image: testscene
+
+##d2
+text: You arrive at the forge of hephaestus
+image: theforges
+c2: Enter deeper into the forge
+
+##d3
+text: You wake up in bourorion. The harbor is active with ships and trade
+image: bourorion
+e1: Buy boat
+e2: Go fishing
+
+##e2
+text: You take a fishing pole. Someone yells at you. Do you listen
+image: bourorion
+f1: Listen
+f2: Ignore
+
+##f1
+text: The fisherman demands payment. Then recognizes you and begs forgiveness, asking a favor
+image: bourorion
+g1: Punish him
+g2: Agree with conditions
+g3: Refuse
+g4: Agree
+
+##g1
+text: How do you punish him
+image: bourorion
+h3: Burn his house
+h4: Rob him
+
+##g2
+text: He asks you to speak with poseidon about the fish
+image: bourorion
+h1: Go now
+h2: Later
+
+##g3
+text: You refuse and walk away
+image: bourorion
+
+##g4
+text: You agree and the fisherman thanks you
+image: bourorion
+
+##h1
+text: You go immediately to speak with poseidon
+image: ocean
+
+##h2
+text: You delay the request
+image: ocean
+
+##h3
+text: You burn the fishermans house
+image: bourorion
+
+##h4
+text: You rob the fisherman
+image: bourorion
+
+##c2
+text: You visit hephaestus forge
+image: theforges
+d4: New sword
+d5: New chestplate
+d6: New helmet
+d7: New shield
+
+##d4
+text: He gives you a masterwork sword. What do you say
+image: theforges
+e3: Thank him
+e4: Leave silently
+
+##e3
+text: He nods and returns to his work
+image: theforges
+f3: Village
+f4: Forest
+
+##e4
+text: You leave without a word
+image: theforges
+
+##f3
+text: Which village
+image: testscene
+g5: Bourorion
+g6: Magnacuse
+g7: Amphaizi
+
+##g5
+text: The harbor is busy and alive
+image: bourorion
+h5: Fish
+h6: Buy boat
+
+##h5
+text: You return to the sea
+image: bourorion
+
+##h6
+text: You consider buying a boat
+image: bourorion
+
+##g6
+text: Magnacuse stands calm under distant skies
+image: testscene
+
+##g7
+text: Amphaizi is filled with scholars of athena. Seek revenge
+image: amphaizi
+h7: Yes
+h8: No
+
+##h7
+text: How will you destroy the town
+image: amphaizi
+i1: Fire
+i2: Sword
+
+##i2
+text: With relentless strikes, the town falls. What now
+image: amphaizi
+j1: Leave
+j2: Loot
+
+##h8
+text: You choose peace. You see a library, school, and tavern
+image: amphaizi
+i3: Library
+i4: School
+i5: Tavern
+
+##i3
+text: Endless books line the walls
+image: library
+j3: Search
+j4: Browse
+
+##i4
+text: Students study under athena's teachings
+image: amphaizi
+
+##i5
+text: Mortals gather and speak freely
+image: amphaizi
+
+##j1
+text: You leave the ruined town behind
+image: amphaizi
+
+##j2
+text: You take what remains of the city
+image: amphaizi
+
+##j3
+text: You search through ancient knowledge
+image: library
+
+##j4
+text: You read without purpose or goal
+image: library
