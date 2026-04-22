@@ -29,6 +29,8 @@ class GodEditor:
         self.selected_choice_index = None
         self._selection_guard_enabled = True
         self._suspend_dirty_tracking = False
+        self.scene_search_var = tk.StringVar(value="")
+        self.scene_issues_only_var = tk.BooleanVar(value=False)
 
         self.god_image_keys = self._list_image_keys(GOD_IMAGE_DIR)
         self.scene_image_keys = self._list_image_keys(SCENE_IMAGE_DIR)
@@ -70,9 +72,35 @@ class GodEditor:
         left = tk.LabelFrame(main, text="Scenes", padx=6, pady=6)
         left.pack(side="left", fill="y")
 
+        scene_search = tk.Frame(left)
+        scene_search.pack(fill="x", pady=(0, 6))
+        tk.Label(scene_search, text="Find").pack(side="left")
+        self.scene_search_entry = tk.Entry(
+            scene_search, textvariable=self.scene_search_var, width=14
+        )
+        self.scene_search_entry.pack(side="left", fill="x", expand=True, padx=(6, 0))
+        self.scene_search_entry.bind("<KeyRelease>", self.on_scene_search_changed)
+        self.scene_search_entry.bind("<Return>", self.open_first_scene_match)
+        self.scene_search_entry.bind("<Escape>", self.clear_scene_search)
+        tk.Button(scene_search, text="X", width=2, command=self.clear_scene_search).pack(
+            side="left", padx=(4, 0)
+        )
+
+        scene_filters = tk.Frame(left)
+        scene_filters.pack(fill="x", pady=(0, 4))
+        tk.Checkbutton(
+            scene_filters,
+            text="Errors only",
+            variable=self.scene_issues_only_var,
+            command=self.on_scene_filter_changed,
+        ).pack(side="left")
+
         self.scene_list = tk.Listbox(left, width=22, height=22)
         self.scene_list.pack(fill="y")
         self.scene_list.bind("<<ListboxSelect>>", self.on_scene_selected)
+
+        self.root.bind_all("<Command-f>", self.focus_scene_search)
+        self.root.bind_all("<Control-f>", self.focus_scene_search)
 
         left_btns = tk.Frame(left)
         left_btns.pack(fill="x", pady=(6, 0))
@@ -84,6 +112,9 @@ class GodEditor:
         tk.Button(left_btns, text="Delete", command=self.delete_scene).pack(fill="x")
         tk.Button(left_btns, text="Move Up", command=lambda: self.move_scene(-1)).pack(fill="x")
         tk.Button(left_btns, text="Move Down", command=lambda: self.move_scene(1)).pack(fill="x")
+        tk.Button(left_btns, text="Normalize IDs", command=self.normalize_scene_layers).pack(
+            fill="x"
+        )
 
         right = tk.LabelFrame(main, text="Scene Editor", padx=8, pady=6)
         right.pack(side="left", fill="both", expand=True, padx=(8, 0))
@@ -137,6 +168,18 @@ class GodEditor:
         tk.Button(scene_btns, text="Save Scene", command=self.save_scene).pack(side="left")
         tk.Button(scene_btns, text="Validate", command=self.validate_and_show).pack(side="left", padx=(6, 0))
 
+        project_console_box = tk.LabelFrame(right, text="Project Console", padx=6, pady=6)
+        project_console_box.pack(fill="both", expand=True, pady=(8, 0))
+        self.project_console = tk.Text(project_console_box, height=6, wrap="word")
+        self.project_console.pack(fill="both", expand=True)
+        self.project_console.configure(state="disabled")
+
+        scene_console_box = tk.LabelFrame(right, text="Scene Errors", padx=6, pady=6)
+        scene_console_box.pack(fill="both", expand=True, pady=(8, 0))
+        self.scene_console = tk.Text(scene_console_box, height=4, wrap="word")
+        self.scene_console.pack(fill="both", expand=True)
+        self.scene_console.configure(state="disabled")
+
         bottom = tk.Frame(self.root)
         bottom.pack(fill="x", padx=8, pady=(4, 8))
 
@@ -172,10 +215,189 @@ class GodEditor:
         self.dirty = dirty
         self._update_title()
 
+    def _filtered_scene_ids(self):
+        query = self.scene_search_var.get().strip().lower()
+        scene_ids = list(self.data["scene_order"])
+        if query:
+            scene_ids = [scene_id for scene_id in scene_ids if query in scene_id.lower()]
+        if self.scene_issues_only_var.get():
+            issue_map = self._scene_issue_map()
+            scene_ids = [scene_id for scene_id in scene_ids if issue_map.get(scene_id)]
+        return scene_ids
+
+    def _scene_issue_map(self):
+        _errors, _warnings, scene_errors = self._validate_data_details()
+        return scene_errors
+
+    def _set_console_text(self, widget, text):
+        widget.configure(state="normal")
+        widget.delete("1.0", tk.END)
+        widget.insert("1.0", text)
+        widget.configure(state="disabled")
+
+    def _refresh_error_consoles(self):
+        errors, warnings, scene_errors = self._validate_data_details()
+
+        chunks = []
+        if errors:
+            chunks.append("Errors:\n- " + "\n- ".join(errors))
+        if warnings:
+            chunks.append("Warnings:\n- " + "\n- ".join(warnings))
+        if not chunks:
+            chunks.append("No issues found.")
+        self._set_console_text(self.project_console, "\n\n".join(chunks))
+
+        selected_scene_id = self.scene_id_entry.get().strip() or self.current_scene
+        if not selected_scene_id:
+            self._set_console_text(self.scene_console, "Select a scene to see scene-specific errors.")
+            return
+
+        current_scene_errors = scene_errors.get(selected_scene_id, [])
+        if current_scene_errors:
+            self._set_console_text(
+                self.scene_console,
+                f"Errors for {selected_scene_id}:\n- " + "\n- ".join(current_scene_errors),
+            )
+        else:
+            self._set_console_text(
+                self.scene_console,
+                f"No errors in selected scene ({selected_scene_id}).",
+            )
+
+    def on_scene_filter_changed(self):
+        matching_ids = self._filtered_scene_ids()
+        select_id = self.current_scene if self.current_scene in matching_ids else None
+        self.refresh_scene_list(select_id=select_id, load_editor=False)
+        if self.scene_issues_only_var.get():
+            self.set_status(f"Showing {len(matching_ids)} scene(s) with errors")
+        else:
+            self.set_status("Showing all scenes")
+
+    def _depth_prefix(self, depth):
+        label = ""
+        n = max(0, int(depth))
+        while True:
+            label = chr(ord("a") + (n % 26)) + label
+            n = n // 26 - 1
+            if n < 0:
+                break
+        return label
+
+    def normalize_scene_layers(self):
+        if not self._ensure_current_scene_saved():
+            return
+        if not self.data["scenes"]:
+            messagebox.showinfo("No Scenes", "Create at least one scene first.")
+            return
+
+        ordered_ids = [sid for sid in self.data["scene_order"] if sid in self.data["scenes"]]
+        for sid in self.data["scenes"]:
+            if sid not in ordered_ids:
+                ordered_ids.append(sid)
+        root_id = ordered_ids[0]
+
+        depth = {root_id: 0}
+        layers = {0: [root_id]}
+        discovered = {root_id}
+        queue = [root_id]
+
+        while queue:
+            current = queue.pop(0)
+            current_depth = depth[current]
+            for choice in self.data["scenes"][current].get("choices", []):
+                for token in choice.get("targets", []):
+                    target, _weight = self._split_weighted_target(token)
+                    if target not in self.data["scenes"]:
+                        continue
+                    if target not in depth:
+                        depth[target] = current_depth + 1
+                    if target not in discovered:
+                        discovered.add(target)
+                        layers.setdefault(depth[target], []).append(target)
+                        queue.append(target)
+
+        unreachable = [sid for sid in ordered_ids if sid not in discovered]
+        if unreachable:
+            layers[max(layers) + 1] = unreachable
+
+        old_ids_by_layer = []
+        for layer_index in sorted(layers):
+            old_ids_by_layer.extend(layers[layer_index])
+
+        id_map = {}
+        for layer_index in sorted(layers):
+            prefix = self._depth_prefix(layer_index)
+            for idx, old_id in enumerate(layers[layer_index], start=1):
+                id_map[old_id] = f"{prefix}{idx}"
+
+        new_scenes = {}
+        for old_id, scene in self.data["scenes"].items():
+            new_id = id_map.get(old_id)
+            if not new_id:
+                continue
+            new_scene = copy.deepcopy(scene)
+            for choice in new_scene.get("choices", []):
+                remapped_targets = []
+                for token in choice.get("targets", []):
+                    base, weight = self._split_weighted_target(token)
+                    mapped = id_map.get(base, base)
+                    if weight is None or weight == "":
+                        remapped_targets.append(mapped)
+                    else:
+                        remapped_targets.append(f"{mapped}*{weight}")
+                choice["targets"] = remapped_targets
+            new_scenes[new_id] = new_scene
+
+        self.data["scenes"] = new_scenes
+        self.data["scene_order"] = [id_map[sid] for sid in old_ids_by_layer if sid in id_map]
+
+        new_current = id_map.get(self.current_scene)
+        self.current_scene = new_current
+        self.refresh_scene_list(select_id=new_current)
+        self.set_dirty(True)
+        self._refresh_error_consoles()
+
+        if unreachable:
+            self.set_status(
+                f"Normalized IDs by layer ({len(unreachable)} unreachable scene(s) moved to final layer)"
+            )
+        else:
+            self.set_status("Normalized IDs by layer")
+
+    def focus_scene_search(self, _event=None):
+        self.scene_search_entry.focus_set()
+        self.scene_search_entry.selection_range(0, tk.END)
+        return "break"
+
+    def clear_scene_search(self, _event=None):
+        had_query = bool(self.scene_search_var.get().strip())
+        self.scene_search_var.set("")
+        self.refresh_scene_list(select_id=self.current_scene, load_editor=False)
+        if had_query:
+            self.set_status("Scene search cleared")
+        if _event is not None:
+            return "break"
+
+    def on_scene_search_changed(self, _event=None):
+        matching_ids = self._filtered_scene_ids()
+        select_id = self.current_scene if self.current_scene in matching_ids else None
+        self.refresh_scene_list(select_id=select_id, load_editor=False)
+        if self.scene_search_var.get().strip():
+            self.set_status(f"Found {len(matching_ids)} matching scene(s)")
+
+    def open_first_scene_match(self, _event=None):
+        matching_ids = self._filtered_scene_ids()
+        if not matching_ids:
+            self.set_status("No scenes match the current search")
+            return "break"
+        self.refresh_scene_list(select_id=matching_ids[0])
+        return "break"
+
     def on_field_edited(self, _event=None):
         if self._suspend_dirty_tracking:
             return
         self.set_dirty(True)
+        self._refresh_error_consoles()
 
     def _update_title(self):
         name = os.path.basename(self.current_file) if self.current_file else "untitled"
@@ -217,10 +439,13 @@ class GodEditor:
         self.current_scene = None
         self.current_choices = []
         self.selected_choice_index = None
+        self.scene_search_var.set("")
+        self.scene_issues_only_var.set(False)
 
         self.load_info_from_data()
         self.refresh_scene_list()
         self.clear_scene_editor()
+        self._refresh_error_consoles()
         self.set_dirty(False)
         self.set_status("New god file")
 
@@ -243,6 +468,7 @@ class GodEditor:
         self.data["scene_order"].insert(0, "a1")
         self.refresh_scene_list(select_id="a1")
         self.set_dirty(True)
+        self._refresh_error_consoles()
         self.set_status("Created root scene a1")
 
     def create_scene(self):
@@ -263,6 +489,7 @@ class GodEditor:
         self.data["scene_order"].append(scene_id)
         self.refresh_scene_list(select_id=scene_id)
         self.set_dirty(True)
+        self._refresh_error_consoles()
         self.set_status(f"Created scene {scene_id}")
 
     def add_child(self):
@@ -283,6 +510,7 @@ class GodEditor:
         )
         self.refresh_scene_list(select_id=new_id)
         self.set_dirty(True)
+        self._refresh_error_consoles()
         self.set_status(f"Added child scene {new_id} from {parent}")
 
     def duplicate_scene(self):
@@ -306,6 +534,7 @@ class GodEditor:
         self.data["scene_order"].insert(insert_at, new_id)
         self.refresh_scene_list(select_id=new_id)
         self.set_dirty(True)
+        self._refresh_error_consoles()
         self.set_status(f"Duplicated {source_id} -> {new_id}")
 
     def _split_weighted_target(self, token):
@@ -358,6 +587,7 @@ class GodEditor:
             self.refresh_scene_list(select_id=new_id)
             self.load_scene_into_editor(new_id)
             self.set_dirty(True)
+            self._refresh_error_consoles()
             self.set_status(f"Renamed {old_id} -> {new_id}")
 
     def delete_scene(self):
@@ -388,6 +618,7 @@ class GodEditor:
         self.refresh_scene_list()
         self.clear_scene_editor()
         self.set_dirty(True)
+        self._refresh_error_consoles()
         self.set_status(f"Deleted scene {sid}")
 
     def move_scene(self, direction):
@@ -403,14 +634,19 @@ class GodEditor:
         order[idx], order[new_idx] = order[new_idx], order[idx]
         self.refresh_scene_list(select_id=self.current_scene)
         self.set_dirty(True)
+        self._refresh_error_consoles()
 
     def refresh_scene_list(self, select_id=None, load_editor=True):
         self._selection_guard_enabled = False
+        scene_ids = self._filtered_scene_ids()
+        if select_id and select_id not in scene_ids and self.scene_search_var.get().strip():
+            self.scene_search_var.set("")
+            scene_ids = list(self.data["scene_order"])
         self.scene_list.delete(0, tk.END)
-        for scene_id in self.data["scene_order"]:
+        for scene_id in scene_ids:
             self.scene_list.insert(tk.END, scene_id)
-        if select_id and select_id in self.data["scene_order"]:
-            idx = self.data["scene_order"].index(select_id)
+        if select_id and select_id in scene_ids:
+            idx = scene_ids.index(select_id)
             self.scene_list.selection_set(idx)
             self.scene_list.activate(idx)
             self.scene_list.see(idx)
@@ -428,6 +664,7 @@ class GodEditor:
         self.refresh_choice_list()
         self.clear_choice_editor()
         self._suspend_dirty_tracking = False
+        self._refresh_error_consoles()
 
     def load_scene_into_editor(self, scene_id):
         self._suspend_dirty_tracking = True
@@ -444,6 +681,7 @@ class GodEditor:
         self.refresh_choice_list()
         self.clear_choice_editor()
         self._suspend_dirty_tracking = False
+        self._refresh_error_consoles()
 
     def on_scene_selected(self, _event):
         sel = self.scene_list.curselection()
@@ -455,6 +693,7 @@ class GodEditor:
                 self.refresh_scene_list(select_id=self.current_scene, load_editor=False)
                 return
         self.load_scene_into_editor(sid)
+        self._refresh_error_consoles()
         self.set_status(f"Editing scene {sid}")
 
     def _format_choice_line(self, idx, choice):
@@ -511,6 +750,7 @@ class GodEditor:
             self.current_choices[self.selected_choice_index] = choice
         self.refresh_choice_list()
         self.set_dirty(True)
+        self._refresh_error_consoles()
 
     def delete_choice(self):
         if self.selected_choice_index is None:
@@ -520,6 +760,7 @@ class GodEditor:
         self.refresh_choice_list()
         self.clear_choice_editor()
         self.set_dirty(True)
+        self._refresh_error_consoles()
 
     def move_choice(self, direction):
         if self.selected_choice_index is None:
@@ -535,6 +776,7 @@ class GodEditor:
         self.selected_choice_index = new_idx
         self.refresh_choice_list()
         self.set_dirty(True)
+        self._refresh_error_consoles()
 
     def jump_to_choice_target(self):
         if self.selected_choice_index is None:
@@ -583,6 +825,7 @@ class GodEditor:
         self.current_scene = scene_id
         self.refresh_scene_list(select_id=scene_id)
         self.set_dirty(True)
+        self._refresh_error_consoles()
         self.set_status(f"Saved scene {scene_id}")
         return True
 
@@ -667,31 +910,36 @@ class GodEditor:
         self.current_scene = None
         self.current_choices = []
         self.selected_choice_index = None
+        self.scene_search_var.set("")
+        self.scene_issues_only_var.set(False)
         self.load_info_from_data()
         self.refresh_scene_list()
         self.clear_scene_editor()
+        self._refresh_error_consoles()
         self.set_dirty(False)
         self.set_status(f"Loaded {os.path.basename(path)}")
 
-    def _reachable_scenes(self):
-        if not self.data["scene_order"]:
+    def _reachable_scenes(self, data=None):
+        data = data or self.data
+        if not data["scene_order"]:
             return set()
-        start = self.data["scene_order"][0]
+        start = data["scene_order"][0]
         visited = set()
         stack = [start]
         while stack:
             current = stack.pop()
-            if current in visited or current not in self.data["scenes"]:
+            if current in visited or current not in data["scenes"]:
                 continue
             visited.add(current)
-            for choice in self.data["scenes"][current].get("choices", []):
+            for choice in data["scenes"][current].get("choices", []):
                 for token in choice.get("targets", []):
                     target, _weight = self._split_weighted_target(token)
-                    if target in self.data["scenes"] and target not in visited:
+                    if target in data["scenes"] and target not in visited:
                         stack.append(target)
         return visited
 
-    def _detect_loop(self):
+    def _detect_loop(self, data=None):
+        data = data or self.data
         temp_mark = set()
         perm_mark = set()
 
@@ -701,26 +949,53 @@ class GodEditor:
             if node in temp_mark:
                 return True
             temp_mark.add(node)
-            for choice in self.data["scenes"][node].get("choices", []):
+            for choice in data["scenes"][node].get("choices", []):
                 for token in choice.get("targets", []):
                     target, _weight = self._split_weighted_target(token)
-                    if target in self.data["scenes"] and visit(target):
+                    if target in data["scenes"] and visit(target):
                         return True
             temp_mark.remove(node)
             perm_mark.add(node)
             return False
 
-        for scene_id in self.data["scene_order"]:
-            if scene_id in self.data["scenes"] and visit(scene_id):
+        for scene_id in data["scene_order"]:
+            if scene_id in data["scenes"] and visit(scene_id):
                 return True
         return False
 
     def validate_data(self):
-        self.sync_info_to_data()
+        errors, warnings, _scene_errors = self._validate_data_details()
+        return errors, warnings
+
+    def _validation_snapshot_data(self):
+        data = copy.deepcopy(self.data)
+        data["info"]["name"] = self.name_entry.get().strip()
+        data["info"]["info"] = self.info_entry.get().strip()
+        data["info"]["image"] = self.image_entry.get().strip()
+
+        scene_id, payload = self._scene_payload_from_editor()
+        if not scene_id:
+            return data
+
+        old_id = self.current_scene
+        if old_id and old_id in data["scenes"] and old_id != scene_id:
+            data["scenes"].pop(old_id, None)
+            data["scenes"][scene_id] = payload
+            data["scene_order"] = [scene_id if sid == old_id else sid for sid in data["scene_order"]]
+        else:
+            data["scenes"][scene_id] = payload
+            if scene_id not in data["scene_order"]:
+                data["scene_order"].append(scene_id)
+
+        return data
+
+    def _validate_data_details(self):
+        data = self._validation_snapshot_data()
         errors = []
         warnings = []
+        scene_errors = {scene_id: [] for scene_id in data["scene_order"]}
 
-        info = self.data["info"]
+        info = data["info"]
         if not info.get("name", "").strip():
             errors.append("Missing god name.")
         if not info.get("info", "").strip():
@@ -732,19 +1007,21 @@ class GodEditor:
         elif self.god_image_keys and god_image not in self.god_image_keys:
             warnings.append(f"God image '{god_image}' is not found in assets/images/god.")
 
-        if not self.data["scene_order"]:
+        if not data["scene_order"]:
             errors.append("No scenes defined.")
-            return errors, warnings
+            return errors, warnings, scene_errors
 
-        if self.data["scene_order"][0] != "a1":
+        if data["scene_order"][0] != "a1":
             warnings.append(
-                f"First scene is '{self.data['scene_order'][0]}', not 'a1'. The first listed scene is the start scene."
+                f"First scene is '{data['scene_order'][0]}', not 'a1'. The first listed scene is the start scene."
             )
 
-        for scene_id in self.data["scene_order"]:
-            scene = self.data["scenes"].get(scene_id)
+        for scene_id in data["scene_order"]:
+            scene = data["scenes"].get(scene_id)
             if scene is None:
-                errors.append(f"Scene order references missing scene '{scene_id}'.")
+                msg = f"Scene order references missing scene '{scene_id}'."
+                errors.append(msg)
+                scene_errors.setdefault(scene_id, []).append(msg)
                 continue
             if not scene.get("text", "").strip():
                 warnings.append(f"Scene '{scene_id}' has no text.")
@@ -758,47 +1035,59 @@ class GodEditor:
 
             choices = scene.get("choices", [])
             if len(choices) > 26:
-                errors.append(
+                msg = (
                     f"Scene '{scene_id}' has {len(choices)} choices. Game only supports up to 26 (A-Z)."
                 )
+                errors.append(msg)
+                scene_errors.setdefault(scene_id, []).append(msg)
             for choice_idx, choice in enumerate(choices, start=1):
                 label = choice.get("text", "")
                 targets = choice.get("targets", [])
                 if not targets:
-                    errors.append(f"Scene '{scene_id}' choice #{choice_idx} has no targets.")
+                    msg = f"Scene '{scene_id}' choice #{choice_idx} has no targets."
+                    errors.append(msg)
+                    scene_errors.setdefault(scene_id, []).append(msg)
                 if not label.strip():
                     warnings.append(f"Scene '{scene_id}' choice #{choice_idx} has empty label.")
                 for token in targets:
                     target_id, weight = self._split_weighted_target(token)
                     if not target_id:
-                        errors.append(
+                        msg = (
                             f"Scene '{scene_id}' choice #{choice_idx} has invalid target token '{token}'."
                         )
+                        errors.append(msg)
+                        scene_errors.setdefault(scene_id, []).append(msg)
                         continue
                     if weight is not None:
                         try:
                             if float(weight) <= 0:
-                                errors.append(
+                                msg = (
                                     f"Scene '{scene_id}' choice #{choice_idx} has non-positive weight in '{token}'."
                                 )
+                                errors.append(msg)
+                                scene_errors.setdefault(scene_id, []).append(msg)
                         except Exception:
-                            errors.append(
+                            msg = (
                                 f"Scene '{scene_id}' choice #{choice_idx} has invalid weight in '{token}'."
                             )
-                    if target_id not in self.data["scenes"]:
-                        errors.append(
+                            errors.append(msg)
+                            scene_errors.setdefault(scene_id, []).append(msg)
+                    if target_id not in data["scenes"]:
+                        msg = (
                             f"Scene '{scene_id}' choice #{choice_idx} targets missing scene '{target_id}'."
                         )
+                        errors.append(msg)
+                        scene_errors.setdefault(scene_id, []).append(msg)
 
-        reachable = self._reachable_scenes()
-        unreachable = [sid for sid in self.data["scene_order"] if sid not in reachable]
+        reachable = self._reachable_scenes(data)
+        unreachable = [sid for sid in data["scene_order"] if sid not in reachable]
         if unreachable:
             warnings.append("Unreachable scenes: " + ", ".join(unreachable))
 
-        if self._detect_loop():
+        if self._detect_loop(data):
             warnings.append("Loop detected in scene graph (allowed, but verify it is intentional).")
 
-        return errors, warnings
+        return errors, warnings, scene_errors
 
     def validate_and_show(self):
         errors, warnings = self.validate_data()

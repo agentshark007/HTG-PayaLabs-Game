@@ -34,10 +34,9 @@ echo -e "${BLUE}[START]: Formatting started${RESET}"
 
 # Run the commands with quiet output and error logging
 run_command "python rbl.py app.py" "rbl"
-run_command "autopep8 --recursive --aggressive --in-place ." "autopep8"
-run_command "isort ." "isort"
-run_command "black ." "black"
-run_command "git restore pgiud.py" "restore pgiud"
+run_command "autopep8 --aggressive --in-place app.py" "autopep8"
+run_command "isort app.py" "isort"
+run_command "black app.py" "black"
 
 # Last message in blue (Finish)
 echo -e "${BLUE}[FINISH]: Formatting finished${RESET}"
