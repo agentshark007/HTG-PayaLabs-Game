@@ -40,19 +40,21 @@ class GodEditor:
 
     def _build_ui(self):
         self.status_var = tk.StringVar(value="Ready")
+        self.validation_summary_var = tk.StringVar(value="Validation: 0 errors, 0 warnings")
         self.title_var = "God Editor"
+        self.root.minsize(1080, 720)
 
-        top = tk.LabelFrame(self.root, text="God Info", padx=8, pady=6)
+        top = tk.LabelFrame(self.root, text="God Metadata", padx=10, pady=8)
         top.pack(fill="x", padx=8, pady=(8, 4))
 
-        tk.Label(top, text="Name").grid(row=0, column=0, sticky="w")
+        tk.Label(top, text="Name").grid(row=0, column=0, sticky="w", pady=(0, 4))
         self.name_entry = tk.Entry(top, width=36)
-        self.name_entry.grid(row=0, column=1, sticky="ew", padx=(6, 12))
+        self.name_entry.grid(row=0, column=1, sticky="ew", padx=(6, 12), pady=(0, 4))
         self.name_entry.bind("<KeyRelease>", self.on_field_edited)
 
-        tk.Label(top, text="Info").grid(row=1, column=0, sticky="w")
+        tk.Label(top, text="Description").grid(row=1, column=0, sticky="w", pady=(0, 4))
         self.info_entry = tk.Entry(top, width=36)
-        self.info_entry.grid(row=1, column=1, sticky="ew", padx=(6, 12))
+        self.info_entry.grid(row=1, column=1, sticky="ew", padx=(6, 12), pady=(0, 4))
         self.info_entry.bind("<KeyRelease>", self.on_field_edited)
 
         tk.Label(top, text="Image key").grid(row=2, column=0, sticky="w")
@@ -66,11 +68,11 @@ class GodEditor:
         )
         top.columnconfigure(1, weight=1)
 
-        main = tk.Frame(self.root)
+        main = ttk.PanedWindow(self.root, orient="horizontal")
         main.pack(fill="both", expand=True, padx=8, pady=4)
 
-        left = tk.LabelFrame(main, text="Scenes", padx=6, pady=6)
-        left.pack(side="left", fill="y")
+        left = tk.LabelFrame(main, text="Scene Navigator", padx=8, pady=8)
+        main.add(left, weight=1)
 
         scene_search = tk.Frame(left)
         scene_search.pack(fill="x", pady=(0, 6))
@@ -90,58 +92,96 @@ class GodEditor:
         scene_filters.pack(fill="x", pady=(0, 4))
         tk.Checkbutton(
             scene_filters,
-            text="Errors only",
+            text="Show only scenes with errors",
             variable=self.scene_issues_only_var,
             command=self.on_scene_filter_changed,
         ).pack(side="left")
 
-        self.scene_list = tk.Listbox(left, width=22, height=22)
-        self.scene_list.pack(fill="y")
+        scene_list_box = tk.Frame(left)
+        scene_list_box.pack(fill="both", expand=True)
+        self.scene_list = tk.Listbox(scene_list_box, width=24, height=24)
+        self.scene_list.pack(side="left", fill="both", expand=True)
+        scene_scroll = tk.Scrollbar(scene_list_box, orient="vertical", command=self.scene_list.yview)
+        scene_scroll.pack(side="right", fill="y")
+        self.scene_list.configure(yscrollcommand=scene_scroll.set)
         self.scene_list.bind("<<ListboxSelect>>", self.on_scene_selected)
 
         self.root.bind_all("<Command-f>", self.focus_scene_search)
         self.root.bind_all("<Control-f>", self.focus_scene_search)
 
-        left_btns = tk.Frame(left)
-        left_btns.pack(fill="x", pady=(6, 0))
-        tk.Button(left_btns, text="New Root", command=self.create_root).pack(fill="x")
-        tk.Button(left_btns, text="New Scene", command=self.create_scene).pack(fill="x")
-        tk.Button(left_btns, text="Add Child", command=self.add_child).pack(fill="x")
-        tk.Button(left_btns, text="Duplicate", command=self.duplicate_scene).pack(fill="x")
-        tk.Button(left_btns, text="Rename", command=self.rename_scene).pack(fill="x")
-        tk.Button(left_btns, text="Delete", command=self.delete_scene).pack(fill="x")
-        tk.Button(left_btns, text="Move Up", command=lambda: self.move_scene(-1)).pack(fill="x")
-        tk.Button(left_btns, text="Move Down", command=lambda: self.move_scene(1)).pack(fill="x")
-        tk.Button(left_btns, text="Normalize IDs", command=self.normalize_scene_layers).pack(
-            fill="x"
+        scene_actions = tk.LabelFrame(left, text="Scene Actions", padx=6, pady=6)
+        scene_actions.pack(fill="x", pady=(8, 0))
+
+        create_btns = tk.Frame(scene_actions)
+        create_btns.pack(fill="x")
+        tk.Button(create_btns, width=12, text="New Root", command=self.create_root).pack(side="left")
+        tk.Button(create_btns, width=12, text="New Scene", command=self.create_scene).pack(
+            side="left", padx=(6, 0)
+        )
+        tk.Button(create_btns, width=12, text="Add Child", command=self.add_child).pack(
+            side="left", padx=(6, 0)
         )
 
-        right = tk.LabelFrame(main, text="Scene Editor", padx=8, pady=6)
-        right.pack(side="left", fill="both", expand=True, padx=(8, 0))
+        manage_btns = tk.Frame(scene_actions)
+        manage_btns.pack(fill="x", pady=(6, 0))
+        tk.Button(manage_btns, width=12, text="Duplicate", command=self.duplicate_scene).pack(side="left")
+        tk.Button(manage_btns, width=12, text="Rename", command=self.rename_scene).pack(
+            side="left", padx=(6, 0)
+        )
+        tk.Button(manage_btns, width=12, text="Delete", command=self.delete_scene).pack(
+            side="left", padx=(6, 0)
+        )
 
-        row1 = tk.Frame(right)
+        order_btns = tk.Frame(scene_actions)
+        order_btns.pack(fill="x", pady=(6, 0))
+        tk.Button(order_btns, width=12, text="Move Up", command=lambda: self.move_scene(-1)).pack(side="left")
+        tk.Button(order_btns, width=12, text="Move Down", command=lambda: self.move_scene(1)).pack(
+            side="left", padx=(6, 0)
+        )
+        tk.Button(
+            order_btns,
+            width=12,
+            text="Normalize IDs",
+            command=self.normalize_scene_layers,
+        ).pack(side="left", padx=(6, 0))
+
+        right = tk.Frame(main)
+        main.add(right, weight=3)
+
+        scene_editor_box = tk.LabelFrame(right, text="Scene Editor", padx=8, pady=8)
+        scene_editor_box.pack(fill="both", expand=True)
+
+        row1 = tk.Frame(scene_editor_box)
         row1.pack(fill="x")
         tk.Label(row1, text="Scene ID").pack(side="left")
-        self.scene_id_entry = tk.Entry(row1, width=18)
+        self.scene_id_entry = tk.Entry(row1, width=14)
         self.scene_id_entry.pack(side="left", padx=(6, 12))
         self.scene_id_entry.bind("<KeyRelease>", self.on_field_edited)
 
         tk.Label(row1, text="Image key").pack(side="left")
         self.scene_image_entry = ttk.Combobox(row1, values=self.scene_image_keys, width=24)
-        self.scene_image_entry.pack(side="left", padx=(6, 0))
+        self.scene_image_entry.pack(side="left", fill="x", expand=True, padx=(6, 8))
         self.scene_image_entry.bind("<<ComboboxSelected>>", self.on_field_edited)
         self.scene_image_entry.bind("<KeyRelease>", self.on_field_edited)
 
-        tk.Label(right, text="Text").pack(anchor="w", pady=(8, 2))
-        self.scene_text = tk.Text(right, height=7, width=60)
+        tk.Button(row1, text="Save Scene", command=self.save_scene).pack(side="left")
+        tk.Button(row1, text="Validate", command=self.validate_and_show).pack(side="left", padx=(6, 0))
+
+        tk.Label(scene_editor_box, text="Scene Text").pack(anchor="w", pady=(8, 2))
+        self.scene_text = tk.Text(scene_editor_box, height=8, width=60)
         self.scene_text.pack(fill="x")
         self.scene_text.bind("<KeyRelease>", self.on_field_edited)
 
-        choices_box = tk.LabelFrame(right, text="Choices", padx=6, pady=6)
+        choices_box = tk.LabelFrame(scene_editor_box, text="Choices", padx=6, pady=6)
         choices_box.pack(fill="both", expand=True, pady=(8, 0))
 
-        self.choice_list = tk.Listbox(choices_box, height=8)
-        self.choice_list.pack(fill="both", expand=True)
+        choice_list_row = tk.Frame(choices_box)
+        choice_list_row.pack(fill="both", expand=True)
+        self.choice_list = tk.Listbox(choice_list_row, height=8)
+        self.choice_list.pack(side="left", fill="both", expand=True)
+        choice_scroll = tk.Scrollbar(choice_list_row, orient="vertical", command=self.choice_list.yview)
+        choice_scroll.pack(side="right", fill="y")
+        self.choice_list.configure(yscrollcommand=choice_scroll.set)
         self.choice_list.bind("<<ListboxSelect>>", self.on_choice_selected)
 
         choice_editor = tk.Frame(choices_box)
@@ -163,33 +203,45 @@ class GodEditor:
         tk.Button(choice_btns, text="Down", command=lambda: self.move_choice(1)).pack(side="left", padx=(4, 0))
         tk.Button(choice_btns, text="Go To", command=self.jump_to_choice_target).pack(side="left", padx=(12, 0))
 
-        scene_btns = tk.Frame(right)
-        scene_btns.pack(fill="x", pady=(8, 0))
-        tk.Button(scene_btns, text="Save Scene", command=self.save_scene).pack(side="left")
-        tk.Button(scene_btns, text="Validate", command=self.validate_and_show).pack(side="left", padx=(6, 0))
+        validation_box = tk.LabelFrame(right, text="Validation", padx=8, pady=8)
+        validation_box.pack(fill="both", expand=True, pady=(8, 0))
 
-        project_console_box = tk.LabelFrame(right, text="Project Console", padx=6, pady=6)
-        project_console_box.pack(fill="both", expand=True, pady=(8, 0))
-        self.project_console = tk.Text(project_console_box, height=6, wrap="word")
+        tk.Label(
+            validation_box,
+            textvariable=self.validation_summary_var,
+            anchor="w",
+        ).pack(fill="x", pady=(0, 6))
+
+        validation_tabs = ttk.Notebook(validation_box)
+        validation_tabs.pack(fill="both", expand=True)
+
+        project_tab = tk.Frame(validation_tabs)
+        scene_tab = tk.Frame(validation_tabs)
+        validation_tabs.add(project_tab, text="Project")
+        validation_tabs.add(scene_tab, text="Selected Scene")
+
+        self.project_console = tk.Text(project_tab, height=6, wrap="word")
         self.project_console.pack(fill="both", expand=True)
         self.project_console.configure(state="disabled")
 
-        scene_console_box = tk.LabelFrame(right, text="Scene Errors", padx=6, pady=6)
-        scene_console_box.pack(fill="both", expand=True, pady=(8, 0))
-        self.scene_console = tk.Text(scene_console_box, height=4, wrap="word")
+        self.scene_console = tk.Text(scene_tab, height=6, wrap="word")
         self.scene_console.pack(fill="both", expand=True)
         self.scene_console.configure(state="disabled")
 
         bottom = tk.Frame(self.root)
         bottom.pack(fill="x", padx=8, pady=(4, 8))
 
-        tk.Button(bottom, text="New", command=self.new_file).pack(side="left")
-        tk.Button(bottom, text="Load", command=self.load_file).pack(side="left", padx=(4, 0))
-        tk.Button(bottom, text="Save", command=self.save_file).pack(side="left", padx=(4, 0))
-        tk.Button(bottom, text="Save As", command=self.save_file_as).pack(side="left", padx=(4, 0))
+        file_actions = tk.Frame(bottom)
+        file_actions.pack(side="left")
+        tk.Button(file_actions, text="New", command=self.new_file).pack(side="left")
+        tk.Button(file_actions, text="Load", command=self.load_file).pack(side="left", padx=(4, 0))
+        tk.Button(file_actions, text="Save", command=self.save_file).pack(side="left", padx=(4, 0))
+        tk.Button(file_actions, text="Save As", command=self.save_file_as).pack(side="left", padx=(4, 0))
+
         tk.Label(bottom, textvariable=self.status_var, anchor="w").pack(
             side="left", fill="x", expand=True, padx=(12, 0)
         )
+        tk.Label(bottom, textvariable=self.validation_summary_var, anchor="e").pack(side="right")
 
     def _list_image_keys(self, folder):
         keys = []
@@ -237,6 +289,9 @@ class GodEditor:
 
     def _refresh_error_consoles(self):
         errors, warnings, scene_errors = self._validate_data_details()
+        self.validation_summary_var.set(
+            f"Validation: {len(errors)} error(s), {len(warnings)} warning(s)"
+        )
 
         chunks = []
         if errors:
@@ -1202,6 +1257,11 @@ class GodEditor:
             self.root.destroy()
 
 
-root = tk.Tk()
-app = GodEditor(root)
-root.mainloop()
+def main():
+    root = tk.Tk()
+    GodEditor(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
