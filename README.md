@@ -13,6 +13,7 @@ When the game starts, a window opens to the intro screen, then the main menu. Fr
 
 - `main.py` – Small launcher that calls `app.main()`.
 - `app.py` – Main game module and `App` class.
+- `editor.py` – Graphical editor for creating and modifying god story data files.
 - `pgiud.py` – Bundled graphics/input engine used by the game.
 - `rbl.py` – Removes blank lines from code files; used by `format.sh`.
 - `format.sh` – Formatting helper for commits.
@@ -58,16 +59,10 @@ Supported command-line options:
 - `--skip-intro` – Skip the intro sequence and go directly to the main menu.
 - `--remove-transparency` – Remove transparency from certain UI overlays for better visibility.
 - `--disable-sound` – Disable all sound effects and music.
-- 
+
 ## Modding
 
-Modding the project is limited, only including adding new gods. To create a new god, follow these instructions:
-
-1. Create a new file in `assets/data/gods/` with the name of the god (e.g., `zeus.txt`).
-2. Follow the format of existing god files to define the story, choices, and outcomes for the new god. Each god file should include sections for the god's name, description, and a series of story nodes with choices that lead to different outcomes.
-3. Add an image asset in `assets/images/god/` for the new god's portrait, following the naming convention (e.g., `zeus.png`).
-4. In the god file, include a reference to the portrait image so that it can be displayed in the game when the god is selected.
-5. The app will automatically register the new god and include it in the main menu for selection when starting a new game.
+Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editory.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, and outcomes.
 
 ## Developers
 
