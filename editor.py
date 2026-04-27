@@ -112,34 +112,34 @@ class GodEditor:
         scene_actions = tk.LabelFrame(left, text="Scene Actions", padx=6, pady=6)
         scene_actions.pack(fill="x", pady=(8, 0))
 
-        create_btns = tk.Frame(scene_actions)
-        create_btns.pack(fill="x")
-        tk.Button(create_btns, width=12, text="New Root", command=self.create_root).pack(side="left")
-        tk.Button(create_btns, width=12, text="New Scene", command=self.create_scene).pack(
+        create_buttons = tk.Frame(scene_actions)
+        create_buttons.pack(fill="x")
+        tk.Button(create_buttons, width=12, text="New Root", command=self.create_root).pack(side="left")
+        tk.Button(create_buttons, width=12, text="New Scene", command=self.create_scene).pack(
             side="left", padx=(6, 0)
         )
-        tk.Button(create_btns, width=12, text="Add Child", command=self.add_child).pack(
-            side="left", padx=(6, 0)
-        )
-
-        manage_btns = tk.Frame(scene_actions)
-        manage_btns.pack(fill="x", pady=(6, 0))
-        tk.Button(manage_btns, width=12, text="Duplicate", command=self.duplicate_scene).pack(side="left")
-        tk.Button(manage_btns, width=12, text="Rename", command=self.rename_scene).pack(
-            side="left", padx=(6, 0)
-        )
-        tk.Button(manage_btns, width=12, text="Delete", command=self.delete_scene).pack(
+        tk.Button(create_buttons, width=12, text="Add Child", command=self.add_child).pack(
             side="left", padx=(6, 0)
         )
 
-        order_btns = tk.Frame(scene_actions)
-        order_btns.pack(fill="x", pady=(6, 0))
-        tk.Button(order_btns, width=12, text="Move Up", command=lambda: self.move_scene(-1)).pack(side="left")
-        tk.Button(order_btns, width=12, text="Move Down", command=lambda: self.move_scene(1)).pack(
+        manage_buttons = tk.Frame(scene_actions)
+        manage_buttons.pack(fill="x", pady=(6, 0))
+        tk.Button(manage_buttons, width=12, text="Duplicate", command=self.duplicate_scene).pack(side="left")
+        tk.Button(manage_buttons, width=12, text="Rename", command=self.rename_scene).pack(
+            side="left", padx=(6, 0)
+        )
+        tk.Button(manage_buttons, width=12, text="Delete", command=self.delete_scene).pack(
+            side="left", padx=(6, 0)
+        )
+
+        order_buttons = tk.Frame(scene_actions)
+        order_buttons.pack(fill="x", pady=(6, 0))
+        tk.Button(order_buttons, width=12, text="Move Up", command=lambda: self.move_scene(-1)).pack(side="left")
+        tk.Button(order_buttons, width=12, text="Move Down", command=lambda: self.move_scene(1)).pack(
             side="left", padx=(6, 0)
         )
         tk.Button(
-            order_btns,
+            order_buttons,
             width=12,
             text="Normalize IDs",
             command=self.normalize_scene_layers,
@@ -194,14 +194,14 @@ class GodEditor:
         self.choice_text_entry.grid(row=1, column=1, sticky="ew", padx=(6, 10), pady=(4, 0))
         choice_editor.columnconfigure(1, weight=1)
 
-        choice_btns = tk.Frame(choices_box)
-        choice_btns.pack(fill="x", pady=(6, 0))
-        tk.Button(choice_btns, text="New", command=self.new_choice).pack(side="left")
-        tk.Button(choice_btns, text="Apply", command=self.apply_choice).pack(side="left", padx=(4, 0))
-        tk.Button(choice_btns, text="Delete", command=self.delete_choice).pack(side="left", padx=(4, 0))
-        tk.Button(choice_btns, text="Up", command=lambda: self.move_choice(-1)).pack(side="left", padx=(12, 0))
-        tk.Button(choice_btns, text="Down", command=lambda: self.move_choice(1)).pack(side="left", padx=(4, 0))
-        tk.Button(choice_btns, text="Go To", command=self.jump_to_choice_target).pack(side="left", padx=(12, 0))
+        choice_buttons = tk.Frame(choices_box)
+        choice_buttons.pack(fill="x", pady=(6, 0))
+        tk.Button(choice_buttons, text="New", command=self.new_choice).pack(side="left")
+        tk.Button(choice_buttons, text="Apply", command=self.apply_choice).pack(side="left", padx=(4, 0))
+        tk.Button(choice_buttons, text="Delete", command=self.delete_choice).pack(side="left", padx=(4, 0))
+        tk.Button(choice_buttons, text="Up", command=lambda: self.move_choice(-1)).pack(side="left", padx=(12, 0))
+        tk.Button(choice_buttons, text="Down", command=lambda: self.move_choice(1)).pack(side="left", padx=(4, 0))
+        tk.Button(choice_buttons, text="Go To", command=self.jump_to_choice_target).pack(side="left", padx=(12, 0))
 
         validation_box = tk.LabelFrame(right, text="Validation", padx=8, pady=8)
         validation_box.pack(fill="both", expand=True, pady=(8, 0))

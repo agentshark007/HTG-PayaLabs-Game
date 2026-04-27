@@ -376,7 +376,7 @@ class App(Window):
             ),
         )
 
-    def _action_button_rect(self, index: int, from_game: bool):
+    def _action_button_rect(self, index: int):
         button_width = 180 * self.scale
         button_height = 28 * self.scale
         list_right_x = self.screen_left.x + (149 * self.scale)
@@ -941,7 +941,7 @@ class App(Window):
         for index, (action_key, _label) in enumerate(
             self._load_game_action_items(from_game)
         ):
-            a, b = self._action_button_rect(index, from_game)
+            a, b = self._action_button_rect(index)
             if is_point_in_rect(self.mouse_pos, a, b) and self.mouse_pressed:
                 clicked = action_key
                 break
@@ -1354,7 +1354,7 @@ class App(Window):
             for index, (action_key, label) in enumerate(
                 self._load_game_action_items(from_game)
             ):
-                a, b = self._action_button_rect(index, from_game)
+                a, b = self._action_button_rect(index)
                 enabled = (
                     self.game is not None
                     if action_key == "save"
