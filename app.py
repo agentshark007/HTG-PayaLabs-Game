@@ -234,18 +234,18 @@ class App(Window):
 
     def _load_assets(self):
         try:
-            file_names = os.listdir(get_absolute_path("assets/images/scene"))
+            file_names = os.listdir(get_absolute_path("assets/data/scenes"))
             self.scene_images = {}
             for file_name in file_names:
                 img_path = get_absolute_path(
-                    os.path.join("assets/images/scene", file_name)
+                    os.path.join("assets/data/scenes", file_name)
                 )
                 self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
-            file_names = os.listdir(get_absolute_path("assets/images/god"))
+            file_names = os.listdir(get_absolute_path("assets/data/thumbnails"))
             self.god_images = {}
             for file_name in file_names:
                 img_path = get_absolute_path(
-                    os.path.join("assets/images/god", file_name)
+                    os.path.join("assets/data/thumbnails", file_name)
                 )
                 self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
             self.heading_font = Font(
@@ -253,14 +253,10 @@ class App(Window):
             )
             self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
             self.intro_payalabs_logo = Image(
-                get_absolute_path("assets/images/intro/payalabs.png")
+                get_absolute_path("assets/intro/payalabs.png")
             )
-            self.intro_pgiud_logo = Image(
-                get_absolute_path("assets/images/intro/pgiud.png")
-            )
-            self.intro_pygame_logo = Image(
-                get_absolute_path("assets/images/intro/pygame.png")
-            )
+            self.intro_pgiud_logo = Image(get_absolute_path("assets/intro/pgiud.png"))
+            self.intro_pygame_logo = Image(get_absolute_path("assets/intro/pygame.png"))
             if "--disable-sound" not in self.argv:
                 self.intro_boom_sound = Sound(
                     get_absolute_path("assets/sounds/intro_boom.mp3")
