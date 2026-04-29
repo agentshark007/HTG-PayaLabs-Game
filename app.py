@@ -178,13 +178,6 @@ class App(Window):
     def _parse_argv(self):
         self.argv = sys.argv[1:]
 
-    def _parse_log_level(self):
-        level_arg = self._find_arg_with_prefix("--level=")
-        if level_arg:
-            result = level_arg.split("=", 1)[1]
-            return result
-        return None
-
     def _initialize_saving(self):
         expected_entries = {"saves", "settings.txt"}
         data_dir_exists = os.path.isdir(data_directory)
@@ -238,9 +231,6 @@ class App(Window):
             raise
         finally:
             pass
-
-    def _initialize_logging(self, log_level=None):
-        pass
 
     def _load_assets(self):
         try:
@@ -1782,7 +1772,3 @@ def main():
         App().start()
     except Exception:
         raise
-
-
-if __name__ == "__main__":
-    main()
