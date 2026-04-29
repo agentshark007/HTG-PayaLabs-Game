@@ -62,7 +62,7 @@ Supported command-line options:
 
 ## Modding
 
-Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editory.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, and outcomes.
+Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editor.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, and outcomes.
 
 ## Developers
 
