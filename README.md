@@ -68,9 +68,9 @@ Modding the project is limited, only including adding new gods. To create a new 
 
 All developers listed here are part of PayaLabs.
 
-- Game designer: Aislinn Haist
+- Game Designer and God Creator: Aislinn Haist
 - Artist: Danielle Milless
-- Coder: Andru Cupala
+- Lead Developer: Andru Cupala
 
 ## Contributing
 

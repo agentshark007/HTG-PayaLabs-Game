@@ -1442,11 +1442,18 @@ class App(Window):
 
     def _draw_credits(self):
         self.draw_text(
-            "No credits yet...",
-            self.screen_center,
-            self.main_font.new_size(int(22 * self.scale)),
-            Color(220, 220, 220),
+            "Credits",
+            V(self.screen_top.x, self.screen_top.y - (20 * self.scale)),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
             Origin.CENTER,
+        )
+        self.draw_text(
+            "Fate of the Gods\nLead Developer: Andru Cupala\nGame Designer and God Creator: Aislinn Haist\nArtist: Danielle Miless\n\nandrucupala.com/payalabs\n\nCreated with python using pygame and pgiud",
+            V(self.screen_top.x, self.screen_top.y - (40 * self.scale)),
+            self.main_font.new_size(int(22 * self.scale)),
+            Color(255, 255, 255),
+            Origin.TOP,
         )
         hover = is_point_in_rect(
             self.mouse_pos,
