@@ -3,7 +3,6 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_GODS_DIR = os.path.join(BASE_DIR, "assets", "data", "gods")
 GOD_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "images", "god")
@@ -761,7 +760,7 @@ class GodEditor:
         for idx, choice in enumerate(self.current_choices):
             self.choice_list.insert(tk.END, self._format_choice_line(idx, choice))
         if self.selected_choice_index is not None and 0 <= self.selected_choice_index < len(
-            self.current_choices
+                self.current_choices
         ):
             self.choice_list.selection_set(self.selected_choice_index)
 
@@ -884,67 +883,6 @@ class GodEditor:
         self.set_status(f"Saved scene {scene_id}")
         return True
 
-    def _parse_god_file(self, text):
-        data = {
-            "info": {"name": "", "info": "", "image": ""},
-            "scenes": {},
-            "scene_order": [],
-        }
-        mode = None
-        current_id = None
-
-        for raw_line in text.splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-            if line == "#info":
-                mode = "info"
-                continue
-            if line == "#tree":
-                mode = "tree"
-                continue
-
-            if mode == "info":
-                if line.startswith("name: "):
-                    data["info"]["name"] = line[len("name: ") :].strip()
-                elif line.startswith("info: "):
-                    data["info"]["info"] = line[len("info: ") :].strip()
-                elif line.startswith("image: "):
-                    data["info"]["image"] = line[len("image: ") :].strip()
-                elif ":" in line:
-                    key, value = line.split(":", 1)
-                    data["info"][key.strip()] = value.strip()
-                continue
-
-            if mode == "tree":
-                if line.startswith("##"):
-                    current_id = line[2:].strip()
-                    if not current_id:
-                        continue
-                    data["scenes"][current_id] = {"text": "", "image": "", "choices": []}
-                    data["scene_order"].append(current_id)
-                elif current_id:
-                    scene = data["scenes"][current_id]
-                    if line.startswith("text: "):
-                        scene["text"] = line[len("text: ") :].strip()
-                    elif line.startswith("text:"):
-                        scene["text"] = line[len("text:") :].strip()
-                    elif line.startswith("image: "):
-                        scene["image"] = line[len("image: ") :].strip()
-                    elif line.startswith("image:"):
-                        scene["image"] = line[len("image:") :].strip()
-                    elif ": " in line:
-                        target_raw, label = line.split(": ", 1)
-                        targets = self._parse_targets(target_raw)
-                        if targets:
-                            scene["choices"].append({"targets": targets, "text": label.strip()})
-                    elif scene["text"]:
-                        scene["text"] += "\n" + line
-                    else:
-                        scene["text"] = line
-
-        return data
-
     def load_file(self):
         if not self.confirm_discard_changes():
             return
@@ -973,6 +911,100 @@ class GodEditor:
         self._refresh_error_consoles()
         self.set_dirty(False)
         self.set_status(f"Loaded {os.path.basename(path)}")
+
+    def save_file(self):
+        if self.current_file:
+            self._write_file(self.current_file)
+        else:
+            self.save_file_as()
+
+    def save_file_as(self):
+        path = filedialog.asksaveasfilename(
+            initialdir=DEFAULT_GODS_DIR,
+            defaultextension=".txt",
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
+        )
+        if not path:
+            return
+        self._write_file(path)
+
+    # FIXED: removed validation checks here
+    def _write_file(self, path):
+        if not self._ensure_current_scene_saved():
+            return False
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(self.export_text())
+        except Exception as exc:
+            messagebox.showerror("Save Failed", str(exc))
+            return False
+
+        self.current_file = path
+        self.set_dirty(False)
+        self.set_status(f"Saved {os.path.basename(path)}")
+        return True
+
+    def _parse_god_file(self, text):
+        data = {
+            "info": {"name": "", "info": "", "image": ""},
+            "scenes": {},
+            "scene_order": [],
+        }
+        mode = None
+        current_id = None
+
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line == "#info":
+                mode = "info"
+                continue
+            if line == "#tree":
+                mode = "tree"
+                continue
+
+            if mode == "info":
+                if line.startswith("name: "):
+                    data["info"]["name"] = line[len("name: "):].strip()
+                elif line.startswith("info: "):
+                    data["info"]["info"] = line[len("info: "):].strip()
+                elif line.startswith("image: "):
+                    data["info"]["image"] = line[len("image: "):].strip()
+                elif ":" in line:
+                    key, value = line.split(":", 1)
+                    data["info"][key.strip()] = value.strip()
+                continue
+
+            if mode == "tree":
+                if line.startswith("##"):
+                    current_id = line[2:].strip()
+                    if not current_id:
+                        continue
+                    data["scenes"][current_id] = {"text": "", "image": "", "choices": []}
+                    data["scene_order"].append(current_id)
+                elif current_id:
+                    scene = data["scenes"][current_id]
+                    if line.startswith("text: "):
+                        scene["text"] = line[len("text: "):].strip()
+                    elif line.startswith("text:"):
+                        scene["text"] = line[len("text:"):].strip()
+                    elif line.startswith("image: "):
+                        scene["image"] = line[len("image: "):].strip()
+                    elif line.startswith("image:"):
+                        scene["image"] = line[len("image:"):].strip()
+                    elif ": " in line:
+                        target_raw, label = line.split(": ", 1)
+                        targets = self._parse_targets(target_raw)
+                        if targets:
+                            scene["choices"].append({"targets": targets, "text": label.strip()})
+                    elif scene["text"]:
+                        scene["text"] += "\n" + line
+                    else:
+                        scene["text"] = line
+
+        return data
 
     def _reachable_scenes(self, data=None):
         data = data or self.data
@@ -1019,7 +1051,7 @@ class GodEditor:
         return False
 
     def validate_data(self):
-        errors, warnings, _scene_errors = self._validate_data_details()
+        errors, warnings = self._validate_data_details()
         return errors, warnings
 
     def _validation_snapshot_data(self):
@@ -1095,6 +1127,7 @@ class GodEditor:
                 )
                 errors.append(msg)
                 scene_errors.setdefault(scene_id, []).append(msg)
+
             for choice_idx, choice in enumerate(choices, start=1):
                 label = choice.get("text", "")
                 targets = choice.get("targets", [])
@@ -1206,21 +1239,10 @@ class GodEditor:
                 return self.save_scene()
         return True
 
+    # FIXED: no validation on save
     def _write_file(self, path):
         if not self._ensure_current_scene_saved():
             return False
-
-        errors, warnings = self.validate_data()
-        if errors:
-            messagebox.showerror("Cannot Save", "- " + "\n- ".join(errors))
-            return False
-        if warnings:
-            proceed = messagebox.askyesno(
-                "Validation Warnings",
-                "Warnings found:\n- " + "\n- ".join(warnings) + "\n\nSave anyway?",
-            )
-            if not proceed:
-                return False
 
         try:
             with open(path, "w", encoding="utf-8") as f:
@@ -1233,22 +1255,6 @@ class GodEditor:
         self.set_dirty(False)
         self.set_status(f"Saved {os.path.basename(path)}")
         return True
-
-    def save_file(self):
-        if self.current_file:
-            self._write_file(self.current_file)
-        else:
-            self.save_file_as()
-
-    def save_file_as(self):
-        path = filedialog.asksaveasfilename(
-            initialdir=DEFAULT_GODS_DIR,
-            defaultextension=".txt",
-            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
-        )
-        if not path:
-            return
-        self._write_file(path)
 
     def on_close(self):
         if not self._ensure_current_scene_saved():
