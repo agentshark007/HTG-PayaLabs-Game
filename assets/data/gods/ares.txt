@@ -1,29 +1,220 @@
-#info
-name: Ares
-info: Command Ares to win the Potato Wars!
-image: ares
+##info
+
+name: Aries
+
+info: God of war, fiery temper.
+
+image: aries
 
 #tree
 
 ##a1
-text: You have just begun as the god Ares! What would you like to do?
-image: trees
-b1: Fight a war
-b2: Go to sleep
-b3, b4: Kill somebody
 
-##b1
-text: You have chosen to fight a war!
-image: trees
+text: You have decided to play as Aries, God of courage, strength, and the trial of battles. Are you ready to take on the challenges?
 
-##b2
-text: You have chosen to go to sleep! You wake up and find that you have been replaced by another god. You lose!
-image: trees
+image:
 
-##b3
-text: You have chosen to kill somebody! You have killed a random person, but they were actually a potato. You lose!
-image: test-scene
+a2: Yes.
 
-##b4
-text: You have chosen to kill somebody! You have killed a random person. It turns out, they were hunting you down. You win!
-image: test-scene
+a3: No.
+
+##a3
+
+text: You did absolutely nothing.
+
+image: skull
+
+a4:ok.
+
+##a2
+
+text: Mount Olympus shines so brightly with the setting sun. You think to yourself, you’ll think about tomorrow when you’ll…
+
+image: Mount Olympus
+
+a5: See Hephaestus about those new weapons.
+
+a6: Go down to a village.
+
+##a6
+
+text: Where would you like to go?
+
+image:
+
+a7: Lissinth.
+
+a8: Ephystus.
+
+a10: Bourorion.
+
+##a10
+
+text: You go to sleep and when you wake up you go to Bourorion. When you arrive there you see ginormous ships coming and going from the port. There you notice a fishing shack that is selling fishing gear, and you also see a beautiful boat with a for sale sign on it. Would you like to buy the boat or go fishing?
+
+image: Bourorion
+
+a11: Buy the boat.
+
+a12: Go fishing.
+
+##a12
+
+text:You go and take one of the fishing poles. You’re about 10 feet away when someone yells at you. Do you ignore them or do you listen to what they’re saying?
+
+image: Bourorion
+
+a13: Listen to them.
+
+a14: Ignore them.
+
+##a13
+
+text: You turn around and listen to them they say “you gotta pay for those fishing poles. They’re not free, you know.” Just then he realizes who you are you see a look of other terror on his face immediately bow down and apologizes and says you can take the fishing pole you tell him to rise, and he asks if you will do him a favor
+
+image: Bourorion
+
+a15: Tell him no and punish him for trying to make you pay for that fishing pole.
+
+a16: Tell him yes, but somewhere down the line he will have to give you a favor.
+
+a17: tell him no.
+
+a18: tell him yes.
+
+##a16
+
+text: He agrees and says, “Can you talk to Poseidon and tell him that we need fish?” You sigh and tell him that you’ll talk to Poseidon. He then runs back to his fish shack. Should you go talk to Poseidon now you think that he’s currently in Lissinth? It will probably be a lengthy journey.
+image: Bourorion
+
+a19: Go see Poseidon now
+
+a20: See him later
+
+##a15
+
+text: How should you punish him?
+
+Image: Bourorion
+
+a21: Burn his house down.
+
+a22: Rob him.
+
+##a5
+
+text: You go to sleep for the night. When you wake up, you go down Hephaestus’s forges where you ask him about your:
+
+Image: the forges
+
+a23: New sword.
+
+a24: New chest plate.
+
+a25: New helmet.
+
+a26: New shield.
+
+##a23
+
+text: He turns around and when he turns back, he hands you a most wonderful, excellent, sturdy, beautiful sword made of silver and copper. What do you say?
+
+Image: the forges
+
+a27: Thank you. This will do for slaying some great beast.
+
+a28: Turn away and leave.
+
+##a27
+
+text: He nods and you leave. Where do you go next?
+
+Image: the forges
+
+a30: Village
+
+a31: Forest
+
+##a30
+
+text: Which village would you like to go to?
+
+image: the forges
+
+a32: Bourorion
+
+a33: Magnacuse
+
+a34: AMPHAIZI
+
+##a32
+
+text: You go to sleep and when you wake up you head to Bourorion. When you arrive there you see ginormous ships coming and going from the port. There you notice a fishing shack that is selling fishing gear, and you also notice a beautiful boat with a for sale sign on it. Would you like to buy the boat or go fishing?
+
+image: Bourorion
+
+a35: Go fishing
+
+a36: Buy the boat
+
+##34
+
+text: When you get to AMPHAIZI there are many schools and libraries. Almost every everybody has their nose in a book. They obviously worship Athena. should you get revenge?
+
+image: AMPHAIZI
+
+a37: Yes
+
+a29: No
+
+##a37
+
+text: How should you do it, with fire or your new sword?
+
+image: AMPHAIZI
+
+a38: Fire
+
+a39: New sword
+
+##a39
+
+text: With 1000 blows from your sword, the town is gone. Nobody remains. What do you do now?
+
+image: AMPHAIZI
+
+a40: Go to a different town
+
+a41: Loot houses
+
+##a29
+
+text: You decide you do not feel like getting revenge today. As you walk through the town, you notice a tavern, a temple, a school, and a library. Which one do you want to go into?
+
+image: AMPHAIZI
+
+a42: The library.
+
+a43: The school.
+
+a44: The tavern.
+
+##a42
+
+text: When you walk in, you see that the walls are lined with floor to ceiling bookshelves. There must be 10,000 books. Do you look for a specific book or just comb the aisles?
+
+image: library
+
+a45: Look for a specific book.
+
+a46: Comb the aisles.
+
+##19
+
+text: As you’re traveling along the road you run into a broken caravan. It looks like it has some supplies in it. It also looks like an animal might’ve made it its home. Would you like to loot it but risk facing a potentially dangerous animal, or would you like to leave it be and continue on the road?
+
+image: road
+
+a46: Investigate the caravan.
+
+a45: Continue on the road.

@@ -21,8 +21,8 @@ When the game starts, a window opens to the intro screen, then the main menu. Fr
 - `assets/` – Bundled game content:
   - `assets/fonts/` – UI fonts.
   - `assets/images/intro/` – Intro logos.
-  - `assets/images/god/` – God portraits.
-  - `assets/images/scene/` – Scene background images.
+  - `assets/data/thumbnails/` – God portraits.
+  - `assets/data/scenes/` – Scene background images.
   - `assets/sounds/` – Sound effects and music.
   - `assets/data/gods/` – Story data files for each god.
 - `data/` – Runtime data created and modified while the game runs:
@@ -62,7 +62,7 @@ Supported command-line options:
 
 ## Modding
 
-Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editor.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, and outcomes.
+Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editor.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, outcomes, and image keys that map to `assets/data/thumbnails/` and `assets/data/scenes/`.
 
 ## Developers
 

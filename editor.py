@@ -1,12 +1,14 @@
 import copy
 import os
 import tkinter as tk
+from pathlib import Path
+from typing import Any, cast
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_GODS_DIR = os.path.join(BASE_DIR, "assets", "data", "gods")
-GOD_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "images", "god")
-SCENE_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "images", "scene")
+GOD_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "data", "thumbnails")
+SCENE_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "data", "scenes")
 
 
 class GodEditor:
@@ -17,15 +19,11 @@ class GodEditor:
         self.current_file = None
         self.dirty = False
 
-        self.data = {
-            "info": {"name": "", "info": "", "image": ""},
-            "scenes": {},
-            "scene_order": [],
-        }
+        self.data: dict[str, Any] = self._blank_data()
 
-        self.current_scene = None
-        self.current_choices = []
-        self.selected_choice_index = None
+        self.current_scene: str | None = None
+        self.current_choices: list[dict[str, Any]] = []
+        self.selected_choice_index: int | None = None
         self._selection_guard_enabled = True
         self._suspend_dirty_tracking = False
         self.scene_search_var = tk.StringVar(value="")
@@ -36,6 +34,16 @@ class GodEditor:
 
         self._build_ui()
         self.new_file(skip_prompt=True)
+
+    def _blank_scene(self) -> dict[str, Any]:
+        return {"text": "", "image": "", "choices": []}
+
+    def _blank_data(self) -> dict[str, Any]:
+        return {
+            "info": {"name": "", "info": "", "image": ""},
+            "scenes": {},
+            "scene_order": [],
+        }
 
     def _build_ui(self):
         self.status_var = tk.StringVar(value="Ready")
@@ -242,7 +250,7 @@ class GodEditor:
         )
         tk.Label(bottom, textvariable=self.validation_summary_var, anchor="e").pack(side="right")
 
-    def _list_image_keys(self, folder):
+    def _list_image_keys(self, folder: str) -> list[str]:
         keys = []
         if os.path.isdir(folder):
             for file_name in sorted(os.listdir(folder)):
@@ -454,7 +462,7 @@ class GodEditor:
         self._refresh_error_consoles()
 
     def _update_title(self):
-        name = os.path.basename(self.current_file) if self.current_file else "untitled"
+        name = Path(self.current_file).name if self.current_file else "untitled"
         marker = " *" if self.dirty else ""
         self.root.title(f"{self.title_var} - {name}{marker}")
 
@@ -485,11 +493,7 @@ class GodEditor:
             return
 
         self.current_file = None
-        self.data = {
-            "info": {"name": "", "info": "", "image": ""},
-            "scenes": {},
-            "scene_order": [],
-        }
+        self.data = self._blank_data()
         self.current_scene = None
         self.current_choices = []
         self.selected_choice_index = None
@@ -518,7 +522,7 @@ class GodEditor:
         if "a1" in self.data["scenes"]:
             messagebox.showinfo("Root Exists", "Scene a1 already exists.")
             return
-        self.data["scenes"]["a1"] = {"text": "", "image": "", "choices": []}
+        self.data["scenes"]["a1"] = self._blank_scene()
         self.data["scene_order"].insert(0, "a1")
         self.refresh_scene_list(select_id="a1")
         self.set_dirty(True)
@@ -539,7 +543,7 @@ class GodEditor:
         if scene_id in self.data["scenes"]:
             messagebox.showerror("Duplicate ID", f"Scene {scene_id} already exists.")
             return
-        self.data["scenes"][scene_id] = {"text": "", "image": "", "choices": []}
+        self.data["scenes"][scene_id] = self._blank_scene()
         self.data["scene_order"].append(scene_id)
         self.refresh_scene_list(select_id=scene_id)
         self.set_dirty(True)
@@ -557,7 +561,7 @@ class GodEditor:
         next_prefix = chr(min(ord(first_char) + 1, ord("z"))) if first_char.isalpha() else "b"
         new_id = self._next_scene_id(next_prefix)
 
-        self.data["scenes"][new_id] = {"text": "", "image": "", "choices": []}
+        self.data["scenes"][new_id] = self._blank_scene()
         self.data["scene_order"].append(new_id)
         self.data["scenes"][parent]["choices"].append(
             {"targets": [new_id], "text": f"Go to {new_id}"}
@@ -836,9 +840,10 @@ class GodEditor:
         if self.selected_choice_index is None:
             return
         choice = self.current_choices[self.selected_choice_index]
-        if not choice.get("targets"):
+        targets = cast(list[str], choice.get("targets", []))
+        if not targets:
             return
-        base, _weight = self._split_weighted_target(choice["targets"][0])
+        base, _weight = self._split_weighted_target(targets[0])
         if base not in self.data["scenes"]:
             messagebox.showinfo("Missing Target", f"Target scene {base} does not exist.")
             return
@@ -910,7 +915,7 @@ class GodEditor:
         self.clear_scene_editor()
         self._refresh_error_consoles()
         self.set_dirty(False)
-        self.set_status(f"Loaded {os.path.basename(path)}")
+        self.set_status(f"Loaded {Path(path).name}")
 
     def save_file(self):
         if self.current_file:
@@ -929,7 +934,7 @@ class GodEditor:
         self._write_file(path)
 
     # FIXED: removed validation checks here
-    def _write_file(self, path):
+    def _write_file(self, path: str) -> bool:
         if not self._ensure_current_scene_saved():
             return False
 
@@ -942,15 +947,11 @@ class GodEditor:
 
         self.current_file = path
         self.set_dirty(False)
-        self.set_status(f"Saved {os.path.basename(path)}")
+        self.set_status(f"Saved {Path(path).name}")
         return True
 
     def _parse_god_file(self, text):
-        data = {
-            "info": {"name": "", "info": "", "image": ""},
-            "scenes": {},
-            "scene_order": [],
-        }
+        data: dict[str, Any] = self._blank_data()
         mode = None
         current_id = None
 
@@ -982,7 +983,7 @@ class GodEditor:
                     current_id = line[2:].strip()
                     if not current_id:
                         continue
-                    data["scenes"][current_id] = {"text": "", "image": "", "choices": []}
+                    data["scenes"][current_id] = self._blank_scene()
                     data["scene_order"].append(current_id)
                 elif current_id:
                     scene = data["scenes"][current_id]
@@ -1051,11 +1052,11 @@ class GodEditor:
         return False
 
     def validate_data(self):
-        errors, warnings = self._validate_data_details()
+        errors, warnings, _scene_errors = self._validate_data_details()
         return errors, warnings
 
     def _validation_snapshot_data(self):
-        data = copy.deepcopy(self.data)
+        data: dict[str, Any] = copy.deepcopy(self.data)
         data["info"]["name"] = self.name_entry.get().strip()
         data["info"]["info"] = self.info_entry.get().strip()
         data["info"]["image"] = self.image_entry.get().strip()
@@ -1092,7 +1093,9 @@ class GodEditor:
         if not god_image:
             errors.append("Missing god image key.")
         elif self.god_image_keys and god_image not in self.god_image_keys:
-            warnings.append(f"God image '{god_image}' is not found in assets/images/god.")
+            warnings.append(
+                f"God image '{god_image}' is not found in assets/data/thumbnails."
+            )
 
         if not data["scene_order"]:
             errors.append("No scenes defined.")
@@ -1117,7 +1120,7 @@ class GodEditor:
                 warnings.append(f"Scene '{scene_id}' has no image key.")
             elif self.scene_image_keys and image_key not in self.scene_image_keys:
                 warnings.append(
-                    f"Scene '{scene_id}' image '{image_key}' is not found in assets/images/scene."
+                    f"Scene '{scene_id}' image '{image_key}' is not found in assets/data/scenes."
                 )
 
             choices = scene.get("choices", [])
@@ -1239,26 +1242,7 @@ class GodEditor:
                 return self.save_scene()
         return True
 
-    # FIXED: no validation on save
-    def _write_file(self, path):
-        if not self._ensure_current_scene_saved():
-            return False
-
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(self.export_text())
-        except Exception as exc:
-            messagebox.showerror("Save Failed", str(exc))
-            return False
-
-        self.current_file = path
-        self.set_dirty(False)
-        self.set_status(f"Saved {os.path.basename(path)}")
-        return True
-
     def on_close(self):
-        if not self._ensure_current_scene_saved():
-            return
         if self.confirm_discard_changes():
             self.root.destroy()
 
