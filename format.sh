@@ -11,6 +11,8 @@ TARGET_FILES=(
   "app.py"
   "editor.py"
   "main.py"
+  "utility.py"
+  "screens/*.py"
   # "another_file.py"
   # "src/module/*.py"
 )
