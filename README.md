@@ -1,83 +1,48 @@
 
 # Fate of the Gods
 
-## Description
+Fate of the Gods is a simple choose-your-own-adventure style game where the player plays a Greek god and makes decisions to determine their fate. Each choice influences the player's path, leading to different outcomes and endings.
 
-`Fate of the Gods` is an in-development choose-your-own-adventure game by PayaLabs, led by Andru Cupala.
+## Python Requirements
 
-The player takes on the role of a Greek god and makes decisions that affect the god's fate and the fate of their followers. The game is designed to be replayable, with multiple paths and endings based on the player's choices.
-
-When the game starts, a window opens to the intro screen, then the main menu. From there, the player can start a new game, load a save, change settings if any, or close the app.
-
-## Project structure
-
-- `main.py` – Small launcher that calls `app.main()`.
-- `app.py` – Main game module and `App` class.
-- `editor.py` – Graphical editor for creating and modifying god story data files.
-- `pgiud.py` – Bundled graphics/input engine used by the game.
-- `rbl.py` – Removes blank lines from code files; used by `format.sh`.
-- `format.sh` – Formatting helper for commits.
-- `requirements.txt` – Python dependencies.
-- `assets/` – Bundled game content:
-  - `assets/fonts/` – UI fonts.
-  - `assets/images/intro/` – Intro logos.
-  - `assets/data/thumbnails/` – God portraits.
-  - `assets/data/scenes/` – Scene background images.
-  - `assets/sounds/` – Sound effects and music.
-  - `assets/data/gods/` – Story data files for each god.
-- `data/` – Runtime data created and modified while the game runs:
-  - `data/settings.txt`
-  - `data/saves/`
-
-## Requirements
-
-- Python 3.12.10
+- Python 3.12
 - Dependencies from `requirements.txt`
+- pgiud version 1.3 (included in project, not installed separately)
 
-Install dependencies with:
+Install dependencies with `pip install -r requirements.txt`.
 
-```zsh
-pip install -r requirements.txt
-```
+## Quick Start Guide
 
-`pgiud` version `1.3` is included in the repository, so you do not need to install it separately.
+1. Install Python 3.12 and dependencies
+2. Run `python main.py`
 
-## Running the game
+## Run Arguments
 
-From the repository root, run:
+- `--skip-intro`: Skips the intro sequence and goes directly to the main menu
+- `--remove-transparency`: Removes transparency from certain UI overlays
+- `--disable-sound`: Disables all sound effects and music
 
-```zsh
-python main.py
-```
-
-`main.py` is the recommended entry point. Running `python app.py` also works because `app.py` exposes the same `main()` function.
-
-## Run arguments
-
-Supported command-line options:
-
-- `--skip-intro` – Skip the intro sequence and go directly to the main menu.
-- `--remove-transparency` – Remove transparency from certain UI overlays for better visibility.
-- `--disable-sound` – Disable all sound effects and music.
-
-## Modding
-
-Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editor.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, outcomes, and image keys that map to `assets/data/thumbnails/` and `assets/data/scenes/`. It also includes a built-in Repair action that handles normalization, validation, and backup creation.
-
-For command-line cleanup and recovery work, you can still run `python repair.py` from the project root; it now delegates to the same editor-owned repair workflow and writes backups into `assets/data/god-backups/`.
+Example of using run arguments:
+Running the program with `python main.py --skip-intro` will skip the intro sequence.
 
 ## Developers
 
-All developers listed here are part of PayaLabs.
+All developers listed are part of PayaLabs.
 
 - Game Designer and God Creator: Aislinn Haist
 - Artist: Danielle Milless
 - Lead Developer: Andru Cupala
 
-## Contributing
+## Contributions
 
-Contributions are not accepted. This is a private project by PayaLabs and is not open for external contributions at this time.
+Contributions are not accepted. This is a private project by PayaLabs and is not open for external contributions.
 
 ## License
 
-This project is provided under a non-commercial license by PayaLabs. See [andrucupala.com/payalabs](https://andrucupala.com/payalabs/home.html) for more information.
+This project is provided under a non-commercial license by PayaLabs:
+
+Non-Commercial Open Source License v1.0:
+- Use, modify, and distribute for non-commercial purposes only.
+- Give credit to PayaLabs for any use or derivatives.
+- Do not sell, license, or profit from this software.
+- Provided “as-is” without any warranty.
