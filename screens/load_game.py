@@ -1,12 +1,9 @@
-from screens import Screen
-
-
-class LoadGameScreen(Screen):
-    def initialize(self):
+class LoadGameScreen:
+    def initialize(self, app):
         pass
 
-    def update(self):
+    def update(self, app):
         pass
 
-    def draw(self):
+    def draw(self, app):
         pass

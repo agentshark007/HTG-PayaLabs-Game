@@ -1,12 +1,9 @@
-from screens import Screen
-
-
-class SettingsScreen(Screen):
-    def initialize(self):
+class SettingsScreen:
+    def initialize(self, app):
         pass
 
-    def update(self):
+    def update(self, app):
         pass
 
-    def draw(self):
+    def draw(self, app):
         pass
