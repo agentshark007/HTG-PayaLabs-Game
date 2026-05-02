@@ -140,7 +140,12 @@ class God:
 
 class Game:
     def __init__(
-        self, god: God, scene_id: str = None, seed: int = None, rng_draws: int = 0
+        self,
+        god: God,
+        scene_id: str = None,
+        seed: int = None,
+        rng_draws: int = 0,
+        previous_scene_index: int = None,
     ):
         self.god = god
         self.seed = (
@@ -151,11 +156,23 @@ class Game:
         for _ in range(max(0, self.rng_draws)):
             self.rng.random()
         self.current_scene_index = god.start_scene_index
+        self.previous_scene_index = None
         if scene_id is not None:
             for idx, scene in enumerate(god.tree.scenes):
                 if scene.id == scene_id:
                     self.current_scene_index = idx
                     break
+        if previous_scene_index is not None:
+            try:
+                previous_scene_index = int(previous_scene_index)
+            except Exception:
+                previous_scene_index = None
+            if (
+                previous_scene_index is not None
+                and 0 <= previous_scene_index < len(god.tree.scenes)
+                and previous_scene_index != self.current_scene_index
+            ):
+                self.previous_scene_index = previous_scene_index
 
 
 class App(Window):
@@ -429,6 +446,38 @@ class App(Window):
         padding_above_button = 10 * self.scale
         return pause_button_center_y + pause_button_radius + padding_above_button
 
+    def _playing_back_button_rect(self):
+        return (
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - (80 * self.scale),
+                self.screen_bottom.y + (26 * self.scale),
+            ),
+        )
+
+    def _set_game_scene(self, game: Game, scene_index: int):
+        if game is None:
+            return False
+        if scene_index is None:
+            return False
+        if not (0 <= scene_index < len(game.god.tree.scenes)):
+            return False
+        if scene_index == game.current_scene_index:
+            return False
+        game.previous_scene_index = game.current_scene_index
+        game.current_scene_index = scene_index
+        self._reset_scene_text_scroll()
+        return True
+
+    def _go_back_to_previous_scene(self):
+        current_game: Optional[Game] = self.game
+        if current_game is None:
+            return False
+        previous_scene_index = getattr(current_game, "previous_scene_index", None)
+        if previous_scene_index is None:
+            return False
+        return self._set_game_scene(current_game, previous_scene_index)
+
     def _selection_item_rect(self, index: int):
         return (
             V(
@@ -492,6 +541,7 @@ class App(Window):
             f"scene: {record.get('scene', '')}",
             f"seed: {record.get('seed', '')}",
             f"rng_draws: {record.get('rng_draws', 0)}",
+            f"previous_scene: {record.get('previous_scene', '')}",
         ]
         with open(path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines).strip() + "\n")
@@ -587,6 +637,7 @@ class App(Window):
             save_scene = ""
             save_seed = None
             save_rng_draws = 0
+            save_previous_scene = None
             for line in lines:
                 if line.startswith("god: "):
                     god_name = line.removeprefix("god: ").strip()
@@ -608,6 +659,12 @@ class App(Window):
                         save_rng_draws = int(draws_value)
                     except Exception:
                         save_rng_draws = 0
+                elif line.startswith("previous_scene: "):
+                    previous_value = line.removeprefix("previous_scene: ").strip()
+                    try:
+                        save_previous_scene = int(previous_value)
+                    except Exception:
+                        save_previous_scene = None
             if not god_name:
                 continue
             if not save_name:
@@ -622,6 +679,7 @@ class App(Window):
                     "scene": save_scene,
                     "seed": save_seed,
                     "rng_draws": save_rng_draws,
+                    "previous_scene": save_previous_scene,
                 }
             )
         return save_entries
@@ -666,6 +724,7 @@ class App(Window):
             scene_id=save_entry.get("scene") or None,
             seed=seed,
             rng_draws=save_entry.get("rng_draws", 0),
+            previous_scene_index=save_entry.get("previous_scene"),
         )
         self._reset_scene_text_scroll()
         self.set_state(State.PLAYING)
@@ -686,6 +745,7 @@ class App(Window):
             "scene": current_scene.id if current_scene is not None else "",
             "seed": game.seed,
             "rng_draws": game.rng_draws,
+            "previous_scene": game.previous_scene_index,
         }
 
     def _save_new_game_entry(self, game: Game, display_name: str = None):
@@ -1187,6 +1247,16 @@ class App(Window):
         self._update_settings(False)
 
     def _update_playing(self):
+        current_game: Optional[Game] = self.game
+        back_a, back_b = self._playing_back_button_rect()
+        back_enabled = (
+            current_game is not None
+            and getattr(current_game, "previous_scene_index", None) is not None
+            and current_game.previous_scene_index != current_game.current_scene_index
+        )
+        if back_enabled and is_point_in_rect(self.mouse_pos, back_a, back_b):
+            if self.mouse_pressed and self._go_back_to_previous_scene():
+                return
         hover = (
             distance(
                 self.mouse_pos,
@@ -1200,7 +1270,7 @@ class App(Window):
         if hover:
             if self.mouse_pressed:
                 self.set_state(State.PAUSED)
-        current_game: Optional[Game] = self.game
+        current_game = self.game
         if current_game is None:
             return
         try:
@@ -1230,8 +1300,7 @@ class App(Window):
                     found_target = False
                     for idx, scene in enumerate(current_game.god.tree.scenes):
                         if scene.id == target_id:
-                            current_game.current_scene_index = idx
-                            self._reset_scene_text_scroll()
+                            self._set_game_scene(current_game, idx)
                             found_target = True
                             break
                     if not found_target:
@@ -1793,6 +1862,32 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
+        back_a, back_b = self._playing_back_button_rect()
+        back_enabled = (
+            getattr(current_game, "previous_scene_index", None) is not None
+            and current_game.previous_scene_index != current_game.current_scene_index
+        )
+        back_hover = back_enabled and is_point_in_rect(self.mouse_pos, back_a, back_b)
+        self.fill_rounded_rect(
+            back_a,
+            back_b,
+            (
+                Color(60, 60, 60)
+                if back_hover
+                else Color(40, 40, 40) if back_enabled else Color(25, 25, 25)
+            ),
+            int(1 * self.scale),
+            Color(50, 50, 50),
+            top_left_roundness=8 * self.scale,
+            steps=10,
+        )
+        self.draw_text(
+            "Back",
+            V((back_a.x + back_b.x) / 2, (back_a.y + back_b.y) / 2),
+            self.main_font.new_size(int(16 * self.scale)),
+            Color(255, 255, 255) if back_enabled else Color(120, 120, 120),
+            Origin.CENTER,
+        )
         hover = (
             distance(
                 self.mouse_pos,
