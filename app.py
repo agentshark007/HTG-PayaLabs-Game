@@ -1069,6 +1069,18 @@ class App(Window):
         self.new_game_selected_god = self._update_selection_list(
             self.gods, self.new_game_selected_god
         )
+        back_x = self.screen_left.x + (150 * self.scale)
+        back_hover = is_point_in_rect(
+            self.mouse_pos,
+            V(back_x, self.screen_bottom.y),
+            V(
+                back_x + (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+        )
+        if back_hover and self.mouse_pressed:
+            self.set_state(State.MAIN_MENU)
+            return
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -1566,6 +1578,37 @@ class App(Window):
         if self.new_game_selected_god is not None:
             selected_god: God = self.gods[self.new_game_selected_god]
             self._draw_god_detail_panel(selected_god)
+        back_x = self.screen_left.x + (150 * self.scale)
+        back_hover = is_point_in_rect(
+            self.mouse_pos,
+            V(back_x, self.screen_bottom.y),
+            V(
+                back_x + (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+        )
+        self.fill_rounded_rect(
+            V(back_x, self.screen_bottom.y),
+            V(
+                back_x + (130 * self.scale),
+                self.screen_bottom.y + (40 * self.scale),
+            ),
+            Color(40, 40, 40) if back_hover else Color(30, 30, 30),
+            int(2 * self.scale),
+            Color(50, 50, 50),
+            top_right_roundness=10 * self.scale,
+            steps=10,
+        )
+        self.draw_text(
+            "Back",
+            V(
+                back_x + (65 * self.scale),
+                self.screen_bottom.y + (20 * self.scale),
+            ),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),

@@ -639,7 +639,7 @@ class GodEditor:
 
         choice_list_row = tk.Frame(choices_box)
         choice_list_row.pack(fill="both", expand=True)
-        self.choice_list = tk.Listbox(choice_list_row, height=8)
+        self.choice_list = tk.Listbox(choice_list_row, height=8, exportselection=False)
         self.choice_list.pack(side="left", fill="both", expand=True)
         choice_scroll = tk.Scrollbar(choice_list_row, orient="vertical", command=self.choice_list.yview)
         choice_scroll.pack(side="right", fill="y")
@@ -1143,6 +1143,11 @@ class GodEditor:
     def on_choice_selected(self, _event):
         sel = self.choice_list.curselection()
         if not sel:
+            # Ignore transient empty selections caused by focus changes.
+            if self.selected_choice_index is not None and 0 <= self.selected_choice_index < len(
+                    self.current_choices
+            ):
+                return
             self.selected_choice_index = None
             self.clear_choice_editor()
             return

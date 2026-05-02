@@ -1,7 +1,7 @@
 #info
 name: Aries
 info: God of war, fiery temper.
-image: aries
+image: ares
 
 #tree
 
@@ -13,7 +13,7 @@ b2: No.
 
 ##b1
 text: Mount Olympus shines so brightly with the setting sun. You think to yourself, you’ll think about tomorrow when you’ll…
-image: Mount Olympus
+image: mount-olympus
 c1: See Hephaestus about those new weapons.
 c2: Go down to a village.
 
@@ -23,7 +23,7 @@ image: skull
 
 ##c1
 text: You go to sleep for the night. When you wake up, you go down Hephaestus’s forges where you ask him about your:
-image: the forges
+image: the-forges
 d1: New sword.
 
 ##c2
@@ -33,65 +33,65 @@ d2: Bourorion.
 
 ##d1
 text: He turns around and when he turns back, he hands you a most wonderful, excellent, sturdy, beautiful sword made of silver and copper. What do you say?
-image: the forges
+image: the-forges
 e1: Thank you. This will do for slaying some great beast.
 
 ##d2
 text: You go to sleep and when you wake up you go to Bourorion. When you arrive there you see ginormous ships coming and going from the port. There you notice a fishing shack that is selling fishing gear, and you also see a beautiful boat with a for sale sign on it. Would you like to buy the boat or go fishing?
-image: Bourorion
+image: bourorion
 e2: Go fishing.
 
 ##e1
 text: He nods and you leave. Where do you go next?
-image: the forges
+image: the-forges
 f1: Village
 
 ##e2
 text: You go and take one of the fishing poles. You’re about 10 feet away when someone yells at you. Do you ignore them or do you listen to what they’re saying?
-image: Bourorion
+image: bourorion
 f2: Listen to them.
 
 ##f1
 text: Which village would you like to go to?
-image: the forges
+image: the-forges
 g1: Bourorion
 
 ##f2
 text: You turn around and listen to them they say “you gotta pay for those fishing poles. They’re not free, you know.” Just then he realizes who you are you see a look of other terror on his face immediately bow down and apologizes and says you can take the fishing pole you tell him to rise, and he asks if you will do him a favor
-image: Bourorion
+image: bourorion
 g2: Tell him no and punish him for trying to make you pay for that fishing pole.
 g3: Tell him yes, but somewhere down the line he will have to give you a favor.
 
 ##g1
 text: You go to sleep and when you wake up you head to Bourorion. When you arrive there you see ginormous ships coming and going from the port. There you notice a fishing shack that is selling fishing gear, and you also notice a beautiful boat with a for sale sign on it. Would you like to buy the boat or go fishing?
-image: Bourorion
+image: bourorion
 
 ##g2
 text: How should you punish him?
-image: Bourorion
+image: bourorion
 
 ##g3
 text: He agrees and says, “Can you talk to Poseidon and tell him that we need fish?” You sigh and tell him that you’ll talk to Poseidon. He then runs back to his fish shack. Should you go talk to Poseidon now you think that he’s currently in Lissinth? It will probably be a lengthy journey.
-image: Bourorion
+image: bourorion
 
 ##h1
 text: When you get to AMPHAIZI there are many schools and libraries. Almost every everybody has their nose in a book. They obviously worship Athena. should you get revenge?
-image: AMPHAIZI
+image: amphaizi
 h2: Yes
 h4: No
 
 ##h2
 text: How should you do it, with fire or your new sword?
-image: AMPHAIZI
+image: amphaizi
 h3: New sword
 
 ##h3
 text: With 1000 blows from your sword, the town is gone. Nobody remains. What do you do now?
-image: AMPHAIZI
+image: amphaizi
 
 ##h4
 text: You decide you do not feel like getting revenge today. As you walk through the town, you notice a tavern, a temple, a school, and a library. Which one do you want to go into?
-image: AMPHAIZI
+image: amphaizi
 h5: The library.
 
 ##h5
