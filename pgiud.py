@@ -6,7 +6,7 @@ from typing import Iterable, Optional, Tuple
 
 import pygame
 
-__version__ = "1.3"
+__version__ = "1.4"
 __all__ = [
     "V",
     "Key",
@@ -367,6 +367,9 @@ class Window:
         self._running = False
         self._mouse_x = 0
         self._mouse_y = 0
+        # Per-frame scroll delta (x = horizontal, y = vertical). Reset each frame in start().
+        self._scroll_x = 0
+        self._scroll_y = 0
         self._deltatime = 0.0
         self._fonts = {}
         self._mouse_down_primary = False
@@ -392,6 +395,23 @@ class Window:
     @property
     def mouse_pos(self):
         return V(self._mouse_x, self._mouse_y)
+
+    @property
+    def mouse_scroll(self):
+        """Returns a V(x, y) with the scroll delta for the current frame.
+
+        Vertical scroll is positive when scrolling up (wheel up / wheel away from user)
+        and negative when scrolling down. Horizontal scroll follows event.x.
+        """
+        return V(self._scroll_x, self._scroll_y)
+
+    @property
+    def mouse_scroll_x(self):
+        return self._scroll_x
+
+    @property
+    def mouse_scroll_y(self):
+        return self._scroll_y
 
     @property
     def mouse_down_primary(self):
@@ -497,6 +517,9 @@ class Window:
         self.initialize()
         while self._running:
             self._deltatime = self._clock.tick(60) / 1000.0
+            # reset per-frame scroll deltas
+            self._scroll_x = 0
+            self._scroll_y = 0
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.on_quit()
@@ -504,6 +527,13 @@ class Window:
                 elif event.type == pygame.VIDEORESIZE:
                     self._handle_resize(event.w, event.h)
                     self.on_resize(event.w, event.h)
+                elif event.type == pygame.MOUSEWHEEL:
+                    # pygame 2 MOUSEWHEEL event (attributes: x, y)
+                    try:
+                        self._scroll_x += getattr(event, "x", 0)
+                        self._scroll_y += getattr(event, "y", 0)
+                    except Exception:
+                        pass
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         self._mouse_down_primary = True
@@ -511,6 +541,18 @@ class Window:
                         self._mouse_down_middle = True
                     elif event.button == 3:
                         self._mouse_down_secondary = True
+                    elif event.button == 4:
+                        # legacy wheel up
+                        self._scroll_y += 1
+                    elif event.button == 5:
+                        # legacy wheel down
+                        self._scroll_y -= 1
+                    elif event.button == 6:
+                        # legacy wheel left
+                        self._scroll_x -= 1
+                    elif event.button == 7:
+                        # legacy wheel right
+                        self._scroll_x += 1
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         self._mouse_down_primary = False
@@ -519,9 +561,34 @@ class Window:
                     elif event.button == 3:
                         self._mouse_down_secondary = False
             self._mouse_x, self._mouse_y = self._pg_to_iud(*pygame.mouse.get_pos())
+            # If any scroll happened this frame, notify and leave deltas available
+            if self._scroll_x != 0 or self._scroll_y != 0:
+                try:
+                    self.on_scroll(self._scroll_x, self._scroll_y)
+                except Exception:
+                    pass
             self.update()
             self.draw()
             pygame.display.flip()
+
+    def on_scroll(self, dx: int, dy: int):
+        """Called when scrolling occurs during a frame.
+
+        dx: horizontal scroll delta (positive = right)
+        dy: vertical scroll delta (positive = up)
+
+        Override this in subclasses to react to scroll input. The per-frame
+        deltas remain available via the `mouse_scroll`, `mouse_scroll_x` and
+        `mouse_scroll_y` properties until `reset_scroll()` is called or the next
+        frame starts (the window resets scroll deltas at the start of each
+        frame).
+        """
+        pass
+
+    def reset_scroll(self):
+        """Reset accumulated scroll deltas to zero for the current frame."""
+        self._scroll_x = 0
+        self._scroll_y = 0
 
     def toggle_fullscreen(self):
         """Toggles fullscreen mode."""

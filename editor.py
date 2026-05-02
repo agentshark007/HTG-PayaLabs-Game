@@ -6,8 +6,8 @@ import tkinter as tk
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
 from tkinter import filedialog, messagebox, simpledialog, ttk
+from typing import Any, cast
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_GODS_DIR = os.path.join(BASE_DIR, "assets", "data", "gods")
@@ -163,9 +163,13 @@ def parse_god_text(text: str, report: RepairReport) -> ParsedGod:
 
         if ":" in line:
             targets_raw, label = line.split(":", 1)
-            targets = [token.strip() for token in targets_raw.split(",") if token.strip()]
+            targets = [
+                token.strip() for token in targets_raw.split(",") if token.strip()
+            ]
             if targets:
-                current_scene.choices.append(ChoiceBlock(targets=targets, text=label.strip()))
+                current_scene.choices.append(
+                    ChoiceBlock(targets=targets, text=label.strip())
+                )
                 continue
 
         if current_scene.text_lines:
@@ -176,7 +180,9 @@ def parse_god_text(text: str, report: RepairReport) -> ParsedGod:
     return parsed
 
 
-def normalize_god(parsed: ParsedGod, report: RepairReport) -> tuple[dict[str, str], list[tuple[str, SceneBlock]]]:
+def normalize_god(
+    parsed: ParsedGod, report: RepairReport
+) -> tuple[dict[str, str], list[tuple[str, SceneBlock]]]:
     if not parsed.scenes:
         report.errors.append("No scenes were found in the file.")
         return parsed.info, []
@@ -193,7 +199,9 @@ def normalize_god(parsed: ParsedGod, report: RepairReport) -> tuple[dict[str, st
     for idx, scene in enumerate(parsed.scenes):
         id_to_indices.setdefault(scene.original_id, []).append(idx)
 
-    duplicate_ids = [scene_id for scene_id, indices in id_to_indices.items() if len(indices) > 1]
+    duplicate_ids = [
+        scene_id for scene_id, indices in id_to_indices.items() if len(indices) > 1
+    ]
     if duplicate_ids:
         report.warnings.append(
             "Duplicate scene ids found; the first occurrence of each id was used for reference repair: "
@@ -222,7 +230,9 @@ def normalize_god(parsed: ParsedGod, report: RepairReport) -> tuple[dict[str, st
                     depth_by_index[target_index] = current_depth + 1
                 if target_index not in discovered:
                     discovered.add(target_index)
-                    layers.setdefault(depth_by_index[target_index], []).append(target_index)
+                    layers.setdefault(depth_by_index[target_index], []).append(
+                        target_index
+                    )
                     queue.append(target_index)
 
     unreachable = [idx for idx in ordered_indices if idx not in discovered]
@@ -283,7 +293,9 @@ def normalize_god(parsed: ParsedGod, report: RepairReport) -> tuple[dict[str, st
                         weight = "1"
 
                 remapped_targets.append(
-                    mapped_base if weight is None or weight == "" else f"{mapped_base}*{weight}"
+                    mapped_base
+                    if weight is None or weight == ""
+                    else f"{mapped_base}*{weight}"
                 )
 
             if not remapped_targets:
@@ -292,7 +304,9 @@ def normalize_god(parsed: ParsedGod, report: RepairReport) -> tuple[dict[str, st
                 )
                 continue
 
-            repaired_choices.append(ChoiceBlock(targets=remapped_targets, text=choice.text.strip()))
+            repaired_choices.append(
+                ChoiceBlock(targets=remapped_targets, text=choice.text.strip())
+            )
 
         scene.choices = repaired_choices
         scene.text_lines = [line.rstrip() for line in scene.text_lines]
@@ -343,7 +357,9 @@ def export_god_text(info: dict[str, str], scenes: list[tuple[str, SceneBlock]]) 
     return "\n".join(lines).rstrip() + "\n"
 
 
-def validate_repaired_data(info: dict[str, str], scenes: list[tuple[str, SceneBlock]]) -> tuple[list[str], list[str]]:
+def validate_repaired_data(
+    info: dict[str, str], scenes: list[tuple[str, SceneBlock]]
+) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -366,7 +382,9 @@ def validate_repaired_data(info: dict[str, str], scenes: list[tuple[str, SceneBl
             warnings.append(f"Scene '{scene_id}' has no image key.")
         for choice_idx, choice in enumerate(scene.choices, start=1):
             if not choice.targets:
-                errors.append(f"Scene '{scene_id}' choice #{choice_idx} has no targets.")
+                errors.append(
+                    f"Scene '{scene_id}' choice #{choice_idx} has no targets."
+                )
             for token in choice.targets:
                 target_id, weight = split_weighted_target(token)
                 if target_id not in scene_map:
@@ -506,7 +524,9 @@ class GodEditor:
 
     def _build_ui(self):
         self.status_var = tk.StringVar(value="Ready")
-        self.validation_summary_var = tk.StringVar(value="Validation: 0 errors, 0 warnings")
+        self.validation_summary_var = tk.StringVar(
+            value="Validation: 0 errors, 0 warnings"
+        )
         self.title_var = "God Editor"
         self.root.minsize(1080, 720)
 
@@ -540,7 +560,9 @@ class GodEditor:
         left = tk.LabelFrame(main, text="Scene Navigator", padx=8, pady=8)
         main.add(left, weight=1)
 
-        tk.Label(left, textvariable=self.scene_summary_var, anchor="w").pack(fill="x", pady=(0, 6))
+        tk.Label(left, textvariable=self.scene_summary_var, anchor="w").pack(
+            fill="x", pady=(0, 6)
+        )
 
         scene_search = tk.Frame(left)
         scene_search.pack(fill="x", pady=(0, 6))
@@ -552,9 +574,9 @@ class GodEditor:
         self.scene_search_entry.bind("<KeyRelease>", self.on_scene_search_changed)
         self.scene_search_entry.bind("<Return>", self.open_first_scene_match)
         self.scene_search_entry.bind("<Escape>", self.clear_scene_search)
-        tk.Button(scene_search, text="X", width=2, command=self.clear_scene_search).pack(
-            side="left", padx=(4, 0)
-        )
+        tk.Button(
+            scene_search, text="X", width=2, command=self.clear_scene_search
+        ).pack(side="left", padx=(4, 0))
 
         scene_filters = tk.Frame(left)
         scene_filters.pack(fill="x", pady=(0, 4))
@@ -569,7 +591,9 @@ class GodEditor:
         scene_list_box.pack(fill="both", expand=True)
         self.scene_list = tk.Listbox(scene_list_box, width=24, height=24)
         self.scene_list.pack(side="left", fill="both", expand=True)
-        scene_scroll = tk.Scrollbar(scene_list_box, orient="vertical", command=self.scene_list.yview)
+        scene_scroll = tk.Scrollbar(
+            scene_list_box, orient="vertical", command=self.scene_list.yview
+        )
         scene_scroll.pack(side="right", fill="y")
         self.scene_list.configure(yscrollcommand=scene_scroll.set)
         self.scene_list.bind("<<ListboxSelect>>", self.on_scene_selected)
@@ -582,30 +606,39 @@ class GodEditor:
 
         create_buttons = tk.Frame(scene_actions)
         create_buttons.pack(fill="x")
-        tk.Button(create_buttons, width=12, text="New Root", command=self.create_root).pack(side="left")
-        tk.Button(create_buttons, width=12, text="New Scene", command=self.create_scene).pack(
-            side="left", padx=(6, 0)
-        )
-        tk.Button(create_buttons, width=12, text="Add Child", command=self.add_child).pack(
-            side="left", padx=(6, 0)
-        )
+        tk.Button(
+            create_buttons, width=12, text="New Root", command=self.create_root
+        ).pack(side="left")
+        tk.Button(
+            create_buttons, width=12, text="New Scene", command=self.create_scene
+        ).pack(side="left", padx=(6, 0))
+        tk.Button(
+            create_buttons, width=12, text="Add Child", command=self.add_child
+        ).pack(side="left", padx=(6, 0))
 
         manage_buttons = tk.Frame(scene_actions)
         manage_buttons.pack(fill="x", pady=(6, 0))
-        tk.Button(manage_buttons, width=12, text="Duplicate", command=self.duplicate_scene).pack(side="left")
-        tk.Button(manage_buttons, width=12, text="Rename", command=self.rename_scene).pack(
-            side="left", padx=(6, 0)
-        )
-        tk.Button(manage_buttons, width=12, text="Delete", command=self.delete_scene).pack(
-            side="left", padx=(6, 0)
-        )
+        tk.Button(
+            manage_buttons, width=12, text="Duplicate", command=self.duplicate_scene
+        ).pack(side="left")
+        tk.Button(
+            manage_buttons, width=12, text="Rename", command=self.rename_scene
+        ).pack(side="left", padx=(6, 0))
+        tk.Button(
+            manage_buttons, width=12, text="Delete", command=self.delete_scene
+        ).pack(side="left", padx=(6, 0))
 
         order_buttons = tk.Frame(scene_actions)
         order_buttons.pack(fill="x", pady=(6, 0))
-        tk.Button(order_buttons, width=12, text="Move Up", command=lambda: self.move_scene(-1)).pack(side="left")
-        tk.Button(order_buttons, width=12, text="Move Down", command=lambda: self.move_scene(1)).pack(
-            side="left", padx=(6, 0)
-        )
+        tk.Button(
+            order_buttons, width=12, text="Move Up", command=lambda: self.move_scene(-1)
+        ).pack(side="left")
+        tk.Button(
+            order_buttons,
+            width=12,
+            text="Move Down",
+            command=lambda: self.move_scene(1),
+        ).pack(side="left", padx=(6, 0))
 
         right = tk.Frame(main)
         main.add(right, weight=3)
@@ -621,13 +654,17 @@ class GodEditor:
         self.scene_id_entry.bind("<KeyRelease>", self.on_field_edited)
 
         tk.Label(row1, text="Image key").pack(side="left")
-        self.scene_image_entry = ttk.Combobox(row1, values=self.scene_image_keys, width=24)
+        self.scene_image_entry = ttk.Combobox(
+            row1, values=self.scene_image_keys, width=24
+        )
         self.scene_image_entry.pack(side="left", fill="x", expand=True, padx=(6, 8))
         self.scene_image_entry.bind("<<ComboboxSelected>>", self.on_field_edited)
         self.scene_image_entry.bind("<KeyRelease>", self.on_field_edited)
 
         tk.Button(row1, text="Save Scene", command=self.save_scene).pack(side="left")
-        tk.Button(row1, text="Validate", command=self.validate_and_show).pack(side="left", padx=(6, 0))
+        tk.Button(row1, text="Validate", command=self.validate_and_show).pack(
+            side="left", padx=(6, 0)
+        )
 
         tk.Label(scene_editor_box, text="Scene Text").pack(anchor="w", pady=(8, 2))
         self.scene_text = tk.Text(scene_editor_box, height=8, width=60)
@@ -641,7 +678,9 @@ class GodEditor:
         choice_list_row.pack(fill="both", expand=True)
         self.choice_list = tk.Listbox(choice_list_row, height=8, exportselection=False)
         self.choice_list.pack(side="left", fill="both", expand=True)
-        choice_scroll = tk.Scrollbar(choice_list_row, orient="vertical", command=self.choice_list.yview)
+        choice_scroll = tk.Scrollbar(
+            choice_list_row, orient="vertical", command=self.choice_list.yview
+        )
         choice_scroll.pack(side="right", fill="y")
         self.choice_list.configure(yscrollcommand=choice_scroll.set)
         self.choice_list.bind("<<ListboxSelect>>", self.on_choice_selected)
@@ -651,19 +690,33 @@ class GodEditor:
         tk.Label(choice_editor, text="Targets").grid(row=0, column=0, sticky="w")
         self.choice_targets_entry = tk.Entry(choice_editor)
         self.choice_targets_entry.grid(row=0, column=1, sticky="ew", padx=(6, 10))
-        tk.Label(choice_editor, text="Label").grid(row=1, column=0, sticky="w", pady=(4, 0))
+        tk.Label(choice_editor, text="Label").grid(
+            row=1, column=0, sticky="w", pady=(4, 0)
+        )
         self.choice_text_entry = tk.Entry(choice_editor)
-        self.choice_text_entry.grid(row=1, column=1, sticky="ew", padx=(6, 10), pady=(4, 0))
+        self.choice_text_entry.grid(
+            row=1, column=1, sticky="ew", padx=(6, 10), pady=(4, 0)
+        )
         choice_editor.columnconfigure(1, weight=1)
 
         choice_buttons = tk.Frame(choices_box)
         choice_buttons.pack(fill="x", pady=(6, 0))
         tk.Button(choice_buttons, text="New", command=self.new_choice).pack(side="left")
-        tk.Button(choice_buttons, text="Apply", command=self.apply_choice).pack(side="left", padx=(4, 0))
-        tk.Button(choice_buttons, text="Delete", command=self.delete_choice).pack(side="left", padx=(4, 0))
-        tk.Button(choice_buttons, text="Up", command=lambda: self.move_choice(-1)).pack(side="left", padx=(12, 0))
-        tk.Button(choice_buttons, text="Down", command=lambda: self.move_choice(1)).pack(side="left", padx=(4, 0))
-        tk.Button(choice_buttons, text="Go To", command=self.jump_to_choice_target).pack(side="left", padx=(12, 0))
+        tk.Button(choice_buttons, text="Apply", command=self.apply_choice).pack(
+            side="left", padx=(4, 0)
+        )
+        tk.Button(choice_buttons, text="Delete", command=self.delete_choice).pack(
+            side="left", padx=(4, 0)
+        )
+        tk.Button(choice_buttons, text="Up", command=lambda: self.move_choice(-1)).pack(
+            side="left", padx=(12, 0)
+        )
+        tk.Button(
+            choice_buttons, text="Down", command=lambda: self.move_choice(1)
+        ).pack(side="left", padx=(4, 0))
+        tk.Button(
+            choice_buttons, text="Go To", command=self.jump_to_choice_target
+        ).pack(side="left", padx=(12, 0))
 
         validation_box = tk.LabelFrame(right, text="Validation", padx=8, pady=8)
         validation_box.pack(fill="both", expand=True, pady=(8, 0))
@@ -696,15 +749,25 @@ class GodEditor:
         file_actions = tk.Frame(bottom)
         file_actions.pack(side="left")
         tk.Button(file_actions, text="New", command=self.new_file).pack(side="left")
-        tk.Button(file_actions, text="Load", command=self.load_file).pack(side="left", padx=(4, 0))
-        tk.Button(file_actions, text="Save", command=self.save_file).pack(side="left", padx=(4, 0))
-        tk.Button(file_actions, text="Save As", command=self.save_file_as).pack(side="left", padx=(4, 0))
-        tk.Button(file_actions, text="Repair", command=self.repair_file).pack(side="left", padx=(4, 0))
+        tk.Button(file_actions, text="Load", command=self.load_file).pack(
+            side="left", padx=(4, 0)
+        )
+        tk.Button(file_actions, text="Save", command=self.save_file).pack(
+            side="left", padx=(4, 0)
+        )
+        tk.Button(file_actions, text="Save As", command=self.save_file_as).pack(
+            side="left", padx=(4, 0)
+        )
+        tk.Button(file_actions, text="Repair", command=self.repair_file).pack(
+            side="left", padx=(4, 0)
+        )
 
         tk.Label(bottom, textvariable=self.status_var, anchor="w").pack(
             side="left", fill="x", expand=True, padx=(12, 0)
         )
-        tk.Label(bottom, textvariable=self.validation_summary_var, anchor="e").pack(side="right")
+        tk.Label(bottom, textvariable=self.validation_summary_var, anchor="e").pack(
+            side="right"
+        )
 
     def _list_image_keys(self, folder: str) -> list[str]:
         keys = []
@@ -734,7 +797,9 @@ class GodEditor:
         query = self.scene_search_var.get().strip().lower()
         scene_ids = list(self.data["scene_order"])
         if query:
-            scene_ids = [scene_id for scene_id in scene_ids if query in scene_id.lower()]
+            scene_ids = [
+                scene_id for scene_id in scene_ids if query in scene_id.lower()
+            ]
         if self.scene_issues_only_var.get():
             issue_map = self._scene_issue_map()
             scene_ids = [scene_id for scene_id in scene_ids if issue_map.get(scene_id)]
@@ -767,14 +832,17 @@ class GodEditor:
 
         selected_scene_id = self.scene_id_entry.get().strip() or self.current_scene
         if not selected_scene_id:
-            self._set_console_text(self.scene_console, "Select a scene to see scene-specific errors.")
+            self._set_console_text(
+                self.scene_console, "Select a scene to see scene-specific errors."
+            )
             return
 
         current_scene_errors = scene_errors.get(selected_scene_id, [])
         if current_scene_errors:
             self._set_console_text(
                 self.scene_console,
-                f"Errors for {selected_scene_id}:\n- " + "\n- ".join(current_scene_errors),
+                f"Errors for {selected_scene_id}:\n- "
+                + "\n- ".join(current_scene_errors),
             )
         else:
             self._set_console_text(
@@ -898,7 +966,9 @@ class GodEditor:
         if not self._ensure_current_scene_saved():
             return
         suggested = self._next_scene_id("a")
-        scene_id = simpledialog.askstring("New Scene", "Scene ID:", initialvalue=suggested)
+        scene_id = simpledialog.askstring(
+            "New Scene", "Scene ID:", initialvalue=suggested
+        )
         if scene_id is None:
             return
         scene_id = scene_id.strip()
@@ -923,7 +993,9 @@ class GodEditor:
             return
         parent = self.current_scene
         first_char = parent[0].lower() if parent else "a"
-        next_prefix = chr(min(ord(first_char) + 1, ord("z"))) if first_char.isalpha() else "b"
+        next_prefix = (
+            chr(min(ord(first_char) + 1, ord("z"))) if first_char.isalpha() else "b"
+        )
         new_id = self._next_scene_id(next_prefix)
 
         self.data["scenes"][new_id] = self._blank_scene()
@@ -987,7 +1059,9 @@ class GodEditor:
                     self._replace_scene_target(token, old_id, new_id)
                     for token in choice.get("targets", [])
                 ]
-        self.current_scene = new_id if self.current_scene == old_id else self.current_scene
+        self.current_scene = (
+            new_id if self.current_scene == old_id else self.current_scene
+        )
 
     def rename_scene(self):
         if not self._ensure_current_scene_saved():
@@ -995,7 +1069,9 @@ class GodEditor:
         if not self.current_scene:
             return
         old_id = self.current_scene
-        new_id = simpledialog.askstring("Rename Scene", "New Scene ID:", initialvalue=old_id)
+        new_id = simpledialog.askstring(
+            "Rename Scene", "New Scene ID:", initialvalue=old_id
+        )
         if new_id is None:
             return
         new_id = new_id.strip()
@@ -1033,7 +1109,9 @@ class GodEditor:
                     if base != sid:
                         kept.append(token)
                 if kept:
-                    new_choices.append({"targets": kept, "text": choice.get("text", "")})
+                    new_choices.append(
+                        {"targets": kept, "text": choice.get("text", "")}
+                    )
             scene["choices"] = new_choices
 
         self.current_scene = None
@@ -1062,7 +1140,11 @@ class GodEditor:
     def refresh_scene_list(self, select_id=None, load_editor=True):
         self._selection_guard_enabled = False
         scene_ids = self._filtered_scene_ids()
-        if select_id and select_id not in scene_ids and self.scene_search_var.get().strip():
+        if (
+            select_id
+            and select_id not in scene_ids
+            and self.scene_search_var.get().strip()
+        ):
             self.scene_search_var.set("")
             scene_ids = list(self.data["scene_order"])
         self.scene_summary_var.set(
@@ -1131,8 +1213,9 @@ class GodEditor:
         self.choice_list.delete(0, tk.END)
         for idx, choice in enumerate(self.current_choices):
             self.choice_list.insert(tk.END, self._format_choice_line(idx, choice))
-        if self.selected_choice_index is not None and 0 <= self.selected_choice_index < len(
-                self.current_choices
+        if (
+            self.selected_choice_index is not None
+            and 0 <= self.selected_choice_index < len(self.current_choices)
         ):
             self.choice_list.selection_set(self.selected_choice_index)
 
@@ -1144,8 +1227,9 @@ class GodEditor:
         sel = self.choice_list.curselection()
         if not sel:
             # Ignore transient empty selections caused by focus changes.
-            if self.selected_choice_index is not None and 0 <= self.selected_choice_index < len(
-                    self.current_choices
+            if (
+                self.selected_choice_index is not None
+                and 0 <= self.selected_choice_index < len(self.current_choices)
             ):
                 return
             self.selected_choice_index = None
@@ -1171,7 +1255,9 @@ class GodEditor:
         targets = self._parse_targets(self.choice_targets_entry.get())
         text = self.choice_text_entry.get().strip()
         if not targets:
-            messagebox.showerror("Invalid Choice", "Choice must have at least one target.")
+            messagebox.showerror(
+                "Invalid Choice", "Choice must have at least one target."
+            )
             return
         choice = {"targets": targets, "text": text}
         if self.selected_choice_index is None:
@@ -1218,7 +1304,9 @@ class GodEditor:
             return
         base, _weight = self._split_weighted_target(targets[0])
         if base not in self.data["scenes"]:
-            messagebox.showinfo("Missing Target", f"Target scene {base} does not exist.")
+            messagebox.showinfo(
+                "Missing Target", f"Target scene {base} does not exist."
+            )
             return
         self.refresh_scene_list(select_id=base)
 
@@ -1242,14 +1330,18 @@ class GodEditor:
         old_id = self.current_scene
         if old_id is None:
             if scene_id in self.data["scenes"]:
-                messagebox.showerror("Duplicate ID", f"Scene {scene_id} already exists.")
+                messagebox.showerror(
+                    "Duplicate ID", f"Scene {scene_id} already exists."
+                )
                 return False
             self.data["scenes"][scene_id] = payload
             self.data["scene_order"].append(scene_id)
         else:
             if scene_id != old_id:
                 if scene_id in self.data["scenes"]:
-                    messagebox.showerror("Duplicate ID", f"Scene {scene_id} already exists.")
+                    messagebox.showerror(
+                        "Duplicate ID", f"Scene {scene_id} already exists."
+                    )
                     return False
                 self._rename_scene_id(old_id, scene_id)
             self.data["scenes"][scene_id] = payload
@@ -1337,7 +1429,9 @@ class GodEditor:
             try:
                 disk_text = repaired_path.read_text(encoding="utf-8")
             except Exception as exc:
-                messagebox.showerror("Repair Failed", f"Failed to read {repaired_path.name}: {exc}")
+                messagebox.showerror(
+                    "Repair Failed", f"Failed to read {repaired_path.name}: {exc}"
+                )
                 return False
 
             if disk_text != repaired_text:
@@ -1352,7 +1446,9 @@ class GodEditor:
         try:
             self.data = self._parse_god_file(repaired_text)
         except Exception as exc:
-            messagebox.showerror("Repair Failed", f"Repaired data could not be reloaded: {exc}")
+            messagebox.showerror(
+                "Repair Failed", f"Repaired data could not be reloaded: {exc}"
+            )
             return False
 
         self.load_info_from_data()
@@ -1360,7 +1456,9 @@ class GodEditor:
         self.current_choices = []
         self.selected_choice_index = None
 
-        selected_scene_id = old_scene_id if old_scene_id in self.data["scenes"] else None
+        selected_scene_id = (
+            old_scene_id if old_scene_id in self.data["scenes"] else None
+        )
         if selected_scene_id is None and self.data["scene_order"]:
             selected_scene_id = self.data["scene_order"][0]
 
@@ -1379,23 +1477,35 @@ class GodEditor:
         fix_count = len(report.fixes)
         warning_count = len(report.warnings)
         if source_text == repaired_text:
-            self.set_status(f"Repair checked {repaired_path.name if repaired_path else 'current file'}")
+            self.set_status(
+                f"Repair checked {repaired_path.name if repaired_path else 'current file'}"
+            )
         else:
             self.set_status(
                 f"Repaired {repaired_path.name if repaired_path else 'current file'}"
-                + (f" ({fix_count} fix(es), {warning_count} warning(s))" if fix_count or warning_count else "")
+                + (
+                    f" ({fix_count} fix(es), {warning_count} warning(s))"
+                    if fix_count or warning_count
+                    else ""
+                )
             )
 
         if unresolved_errors:
             messagebox.showwarning(
                 "Repair Completed with Errors",
-                "Repair applied, but unresolved errors remain:\n- " + "\n- ".join(unresolved_errors),
+                "Repair applied, but unresolved errors remain:\n- "
+                + "\n- ".join(unresolved_errors),
             )
         elif report.fixes:
             messagebox.showinfo(
                 "Repair Complete",
-                "Fixes applied:\n- " + "\n- ".join(report.fixes)
-                + ("\n\nWarnings:\n- " + "\n- ".join(report.warnings) if report.warnings else ""),
+                "Fixes applied:\n- "
+                + "\n- ".join(report.fixes)
+                + (
+                    "\n\nWarnings:\n- " + "\n- ".join(report.warnings)
+                    if report.warnings
+                    else ""
+                ),
             )
         elif report.warnings and source_text != repaired_text:
             messagebox.showinfo(
@@ -1439,11 +1549,11 @@ class GodEditor:
 
             if mode == "info":
                 if line.startswith("name: "):
-                    data["info"]["name"] = line[len("name: "):].strip()
+                    data["info"]["name"] = line[len("name: ") :].strip()
                 elif line.startswith("info: "):
-                    data["info"]["info"] = line[len("info: "):].strip()
+                    data["info"]["info"] = line[len("info: ") :].strip()
                 elif line.startswith("image: "):
-                    data["info"]["image"] = line[len("image: "):].strip()
+                    data["info"]["image"] = line[len("image: ") :].strip()
                 elif ":" in line:
                     key, value = line.split(":", 1)
                     data["info"][key.strip()] = value.strip()
@@ -1459,18 +1569,20 @@ class GodEditor:
                 elif current_id:
                     scene = data["scenes"][current_id]
                     if line.startswith("text: "):
-                        scene["text"] = line[len("text: "):].strip()
+                        scene["text"] = line[len("text: ") :].strip()
                     elif line.startswith("text:"):
-                        scene["text"] = line[len("text:"):].strip()
+                        scene["text"] = line[len("text:") :].strip()
                     elif line.startswith("image: "):
-                        scene["image"] = line[len("image: "):].strip()
+                        scene["image"] = line[len("image: ") :].strip()
                     elif line.startswith("image:"):
-                        scene["image"] = line[len("image:"):].strip()
+                        scene["image"] = line[len("image:") :].strip()
                     elif ": " in line:
                         target_raw, label = line.split(": ", 1)
                         targets = self._parse_targets(target_raw)
                         if targets:
-                            scene["choices"].append({"targets": targets, "text": label.strip()})
+                            scene["choices"].append(
+                                {"targets": targets, "text": label.strip()}
+                            )
                     elif scene["text"]:
                         scene["text"] += "\n" + line
                     else:
@@ -1540,7 +1652,9 @@ class GodEditor:
         if old_id and old_id in data["scenes"] and old_id != scene_id:
             data["scenes"].pop(old_id, None)
             data["scenes"][scene_id] = payload
-            data["scene_order"] = [scene_id if sid == old_id else sid for sid in data["scene_order"]]
+            data["scene_order"] = [
+                scene_id if sid == old_id else sid for sid in data["scene_order"]
+            ]
         else:
             data["scenes"][scene_id] = payload
             if scene_id not in data["scene_order"]:
@@ -1596,9 +1710,7 @@ class GodEditor:
 
             choices = scene.get("choices", [])
             if len(choices) > 26:
-                msg = (
-                    f"Scene '{scene_id}' has {len(choices)} choices. Game only supports up to 26 (A-Z)."
-                )
+                msg = f"Scene '{scene_id}' has {len(choices)} choices. Game only supports up to 26 (A-Z)."
                 errors.append(msg)
                 scene_errors.setdefault(scene_id, []).append(msg)
 
@@ -1610,34 +1722,28 @@ class GodEditor:
                     errors.append(msg)
                     scene_errors.setdefault(scene_id, []).append(msg)
                 if not label.strip():
-                    warnings.append(f"Scene '{scene_id}' choice #{choice_idx} has empty label.")
+                    warnings.append(
+                        f"Scene '{scene_id}' choice #{choice_idx} has empty label."
+                    )
                 for token in targets:
                     target_id, weight = self._split_weighted_target(token)
                     if not target_id:
-                        msg = (
-                            f"Scene '{scene_id}' choice #{choice_idx} has invalid target token '{token}'."
-                        )
+                        msg = f"Scene '{scene_id}' choice #{choice_idx} has invalid target token '{token}'."
                         errors.append(msg)
                         scene_errors.setdefault(scene_id, []).append(msg)
                         continue
                     if weight is not None:
                         try:
                             if float(weight) <= 0:
-                                msg = (
-                                    f"Scene '{scene_id}' choice #{choice_idx} has non-positive weight in '{token}'."
-                                )
+                                msg = f"Scene '{scene_id}' choice #{choice_idx} has non-positive weight in '{token}'."
                                 errors.append(msg)
                                 scene_errors.setdefault(scene_id, []).append(msg)
                         except Exception:
-                            msg = (
-                                f"Scene '{scene_id}' choice #{choice_idx} has invalid weight in '{token}'."
-                            )
+                            msg = f"Scene '{scene_id}' choice #{choice_idx} has invalid weight in '{token}'."
                             errors.append(msg)
                             scene_errors.setdefault(scene_id, []).append(msg)
                     if target_id not in data["scenes"]:
-                        msg = (
-                            f"Scene '{scene_id}' choice #{choice_idx} targets missing scene '{target_id}'."
-                        )
+                        msg = f"Scene '{scene_id}' choice #{choice_idx} targets missing scene '{target_id}'."
                         errors.append(msg)
                         scene_errors.setdefault(scene_id, []).append(msg)
 
@@ -1647,7 +1753,9 @@ class GodEditor:
             warnings.append("Unreachable scenes: " + ", ".join(unreachable))
 
         if self._detect_loop(data):
-            warnings.append("Loop detected in scene graph (allowed, but verify it is intentional).")
+            warnings.append(
+                "Loop detected in scene graph (allowed, but verify it is intentional)."
+            )
 
         return errors, warnings, scene_errors
 

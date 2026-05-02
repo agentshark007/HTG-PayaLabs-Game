@@ -213,6 +213,7 @@ class App(Window):
         self.seconds_since_start = 0.0
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
+        self.scene_text_scroll_y = 0.0
 
     def initialize(self):
         self._parse_argv()
@@ -342,6 +343,91 @@ class App(Window):
         self.load_game_rename_buffer = ""
         self.load_game_rename_index: Optional[int] = None
         self.load_game_rename_path: Optional[str] = None
+
+    def _reset_scene_text_scroll(self):
+        self.scene_text_scroll_y = 0.0
+
+    def _scene_text_content(self, scene: Scene):
+        lines = [scene.text.strip()] if scene.text.strip() else ["*No scene data*"]
+        link_lines = []
+        for i, link in enumerate(scene.links):
+            if i >= 26:
+                break
+            link_lines.append(f"{string.ascii_uppercase[i]}: {link.label}")
+        if link_lines:
+            if lines and lines[-1]:
+                lines.append("")
+            lines.append("Press:")
+            lines.extend(link_lines)
+        return "\n".join(lines)
+
+    def _wrap_scene_text_lines(self, text: str, font, wrap_distance: Optional[int]):
+        if not text:
+            return [""]
+        if wrap_distance is None or wrap_distance <= 0:
+            return text.split("\n") or [""]
+        lines = []
+        for para in text.split("\n"):
+            if para == "":
+                lines.append("")
+                continue
+            words = para.split(" ")
+            cur = ""
+            for word in words:
+                candidate = word if cur == "" else cur + " " + word
+                try:
+                    candidate_width = font.font.size(candidate)[0]
+                except Exception:
+                    candidate_width = 0
+                if candidate_width <= wrap_distance:
+                    cur = candidate
+                    continue
+                if cur != "":
+                    lines.append(cur)
+                try:
+                    word_width = font.font.size(word)[0]
+                except Exception:
+                    word_width = 0
+                if word_width <= wrap_distance:
+                    cur = word
+                else:
+                    chunk = ""
+                    for ch in word:
+                        next_chunk = chunk + ch
+                        try:
+                            next_width = font.font.size(next_chunk)[0]
+                        except Exception:
+                            next_width = 0
+                        if next_width <= wrap_distance:
+                            chunk = next_chunk
+                        else:
+                            if chunk != "":
+                                lines.append(chunk)
+                            chunk = ch
+                    cur = chunk
+            if cur != "":
+                lines.append(cur)
+        return lines or [""]
+
+    def _scene_text_scroll_metrics(
+        self,
+        text: str,
+        font,
+        wrap_distance: Optional[int],
+        visible_height: float,
+    ):
+        lines = self._wrap_scene_text_lines(text, font, wrap_distance)
+        line_step = max(1, int(font.font.get_linesize()))
+        line_height = max(1, int(font.font.get_height()))
+        total_height = line_height + max(0, len(lines) - 1) * line_step
+        max_scroll = max(0.0, float(total_height) - max(0.0, float(visible_height)))
+        return total_height, max_scroll
+
+    def _playing_scene_text_bottom_y(self):
+        pause_button_center_y = self.screen_bottom.y + (15 * self.scale)
+        pause_button_radius = 10 * self.scale
+        padding_above_button = 10 * self.scale
+        return pause_button_center_y + pause_button_radius + padding_above_button
 
     def _selection_item_rect(self, index: int):
         return (
@@ -581,6 +667,7 @@ class App(Window):
             seed=seed,
             rng_draws=save_entry.get("rng_draws", 0),
         )
+        self._reset_scene_text_scroll()
         self.set_state(State.PLAYING)
         return True
 
@@ -617,10 +704,9 @@ class App(Window):
 
     def _duplicate_save_entry(self, save_entry: dict):
         new_record = dict(save_entry)
-        new_record["name"] = f"{
-            new_record.get(
-                'god', '')} {
-            self._current_date_string()}".strip()
+        new_record["name"] = (
+            f"{new_record.get('god', '')} {self._current_date_string()}".strip()
+        )
         new_file_name = self._generate_save_file_name()
         self._write_save_record(self._save_file_path(new_file_name), new_record)
         return new_file_name
@@ -1091,6 +1177,7 @@ class App(Window):
         )
         if hover and self.mouse_pressed and self.new_game_selected_god is not None:
             self.game = Game(self.gods[self.new_game_selected_god])
+            self._reset_scene_text_scroll()
             self.set_state(State.PLAYING)
 
     def _update_load_game_menu(self):
@@ -1122,6 +1209,9 @@ class App(Window):
             ]
         except Exception:
             current_scene = None
+        if current_scene is None:
+            self._reset_scene_text_scroll()
+            return
         if current_scene is not None and current_scene.links:
             for i, link in enumerate(current_scene.links):
                 if i >= 26:
@@ -1141,6 +1231,7 @@ class App(Window):
                     for idx, scene in enumerate(current_game.god.tree.scenes):
                         if scene.id == target_id:
                             current_game.current_scene_index = idx
+                            self._reset_scene_text_scroll()
                             found_target = True
                             break
                     if not found_target:
@@ -1656,12 +1747,43 @@ class App(Window):
         current_game: Optional[Game] = self.game
         if current_game is None:
             return
-        image_name = current_game.god.tree.scenes[
-            current_game.current_scene_index
-        ].image
-        scene_img = self.scene_images.get(image_name)
-        if scene_img is None:
-            scene_img = next(iter(self.scene_images.values()), None)
+        try:
+            current_scene: Optional[Scene] = current_game.god.tree.scenes[
+                current_game.current_scene_index
+            ]
+        except Exception:
+            current_scene = None
+        main_text = "*No scene data*"
+        scene_img = None
+        if current_scene is not None:
+            image_name = current_scene.image
+            scene_img = self.scene_images.get(image_name)
+            if scene_img is None:
+                scene_img = next(iter(self.scene_images.values()), None)
+            main_text = self._scene_text_content(current_scene)
+        text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
+        text_x = -230 * self.scale
+        text_y = 35 * self.scale
+        wrap_distance = max(
+            1, int(abs(self.screen_right.x - text_x - (10 * self.scale)))
+        )
+        text_bottom_y = self._playing_scene_text_bottom_y()
+        visible_height = max(1.0, abs(text_bottom_y - text_y))
+        _, max_scroll = self._scene_text_scroll_metrics(
+            main_text,
+            text_font,
+            wrap_distance,
+            visible_height,
+        )
+        self.scene_text_scroll_y = max(0.0, min(self.scene_text_scroll_y, max_scroll))
+        self.draw_text_word_wrap(
+            main_text,
+            V(text_x, text_y + self.scene_text_scroll_y),
+            text_font,
+            Color(255, 255, 255),
+            Origin.TOP_LEFT,
+            wrap_distance=wrap_distance,
+        )
         if scene_img is not None:
             self.draw_image(
                 scene_img,
@@ -1671,36 +1793,6 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
-        if current_game is not None:
-            try:
-                current_scene: Optional[Scene] = current_game.god.tree.scenes[
-                    current_game.current_scene_index
-                ]
-            except Exception:
-                current_scene = None
-        else:
-            current_scene = None
-        links = []
-        current_links = current_scene.links if current_scene is not None else []
-        for i, link in enumerate(current_links):
-            links.append(f"{string.ascii_uppercase[i]}: {link.label}")
-        links_text = "\n".join(links)
-        if current_scene is not None:
-            main_text = current_scene.text
-            if links_text:
-                main_text += f"\nPress:\n{links_text}"
-        else:
-            main_text = "*No scene data*"
-        self.draw_text_word_wrap(
-            main_text,
-            V(-230 * self.scale, 35 * self.scale),
-            self.main_font.new_size(int(self.main_font.size * self.scale)),
-            Color(255, 255, 255),
-            Origin.TOP_LEFT,
-            wrap_distance=abs(
-                self.screen_right.x - (-230 * self.scale) + (-10 * self.scale)
-            ),
-        )
         hover = (
             distance(
                 self.mouse_pos,
@@ -1742,6 +1834,44 @@ class App(Window):
             ),
             Color(255, 255, 255),
             int(2 * self.scale),
+        )
+
+    def on_scroll(self, dx: int, dy: int):
+        if self.state != State.PLAYING or dy == 0:
+            return
+        current_game: Optional[Game] = self.game
+        if current_game is None:
+            return
+        try:
+            current_scene: Optional[Scene] = current_game.god.tree.scenes[
+                current_game.current_scene_index
+            ]
+        except Exception:
+            current_scene = None
+        if current_scene is None:
+            return
+        main_text = self._scene_text_content(current_scene)
+        text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
+        text_x = -230 * self.scale
+        text_y = 35 * self.scale
+        wrap_distance = max(
+            1, int(abs(self.screen_right.x - text_x - (10 * self.scale)))
+        )
+        text_bottom_y = self._playing_scene_text_bottom_y()
+        visible_height = max(1.0, abs(text_bottom_y - text_y))
+        _, max_scroll = self._scene_text_scroll_metrics(
+            main_text,
+            text_font,
+            wrap_distance,
+            visible_height,
+        )
+        if max_scroll <= 0:
+            self.scene_text_scroll_y = 0.0
+            return
+        scroll_step = max(1.0, float(text_font.font.get_linesize()) * 0.2)
+        self.scene_text_scroll_y = max(
+            0.0,
+            min(max_scroll, self.scene_text_scroll_y - (dy * scroll_step)),
         )
 
     def _draw_paused(self):

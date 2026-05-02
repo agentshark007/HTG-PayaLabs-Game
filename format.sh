@@ -1,49 +1,125 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Define colors
+set -euo pipefail
+
+#######################################
+# CONFIGURATION (EDIT THIS SECTION)
+#######################################
+
+# Files to format (relative or absolute paths)
+TARGET_FILES=(
+  "app.py"
+  "editor.py"
+  "main.py"
+  # "another_file.py"
+  # "src/module/*.py"
+)
+
+# Enable/disable tools
+USE_ISORT=true
+USE_BLACK=true
+
+#######################################
+# COLORS
+#######################################
 BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 RESET='\033[0m'
 
-# Initialize fail count
+#######################################
+# INTERNAL STATE
+#######################################
 fail_count=0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Function to run commands quietly and log errors with color if they fail
+#######################################
+# UTIL FUNCTIONS
+#######################################
+
+log_info() {
+  echo -e "${YELLOW}[INFO]: $1${RESET}"
+}
+
+log_success() {
+  echo -e "${GREEN}[SUCCESS]: $1${RESET}"
+}
+
+log_error() {
+  echo -e "${RED}[ERROR]: $1${RESET}"
+}
+
 run_command() {
-  command="$1"
-  name="$2"
+  local name="$1"
+  shift
 
-  # Print the running message in yellow
-  echo -e "${YELLOW}[INFO]: ${name}: Running...${RESET}"
+  log_info "${name}: Running..."
 
-  # Run command, suppressing output, check if it fails
-  if $command &>/dev/null; then
-    # If command runs successfully, print success message in green
-    echo -e "${GREEN}[SUCCESS]: ${name}: Ran successfully${RESET}"
+  if "$@" &>/dev/null; then
+    log_success "${name}: Completed"
   else
-    # If command fails, print error message in red and increment fail count
-    echo -e "${RED}[ERROR]: ${name}: Failed to run${RESET}"
+    log_error "${name}: Failed"
     ((fail_count++))
   fi
 }
 
-# First message in blue (Start)
+#######################################
+# FILE RESOLUTION
+#######################################
+
+resolve_files() {
+  local resolved=()
+
+  for pattern in "${TARGET_FILES[@]}"; do
+    # Expand glob relative to script directory
+    for file in "$SCRIPT_DIR"/$pattern; do
+      if [[ -f "$file" ]]; then
+        resolved+=("$file")
+      else
+        log_error "File not found: $pattern"
+        ((fail_count++))
+      fi
+    done
+  done
+
+  # Sort files for deterministic order
+  IFS=$'\n' resolved=($(sort <<<"${resolved[*]}"))
+  unset IFS
+
+  echo "${resolved[@]}"
+}
+
+#######################################
+# MAIN
+#######################################
+
 echo -e "${BLUE}[START]: Formatting started${RESET}"
 
-# Run the commands with quiet output and error logging
-run_command "python rbl.py app.py" "rbl"
-run_command "autopep8 --aggressive --in-place app.py" "autopep8"
-run_command "isort app.py" "isort"
-run_command "black app.py" "black"
+FILES=($(resolve_files))
 
-# Last message in blue (Finish)
+if [ ${#FILES[@]} -eq 0 ]; then
+  log_error "No valid files to process"
+  exit 1
+fi
+
+for file in "${FILES[@]}"; do
+  log_info "Processing: $file"
+
+  if [ "$USE_ISORT" = true ]; then
+    run_command "isort ($file)" python3 -m isort --profile black "$file"
+  fi
+
+  if [ "$USE_BLACK" = true ]; then
+    run_command "black ($file)" python3 -m black --quiet "$file"
+  fi
+done
+
 echo -e "${BLUE}[FINISH]: Formatting finished${RESET}"
 
-# Print the fail count
 if [ "$fail_count" -gt 0 ]; then
-  echo -e "${RED}[INFO]: ${fail_count} command(s) failed${RESET}"
+  log_error "${fail_count} command(s) failed"
+  exit 1
 else
-  echo -e "${GREEN}[INFO]: All commands ran successfully${RESET}"
+  log_success "All commands ran successfully"
 fi
