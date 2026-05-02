@@ -1,6 +1,10 @@
+import argparse
 import copy
 import os
+import shutil
 import tkinter as tk
+from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 from tkinter import filedialog, messagebox, simpledialog, ttk
@@ -9,6 +13,460 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_GODS_DIR = os.path.join(BASE_DIR, "assets", "data", "gods")
 GOD_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "data", "thumbnails")
 SCENE_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "data", "scenes")
+GOD_BACKUPS_DIR = os.path.join(BASE_DIR, "assets", "data", "god-backups")
+
+
+@dataclass
+class ChoiceBlock:
+    targets: list[str] = field(default_factory=list)
+    text: str = ""
+
+
+@dataclass
+class SceneBlock:
+    original_id: str
+    text_lines: list[str] = field(default_factory=list)
+    image: str = ""
+    choices: list[ChoiceBlock] = field(default_factory=list)
+
+
+@dataclass
+class ParsedGod:
+    info: dict[str, str] = field(
+        default_factory=lambda: {"name": "", "info": "", "image": ""}
+    )
+    scenes: list[SceneBlock] = field(default_factory=list)
+    seen_info_header: bool = False
+    seen_tree_header: bool = False
+
+
+@dataclass
+class RepairReport:
+    fixes: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+
+def clean_god_name(raw: str) -> str:
+    name = raw.strip()
+    if name.lower().endswith(".txt"):
+        name = name[:-4]
+    return name.strip()
+
+
+def resolve_god_file(name: str) -> Path:
+    clean_name = clean_god_name(name)
+    if not clean_name:
+        raise ValueError("God name cannot be empty.")
+
+    gods_dir = Path(BASE_DIR) / "assets" / "data" / "gods"
+    exact = gods_dir / f"{clean_name}.txt"
+    if exact.exists():
+        return exact
+
+    lower = clean_name.lower()
+    for candidate in gods_dir.glob("*.txt"):
+        if candidate.stem.lower() == lower:
+            return candidate
+
+    return exact
+
+
+def split_weighted_target(token: str) -> tuple[str, str | None]:
+    token = token.strip()
+    if "*" in token:
+        base, weight = token.rsplit("*", 1)
+        return base.strip(), weight.strip()
+    return token, None
+
+
+def replace_scene_target(token: str, old_id: str, new_id: str) -> str:
+    base, weight = split_weighted_target(token)
+    if base != old_id:
+        return token
+    if weight is None or weight == "":
+        return new_id
+    return f"{new_id}*{weight}"
+
+
+def depth_prefix(depth: int) -> str:
+    label = ""
+    n = max(0, int(depth))
+    while True:
+        label = chr(ord("a") + (n % 26)) + label
+        n = n // 26 - 1
+        if n < 0:
+            break
+    return label
+
+
+def parse_god_text(text: str, report: RepairReport) -> ParsedGod:
+    parsed = ParsedGod()
+    current_scene: SceneBlock | None = None
+    section: str | None = None
+
+    def start_scene(scene_id: str) -> None:
+        nonlocal current_scene, section
+        scene_id = scene_id.strip()
+        if not scene_id:
+            report.warnings.append("Ignored a scene header with an empty id.")
+            current_scene = None
+            return
+        scene = SceneBlock(original_id=scene_id)
+        current_scene = scene
+        parsed.scenes.append(scene)
+        section = "tree"
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        lower = line.lower()
+        if line == "#info":
+            parsed.seen_info_header = True
+            section = "info"
+            continue
+        if line == "#tree":
+            parsed.seen_tree_header = True
+            section = "tree"
+            continue
+
+        if line.startswith("##"):
+            if not parsed.seen_tree_header:
+                parsed.seen_tree_header = True
+            start_scene(line[2:])
+            continue
+
+        if section == "info" or (section is None and not parsed.scenes):
+            if ":" in line:
+                key, value = line.split(":", 1)
+                key = key.strip().lower()
+                value = value.strip()
+                parsed.info[key] = value
+                continue
+            if parsed.info["info"]:
+                parsed.info["info"] += "\n" + line
+            else:
+                parsed.info["info"] = line
+            continue
+
+        if current_scene is None:
+            continue
+
+        if lower.startswith("text:"):
+            current_scene.text_lines = [line.split(":", 1)[1].strip()]
+            continue
+        if lower.startswith("image:"):
+            current_scene.image = line.split(":", 1)[1].strip()
+            continue
+
+        if ":" in line:
+            targets_raw, label = line.split(":", 1)
+            targets = [token.strip() for token in targets_raw.split(",") if token.strip()]
+            if targets:
+                current_scene.choices.append(ChoiceBlock(targets=targets, text=label.strip()))
+                continue
+
+        if current_scene.text_lines:
+            current_scene.text_lines.append(line)
+        else:
+            current_scene.text_lines = [line]
+
+    return parsed
+
+
+def normalize_god(parsed: ParsedGod, report: RepairReport) -> tuple[dict[str, str], list[tuple[str, SceneBlock]]]:
+    if not parsed.scenes:
+        report.errors.append("No scenes were found in the file.")
+        return parsed.info, []
+
+    if not parsed.seen_info_header:
+        report.fixes.append("Added missing #info section header.")
+    if not parsed.seen_tree_header:
+        report.fixes.append("Added missing #tree section header.")
+
+    ordered_indices = list(range(len(parsed.scenes)))
+    root_index = ordered_indices[0]
+
+    id_to_indices: dict[str, list[int]] = {}
+    for idx, scene in enumerate(parsed.scenes):
+        id_to_indices.setdefault(scene.original_id, []).append(idx)
+
+    duplicate_ids = [scene_id for scene_id, indices in id_to_indices.items() if len(indices) > 1]
+    if duplicate_ids:
+        report.warnings.append(
+            "Duplicate scene ids found; the first occurrence of each id was used for reference repair: "
+            + ", ".join(sorted(duplicate_ids))
+        )
+
+    def resolve_scene_id(scene_id: str) -> int | None:
+        indices = id_to_indices.get(scene_id)
+        return indices[0] if indices else None
+
+    depth_by_index = {root_index: 0}
+    layers: dict[int, list[int]] = {0: [root_index]}
+    discovered = {root_index}
+    queue = [root_index]
+
+    while queue:
+        current = queue.pop(0)
+        current_depth = depth_by_index[current]
+        for choice in parsed.scenes[current].choices:
+            for token in choice.targets:
+                target_id, _weight = split_weighted_target(token)
+                target_index = resolve_scene_id(target_id)
+                if target_index is None:
+                    continue
+                if target_index not in depth_by_index:
+                    depth_by_index[target_index] = current_depth + 1
+                if target_index not in discovered:
+                    discovered.add(target_index)
+                    layers.setdefault(depth_by_index[target_index], []).append(target_index)
+                    queue.append(target_index)
+
+    unreachable = [idx for idx in ordered_indices if idx not in discovered]
+    if unreachable:
+        layers[max(layers) + 1] = unreachable
+        report.warnings.append(
+            "Unreachable scenes were moved to the final layer: "
+            + ", ".join(parsed.scenes[idx].original_id for idx in unreachable)
+        )
+
+    ordered_indices_by_layer: list[int] = []
+    for layer in sorted(layers):
+        ordered_indices_by_layer.extend(layers[layer])
+
+    id_map: dict[int, str] = {}
+    for layer in sorted(layers):
+        prefix = depth_prefix(layer)
+        for idx, scene_index in enumerate(layers[layer], start=1):
+            id_map[scene_index] = f"{prefix}{idx}"
+
+    old_id_to_new_id: dict[str, str] = {}
+    for old_id, indices in id_to_indices.items():
+        mapped_index = indices[0]
+        if mapped_index in id_map:
+            old_id_to_new_id[old_id] = id_map[mapped_index]
+
+    repaired_scenes: list[tuple[str, SceneBlock]] = []
+    for scene_index in ordered_indices_by_layer:
+        scene = copy.deepcopy(parsed.scenes[scene_index])
+        new_id = id_map[scene_index]
+        if scene.original_id != new_id:
+            report.fixes.append(f"Renamed scene {scene.original_id} -> {new_id}.")
+        scene.original_id = new_id
+
+        repaired_choices: list[ChoiceBlock] = []
+        for choice in scene.choices:
+            remapped_targets: list[str] = []
+            for token in choice.targets:
+                base, weight = split_weighted_target(token)
+                mapped_base = old_id_to_new_id.get(base)
+                if mapped_base is None:
+                    report.warnings.append(
+                        f"Removed missing choice target '{token}' from scene {scene.original_id}."
+                    )
+                    continue
+
+                if weight is not None and weight != "":
+                    try:
+                        if float(weight) <= 0:
+                            report.warnings.append(
+                                f"Normalized non-positive weight '{token}' in scene {scene.original_id} to 1."
+                            )
+                            weight = "1"
+                    except Exception:
+                        report.warnings.append(
+                            f"Normalized invalid weight '{token}' in scene {scene.original_id} to 1."
+                        )
+                        weight = "1"
+
+                remapped_targets.append(
+                    mapped_base if weight is None or weight == "" else f"{mapped_base}*{weight}"
+                )
+
+            if not remapped_targets:
+                report.warnings.append(
+                    f"Removed empty choice '{choice.text}' from scene {scene.original_id}."
+                )
+                continue
+
+            repaired_choices.append(ChoiceBlock(targets=remapped_targets, text=choice.text.strip()))
+
+        scene.choices = repaired_choices
+        scene.text_lines = [line.rstrip() for line in scene.text_lines]
+        scene.image = scene.image.strip()
+        repaired_scenes.append((new_id, scene))
+
+    if not parsed.info.get("name", "").strip():
+        report.warnings.append("God name is missing.")
+    if not parsed.info.get("info", "").strip():
+        report.warnings.append("God description is empty.")
+    if not parsed.info.get("image", "").strip():
+        report.warnings.append("God image key is missing.")
+
+    normalized_info = {
+        "name": parsed.info.get("name", "").strip(),
+        "info": parsed.info.get("info", "").strip(),
+        "image": parsed.info.get("image", "").strip(),
+    }
+
+    return normalized_info, repaired_scenes
+
+
+def export_god_text(info: dict[str, str], scenes: list[tuple[str, SceneBlock]]) -> str:
+    lines = [
+        "#info",
+        f"name: {info.get('name', '').strip()}",
+        f"info: {info.get('info', '').strip()}",
+        f"image: {info.get('image', '').strip()}",
+        "",
+        "#tree",
+        "",
+    ]
+
+    for scene_id, scene in scenes:
+        lines.append(f"##{scene_id}")
+
+        text_lines = scene.text_lines if scene.text_lines else [""]
+        lines.append(f"text: {text_lines[0] if text_lines else ''}")
+        for extra in text_lines[1:]:
+            lines.append(extra)
+
+        lines.append(f"image: {scene.image.strip()}")
+        for choice in scene.choices:
+            targets = ", ".join(choice.targets)
+            lines.append(f"{targets}: {choice.text}")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def validate_repaired_data(info: dict[str, str], scenes: list[tuple[str, SceneBlock]]) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if not info.get("name", "").strip():
+        errors.append("Missing god name.")
+    if not info.get("image", "").strip():
+        errors.append("Missing god image key.")
+    if not scenes:
+        errors.append("No scenes defined.")
+        return errors, warnings
+
+    scene_map = {scene_id: scene for scene_id, scene in scenes}
+    if scenes[0][0] != "a1":
+        warnings.append(f"First scene is '{scenes[0][0]}', not 'a1'.")
+
+    for scene_id, scene in scenes:
+        if not scene.text_lines or not "\n".join(scene.text_lines).strip():
+            warnings.append(f"Scene '{scene_id}' has no text.")
+        if not scene.image.strip():
+            warnings.append(f"Scene '{scene_id}' has no image key.")
+        for choice_idx, choice in enumerate(scene.choices, start=1):
+            if not choice.targets:
+                errors.append(f"Scene '{scene_id}' choice #{choice_idx} has no targets.")
+            for token in choice.targets:
+                target_id, weight = split_weighted_target(token)
+                if target_id not in scene_map:
+                    errors.append(
+                        f"Scene '{scene_id}' choice #{choice_idx} targets missing scene '{target_id}'."
+                    )
+                if weight is not None:
+                    try:
+                        if float(weight) <= 0:
+                            errors.append(
+                                f"Scene '{scene_id}' choice #{choice_idx} has non-positive weight in '{token}'."
+                            )
+                    except Exception:
+                        errors.append(
+                            f"Scene '{scene_id}' choice #{choice_idx} has invalid weight in '{token}'."
+                        )
+
+    return errors, warnings
+
+
+def backup_file(path: Path) -> Path:
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    Path(GOD_BACKUPS_DIR).mkdir(parents=True, exist_ok=True)
+    backup_path = Path(GOD_BACKUPS_DIR) / f"{path.name}.bak-{stamp}"
+    shutil.copy2(path, backup_path)
+    return backup_path
+
+
+def repair_god_file(path: Path) -> tuple[int, RepairReport, str, str]:
+    report = RepairReport()
+
+    if not path.exists():
+        report.errors.append(f"File not found: {path}")
+        return 1, report, "", ""
+
+    original_text = path.read_text(encoding="utf-8")
+    parsed = parse_god_text(original_text, report)
+    info, scenes = normalize_god(parsed, report)
+
+    if report.errors:
+        return 1, report, original_text, original_text
+
+    repaired_text = export_god_text(info, scenes)
+    validation_errors, validation_warnings = validate_repaired_data(info, scenes)
+    report.errors.extend(validation_errors)
+    report.warnings.extend(validation_warnings)
+
+    if original_text != repaired_text:
+        backup = backup_file(path)
+        path.write_text(repaired_text, encoding="utf-8")
+        report.fixes.append(f"Wrote repaired file and backup {backup.name}.")
+
+    return (0 if not report.errors else 1), report, original_text, repaired_text
+
+
+def prompt_for_god_name() -> str:
+    try:
+        return input("Which god do you want to repair? (no .txt needed): ")
+    except EOFError:
+        return ""
+
+
+def repair_main() -> int:
+    parser = argparse.ArgumentParser(description="Repair a god story text file.")
+    parser.add_argument("god", nargs="?", help="God file name without .txt")
+    args = parser.parse_args()
+
+    god_name = clean_god_name(args.god or prompt_for_god_name())
+    if not god_name:
+        print("No god name provided.")
+        return 1
+
+    path = resolve_god_file(god_name)
+    code, report, original_text, repaired_text = repair_god_file(path)
+
+    if code != 0 and not path.exists():
+        for err in report.errors:
+            print(err)
+        return 1
+
+    if report.errors:
+        print("Repair finished with unresolved errors:")
+        for err in report.errors:
+            print(f"- {err}")
+
+    if original_text == repaired_text:
+        print(f"No changes needed for {path.name}.")
+    else:
+        print(f"Repaired {path.name}.")
+
+    if report.fixes:
+        print("Fixes applied:")
+        for fix in report.fixes:
+            print(f"- {fix}")
+    if report.warnings:
+        print("Warnings:")
+        for warning in report.warnings:
+            print(f"- {warning}")
+
+    return code
 
 
 class GodEditor:
@@ -26,6 +484,7 @@ class GodEditor:
         self.selected_choice_index: int | None = None
         self._selection_guard_enabled = True
         self._suspend_dirty_tracking = False
+        self.scene_summary_var = tk.StringVar(value="Scenes: 0 total · 0 shown")
         self.scene_search_var = tk.StringVar(value="")
         self.scene_issues_only_var = tk.BooleanVar(value=False)
 
@@ -80,6 +539,8 @@ class GodEditor:
 
         left = tk.LabelFrame(main, text="Scene Navigator", padx=8, pady=8)
         main.add(left, weight=1)
+
+        tk.Label(left, textvariable=self.scene_summary_var, anchor="w").pack(fill="x", pady=(0, 6))
 
         scene_search = tk.Frame(left)
         scene_search.pack(fill="x", pady=(0, 6))
@@ -145,12 +606,6 @@ class GodEditor:
         tk.Button(order_buttons, width=12, text="Move Down", command=lambda: self.move_scene(1)).pack(
             side="left", padx=(6, 0)
         )
-        tk.Button(
-            order_buttons,
-            width=12,
-            text="Normalize IDs",
-            command=self.normalize_scene_layers,
-        ).pack(side="left", padx=(6, 0))
 
         right = tk.Frame(main)
         main.add(right, weight=3)
@@ -244,6 +699,7 @@ class GodEditor:
         tk.Button(file_actions, text="Load", command=self.load_file).pack(side="left", padx=(4, 0))
         tk.Button(file_actions, text="Save", command=self.save_file).pack(side="left", padx=(4, 0))
         tk.Button(file_actions, text="Save As", command=self.save_file_as).pack(side="left", padx=(4, 0))
+        tk.Button(file_actions, text="Repair", command=self.repair_file).pack(side="left", padx=(4, 0))
 
         tk.Label(bottom, textvariable=self.status_var, anchor="w").pack(
             side="left", fill="x", expand=True, padx=(12, 0)
@@ -334,97 +790,6 @@ class GodEditor:
             self.set_status(f"Showing {len(matching_ids)} scene(s) with errors")
         else:
             self.set_status("Showing all scenes")
-
-    def _depth_prefix(self, depth):
-        label = ""
-        n = max(0, int(depth))
-        while True:
-            label = chr(ord("a") + (n % 26)) + label
-            n = n // 26 - 1
-            if n < 0:
-                break
-        return label
-
-    def normalize_scene_layers(self):
-        if not self._ensure_current_scene_saved():
-            return
-        if not self.data["scenes"]:
-            messagebox.showinfo("No Scenes", "Create at least one scene first.")
-            return
-
-        ordered_ids = [sid for sid in self.data["scene_order"] if sid in self.data["scenes"]]
-        for sid in self.data["scenes"]:
-            if sid not in ordered_ids:
-                ordered_ids.append(sid)
-        root_id = ordered_ids[0]
-
-        depth = {root_id: 0}
-        layers = {0: [root_id]}
-        discovered = {root_id}
-        queue = [root_id]
-
-        while queue:
-            current = queue.pop(0)
-            current_depth = depth[current]
-            for choice in self.data["scenes"][current].get("choices", []):
-                for token in choice.get("targets", []):
-                    target, _weight = self._split_weighted_target(token)
-                    if target not in self.data["scenes"]:
-                        continue
-                    if target not in depth:
-                        depth[target] = current_depth + 1
-                    if target not in discovered:
-                        discovered.add(target)
-                        layers.setdefault(depth[target], []).append(target)
-                        queue.append(target)
-
-        unreachable = [sid for sid in ordered_ids if sid not in discovered]
-        if unreachable:
-            layers[max(layers) + 1] = unreachable
-
-        old_ids_by_layer = []
-        for layer_index in sorted(layers):
-            old_ids_by_layer.extend(layers[layer_index])
-
-        id_map = {}
-        for layer_index in sorted(layers):
-            prefix = self._depth_prefix(layer_index)
-            for idx, old_id in enumerate(layers[layer_index], start=1):
-                id_map[old_id] = f"{prefix}{idx}"
-
-        new_scenes = {}
-        for old_id, scene in self.data["scenes"].items():
-            new_id = id_map.get(old_id)
-            if not new_id:
-                continue
-            new_scene = copy.deepcopy(scene)
-            for choice in new_scene.get("choices", []):
-                remapped_targets = []
-                for token in choice.get("targets", []):
-                    base, weight = self._split_weighted_target(token)
-                    mapped = id_map.get(base, base)
-                    if weight is None or weight == "":
-                        remapped_targets.append(mapped)
-                    else:
-                        remapped_targets.append(f"{mapped}*{weight}")
-                choice["targets"] = remapped_targets
-            new_scenes[new_id] = new_scene
-
-        self.data["scenes"] = new_scenes
-        self.data["scene_order"] = [id_map[sid] for sid in old_ids_by_layer if sid in id_map]
-
-        new_current = id_map.get(self.current_scene)
-        self.current_scene = new_current
-        self.refresh_scene_list(select_id=new_current)
-        self.set_dirty(True)
-        self._refresh_error_consoles()
-
-        if unreachable:
-            self.set_status(
-                f"Normalized IDs by layer ({len(unreachable)} unreachable scene(s) moved to final layer)"
-            )
-        else:
-            self.set_status("Normalized IDs by layer")
 
     def focus_scene_search(self, _event=None):
         self.scene_search_entry.focus_set()
@@ -700,6 +1065,9 @@ class GodEditor:
         if select_id and select_id not in scene_ids and self.scene_search_var.get().strip():
             self.scene_search_var.set("")
             scene_ids = list(self.data["scene_order"])
+        self.scene_summary_var.set(
+            f"Scenes: {len(self.data['scenes'])} total · {len(scene_ids)} shown"
+        )
         self.scene_list.delete(0, tk.END)
         for scene_id in scene_ids:
             self.scene_list.insert(tk.END, scene_id)
@@ -933,7 +1301,105 @@ class GodEditor:
             return
         self._write_file(path)
 
-    # FIXED: removed validation checks here
+    def repair_file(self):
+        if not self._ensure_current_scene_saved():
+            return False
+
+        source_text = self.export_text()
+        report = RepairReport()
+        parsed = parse_god_text(source_text, report)
+        info, scenes = normalize_god(parsed, report)
+
+        if report.errors:
+            messagebox.showerror(
+                "Repair Failed",
+                "Repair could not continue:\n- " + "\n- ".join(report.errors),
+            )
+            return False
+
+        repaired_text = export_god_text(info, scenes)
+        validation_errors, validation_warnings = validate_repaired_data(info, scenes)
+        report.errors.extend(validation_errors)
+        report.warnings.extend(validation_warnings)
+        unresolved_errors = list(report.errors)
+
+        previous_file = self.current_file
+        previous_dirty = self.dirty
+        repaired_path = Path(previous_file) if previous_file else None
+        disk_text = None
+
+        if repaired_path is not None:
+            try:
+                disk_text = repaired_path.read_text(encoding="utf-8")
+            except Exception as exc:
+                messagebox.showerror("Repair Failed", f"Failed to read {repaired_path.name}: {exc}")
+                return False
+
+            if disk_text != repaired_text:
+                try:
+                    backup_file(repaired_path)
+                    repaired_path.write_text(repaired_text, encoding="utf-8")
+                except Exception as exc:
+                    messagebox.showerror("Repair Failed", str(exc))
+                    return False
+
+        old_scene_id = self.current_scene
+        try:
+            self.data = self._parse_god_file(repaired_text)
+        except Exception as exc:
+            messagebox.showerror("Repair Failed", f"Repaired data could not be reloaded: {exc}")
+            return False
+
+        self.load_info_from_data()
+        self.current_scene = None
+        self.current_choices = []
+        self.selected_choice_index = None
+
+        selected_scene_id = old_scene_id if old_scene_id in self.data["scenes"] else None
+        if selected_scene_id is None and self.data["scene_order"]:
+            selected_scene_id = self.data["scene_order"][0]
+
+        if selected_scene_id is not None:
+            self.refresh_scene_list(select_id=selected_scene_id)
+        else:
+            self.refresh_scene_list()
+            self.clear_scene_editor()
+
+        if repaired_path is not None:
+            self.set_dirty(False)
+        else:
+            self.set_dirty(previous_dirty or source_text != repaired_text)
+
+        self._refresh_error_consoles()
+        fix_count = len(report.fixes)
+        warning_count = len(report.warnings)
+        if source_text == repaired_text:
+            self.set_status(f"Repair checked {repaired_path.name if repaired_path else 'current file'}")
+        else:
+            self.set_status(
+                f"Repaired {repaired_path.name if repaired_path else 'current file'}"
+                + (f" ({fix_count} fix(es), {warning_count} warning(s))" if fix_count or warning_count else "")
+            )
+
+        if unresolved_errors:
+            messagebox.showwarning(
+                "Repair Completed with Errors",
+                "Repair applied, but unresolved errors remain:\n- " + "\n- ".join(unresolved_errors),
+            )
+        elif report.fixes:
+            messagebox.showinfo(
+                "Repair Complete",
+                "Fixes applied:\n- " + "\n- ".join(report.fixes)
+                + ("\n\nWarnings:\n- " + "\n- ".join(report.warnings) if report.warnings else ""),
+            )
+        elif report.warnings and source_text != repaired_text:
+            messagebox.showinfo(
+                "Repair Complete",
+                "Warnings:\n- " + "\n- ".join(report.warnings),
+            )
+
+        return True
+
     def _write_file(self, path: str) -> bool:
         if not self._ensure_current_scene_saved():
             return False

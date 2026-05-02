@@ -62,7 +62,9 @@ Supported command-line options:
 
 ## Modding
 
-Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editor.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, outcomes, and image keys that map to `assets/data/thumbnails/` and `assets/data/scenes/`.
+Modding the project is limited, only including adding new gods. To create a new god, use the editor by running `editor.py` and creating a new god story data file in `assets/data/gods/`. The editor provides a graphical interface for creating and modifying the story data, including scenes, choices, outcomes, and image keys that map to `assets/data/thumbnails/` and `assets/data/scenes/`. It also includes a built-in Repair action that handles normalization, validation, and backup creation.
+
+For command-line cleanup and recovery work, you can still run `python repair.py` from the project root; it now delegates to the same editor-owned repair workflow and writes backups into `assets/data/god-backups/`.
 
 ## Developers
 
