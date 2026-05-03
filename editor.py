@@ -591,9 +591,7 @@ class GodEditor:
         scene_list_box.pack(fill="both", expand=True)
         self.scene_list = tk.Listbox(scene_list_box, width=24, height=24)
         self.scene_list.pack(side="left", fill="both", expand=True)
-        scene_scroll = tk.Scrollbar(
-            scene_list_box, orient="vertical", command=self.scene_list.yview
-        )
+        scene_scroll = tk.Scrollbar(scene_list_box, command=self.scene_list.yview)
         scene_scroll.pack(side="right", fill="y")
         self.scene_list.configure(yscrollcommand=scene_scroll.set)
         self.scene_list.bind("<<ListboxSelect>>", self.on_scene_selected)
@@ -678,9 +676,7 @@ class GodEditor:
         choice_list_row.pack(fill="both", expand=True)
         self.choice_list = tk.Listbox(choice_list_row, height=8, exportselection=False)
         self.choice_list.pack(side="left", fill="both", expand=True)
-        choice_scroll = tk.Scrollbar(
-            choice_list_row, orient="vertical", command=self.choice_list.yview
-        )
+        choice_scroll = tk.Scrollbar(choice_list_row, command=self.choice_list.yview)
         choice_scroll.pack(side="right", fill="y")
         self.choice_list.configure(yscrollcommand=choice_scroll.set)
         self.choice_list.bind("<<ListboxSelect>>", self.on_choice_selected)
@@ -872,6 +868,7 @@ class GodEditor:
             self.set_status("Scene search cleared")
         if _event is not None:
             return "break"
+        return None
 
     def on_scene_search_changed(self, _event=None):
         matching_ids = self._filtered_scene_ids()
@@ -891,7 +888,7 @@ class GodEditor:
     def on_field_edited(self, _event=None):
         if self._suspend_dirty_tracking:
             return
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
 
     def _update_title(self):
@@ -958,14 +955,14 @@ class GodEditor:
         self.data["scenes"]["a1"] = self._blank_scene()
         self.data["scene_order"].insert(0, "a1")
         self.refresh_scene_list(select_id="a1")
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
         self.set_status("Created root scene a1")
 
     def create_scene(self):
         if not self._ensure_current_scene_saved():
             return
-        suggested = self._next_scene_id("a")
+        suggested = self._next_scene_id()
         scene_id = simpledialog.askstring(
             "New Scene", "Scene ID:", initialvalue=suggested
         )
@@ -981,7 +978,7 @@ class GodEditor:
         self.data["scenes"][scene_id] = self._blank_scene()
         self.data["scene_order"].append(scene_id)
         self.refresh_scene_list(select_id=scene_id)
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
         self.set_status(f"Created scene {scene_id}")
 
@@ -1004,7 +1001,7 @@ class GodEditor:
             {"targets": [new_id], "text": f"Go to {new_id}"}
         )
         self.refresh_scene_list(select_id=new_id)
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
         self.set_status(f"Added child scene {new_id} from {parent}")
 
@@ -1028,7 +1025,7 @@ class GodEditor:
         insert_at = self.data["scene_order"].index(source_id) + 1
         self.data["scene_order"].insert(insert_at, new_id)
         self.refresh_scene_list(select_id=new_id)
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
         self.set_status(f"Duplicated {source_id} -> {new_id}")
 
@@ -1085,7 +1082,7 @@ class GodEditor:
             self._rename_scene_id(old_id, new_id)
             self.refresh_scene_list(select_id=new_id)
             self.load_scene_into_editor(new_id)
-            self.set_dirty(True)
+            self.set_dirty()
             self._refresh_error_consoles()
             self.set_status(f"Renamed {old_id} -> {new_id}")
 
@@ -1118,7 +1115,7 @@ class GodEditor:
         self.current_choices = []
         self.refresh_scene_list()
         self.clear_scene_editor()
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
         self.set_status(f"Deleted scene {sid}")
 
@@ -1134,7 +1131,7 @@ class GodEditor:
             return
         order[idx], order[new_idx] = order[new_idx], order[idx]
         self.refresh_scene_list(select_id=self.current_scene)
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
 
     def refresh_scene_list(self, select_id=None, load_editor=True):
@@ -1266,7 +1263,7 @@ class GodEditor:
         else:
             self.current_choices[self.selected_choice_index] = choice
         self.refresh_choice_list()
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
 
     def delete_choice(self):
@@ -1276,7 +1273,7 @@ class GodEditor:
         self.selected_choice_index = None
         self.refresh_choice_list()
         self.clear_choice_editor()
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
 
     def move_choice(self, direction):
@@ -1292,7 +1289,7 @@ class GodEditor:
         )
         self.selected_choice_index = new_idx
         self.refresh_choice_list()
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
 
     def jump_to_choice_target(self):
@@ -1348,7 +1345,7 @@ class GodEditor:
 
         self.current_scene = scene_id
         self.refresh_scene_list(select_id=scene_id)
-        self.set_dirty(True)
+        self.set_dirty()
         self._refresh_error_consoles()
         self.set_status(f"Saved scene {scene_id}")
         return True
@@ -1363,7 +1360,7 @@ class GodEditor:
         if not path:
             return
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 self.data = self._parse_god_file(f.read())
         except Exception as exc:
             messagebox.showerror("Load Failed", str(exc))
@@ -1423,7 +1420,6 @@ class GodEditor:
         previous_file = self.current_file
         previous_dirty = self.dirty
         repaired_path = Path(previous_file) if previous_file else None
-        disk_text = None
 
         if repaired_path is not None:
             try:

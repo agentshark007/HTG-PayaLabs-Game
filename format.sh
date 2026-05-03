@@ -8,8 +8,6 @@ set -euo pipefail
 
 # Files to format (relative or absolute paths)
 TARGET_FILES=(
-  "elements/*.py"
-  "screens/*.py"
   "app.py"
   "editor.py"
   "game.py"
