@@ -1,5 +1,10 @@
-from utility import *
 import random
+
+from path import *
+from pgiud import *
+from utility import *
+
+
 class Link:
     def __init__(self, target, label):
         self.target = target
@@ -85,12 +90,12 @@ class God:
 
 class Game:
     def __init__(
-            self,
-            god: God,
-            scene_id: str = None,
-            seed: int = None,
-            rng_draws: int = 0,
-            previous_scene_index: int = None,
+        self,
+        god: God,
+        scene_id: str = None,
+        seed: int = None,
+        rng_draws: int = 0,
+        previous_scene_index: int = None,
     ):
         self.god = god
         self.seed = (
@@ -113,8 +118,8 @@ class Game:
             except Exception:
                 previous_scene_index = None
             if (
-                    previous_scene_index is not None
-                    and 0 <= previous_scene_index < len(god.tree.scenes)
-                    and previous_scene_index != self.current_scene_index
+                previous_scene_index is not None
+                and 0 <= previous_scene_index < len(god.tree.scenes)
+                and previous_scene_index != self.current_scene_index
             ):
                 self.previous_scene_index = previous_scene_index

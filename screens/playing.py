@@ -1,7 +1,4 @@
-import os.path
-
 from game import *
-from path import *
 from pgiud import *
 from screens import Screen
 from utility import *
@@ -9,8 +6,10 @@ from utility import *
 
 class PlayingScreen:
     def initialize(self, app):
-        self.pause_button_size = 0
-        self.pause_button_padding = 0
+        self.pause_button_size = 10
+        self.pause_button_padding = 10
+        self.pause_bars_size_x = 3
+        self.pause_bars_size_y = 6
 
     def load(self, app, args):
         pass
@@ -19,7 +18,19 @@ class PlayingScreen:
         # Text Scrolling
 
         # Pause Button
-
+        button_x = app.screen_left.x + (
+            (self.pause_button_size + self.pause_button_padding) * app.scale
+        )
+        button_y = app.screen_bottom.y + (
+            (self.pause_button_size + self.pause_button_padding) * app.scale
+        )
+        hover = (
+            distance(app.mouse_pos, V(button_x, button_y))
+            < self.pause_button_size * app.scale
+        )
+        if hover:
+            if app.mouse_pressed_primary:
+                app.set_screen(Screen.PAUSED)
         # Back Button
         hover = is_point_in_rect(
             app.mouse_pos,
@@ -62,9 +73,11 @@ class PlayingScreen:
                 antialiasing=False,
             )
         # Pause Button
-        button_x = app.screen_left.x + self.pause_button_size + self.pause_button_size
-        button_y = (
-            app.screen_bottom.y + self.pause_button_size + self.pause_button_padding
+        button_x = app.screen_left.x + (
+            (self.pause_button_size + self.pause_button_padding) * app.scale
+        )
+        button_y = app.screen_bottom.y + (
+            (self.pause_button_size + self.pause_button_padding) * app.scale
         )
         hover = (
             distance(app.mouse_pos, V(button_x, button_y))
@@ -75,4 +88,31 @@ class PlayingScreen:
             self.pause_button_size * app.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
+        # Left Bar
+        app.draw_line(
+            V(
+                button_x + (self.pause_bars_size_x * app.scale),
+                button_y + (self.pause_bars_size_y * app.scale),
+            ),
+            V(
+                button_x + (self.pause_bars_size_x * app.scale),
+                button_y - (self.pause_bars_size_y * app.scale),
+            ),
+            Color(255, 255, 255),
+            int(2 * app.scale),
+        )
+        # Right Bar
+        app.draw_line(
+            V(
+                button_x - (self.pause_bars_size_x * app.scale),
+                button_y + (self.pause_bars_size_y * app.scale),
+            ),
+            V(
+                button_x - (self.pause_bars_size_x * app.scale),
+                button_y - (self.pause_bars_size_y * app.scale),
+            ),
+            Color(255, 255, 255),
+            int(2 * app.scale),
+        )
+
         # Back Button
