@@ -12,7 +12,7 @@ class NewGameScreen:
         )
 
     def load(self, app, args):
-        pass
+        self.selection_list.selected_index = -1
 
     def update(self, app):
         self.selection_list.update(app)
