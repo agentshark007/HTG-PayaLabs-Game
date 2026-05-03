@@ -7,7 +7,7 @@ Fate of the Gods is a simple choose-your-own-adventure style game where the play
 
 - Python 3.12
 - Dependencies from `requirements.txt`
-- pgiud version 1.3 (included in project, not installed separately)
+- pgiud version 1.4 (included in project, not installed separately)
 
 Install dependencies with `pip install -r requirements.txt`.
 
