@@ -34,7 +34,7 @@ class SelectionList:
         for i, _item in enumerate(self.items):
             a, b = self._selection_item_rect(app, i)
             hover = is_point_in_rect(app.mouse_pos, a, b)
-            if hover and app.mouse_pressed:
+            if hover and app.mouse_pressed_primary:
                 self.selected_index = i
         if self.selected_index >= len(self.items):
             self.selected_index = -1

@@ -20,7 +20,7 @@ class CreditsScreen:
             ),
         )
         if hover:
-            if app.mouse_pressed:
+            if app.mouse_pressed_primary:
                 app.set_screen(Screen.MAIN_MENU)
 
     def draw(self, app):

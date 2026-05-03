@@ -37,7 +37,7 @@ class ButtonList:
                 bx = x + width / 2
                 by = y + height / 2
                 hover = is_point_in_rect(app.mouse_pos, V(ax, ay), V(bx, by))
-                if hover and app.mouse_pressed:
+                if hover and app.mouse_pressed_primary:
                     app.set_screen(button)
 
     def draw(self, app, title, buttons):

@@ -1,7 +1,7 @@
 from elements.selection_list import SelectionList
+from game import *
 from pgiud import *
 from screens import Screen
-from utility import *
 
 
 class NewGameScreen:
@@ -15,7 +15,22 @@ class NewGameScreen:
         self.selection_list.selected_index = -1
 
     def update(self, app):
+        # God List
         self.selection_list.update(app)
+        # Back Button
+        back_x = app.screen_left.x + (150 * app.scale)
+        back_hover = is_point_in_rect(
+            app.mouse_pos,
+            V(back_x, app.screen_bottom.y),
+            V(
+                back_x + (130 * app.scale),
+                app.screen_bottom.y + (40 * app.scale),
+            ),
+        )
+        if back_hover and app.mouse_pressed_primary:
+            app.set_screen(Screen.MAIN_MENU)
+            return
+        # Start Game Button
         hover = is_point_in_rect(
             app.mouse_pos,
             V(app.screen_right.x, app.screen_bottom.y),
@@ -25,8 +40,9 @@ class NewGameScreen:
             ),
         )
         if hover:
-            if app.mouse_pressed:
+            if app.mouse_pressed_primary:
                 app.set_screen(Screen.PLAYING)
+                app.game = Game(app.gods[self.selection_list.selected_index])
 
     def _draw_god_details(self, app):
         god = app.gods[self.selection_list.selected_index]
@@ -99,9 +115,43 @@ class NewGameScreen:
         )
 
     def draw(self, app):
+        # God List
         self.selection_list.draw(app)
         if self.selection_list.selected_index != -1:
             self._draw_god_details(app)
+        # Back Button
+        back_x = app.screen_left.x + (150 * app.scale)
+        back_hover = is_point_in_rect(
+            app.mouse_pos,
+            V(back_x, app.screen_bottom.y),
+            V(
+                back_x + (130 * app.scale),
+                app.screen_bottom.y + (40 * app.scale),
+            ),
+        )
+        app.fill_rounded_rect(
+            V(back_x, app.screen_bottom.y),
+            V(
+                back_x + (130 * app.scale),
+                app.screen_bottom.y + (40 * app.scale),
+            ),
+            Color(40, 40, 40) if back_hover else Color(30, 30, 30),
+            int(2 * app.scale),
+            Color(50, 50, 50),
+            top_right_roundness=10 * app.scale,
+            steps=10,
+        )
+        app.draw_text(
+            "Back",
+            V(
+                back_x + (65 * app.scale),
+                app.screen_bottom.y + (20 * app.scale),
+            ),
+            app.main_font.new_size(int(30 * app.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
+        # Start Game Button
         hover = is_point_in_rect(
             app.mouse_pos,
             V(app.screen_right.x, app.screen_bottom.y),

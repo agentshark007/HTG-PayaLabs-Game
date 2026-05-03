@@ -20,7 +20,7 @@ class SettingsScreen:
             ),
         )
         if hover:
-            if app.mouse_pressed:
+            if app.mouse_pressed_primary:
                 if self.from_game:
                     app.set_screen(Screen.PAUSED)
                 else:

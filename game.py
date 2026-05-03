@@ -28,6 +28,9 @@ class Scene:
                     else:
                         self.text = line.strip()
         self.links = links
+        self.image = Image(
+            get_absolute_path(os.path.join("assets/data/scenes", self.image + ".png"))
+        )
 
 
 class Tree:

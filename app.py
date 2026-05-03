@@ -137,7 +137,7 @@ class App(Window):
             self.settings_screen.update(self)
 
     def _update_state(self):
-        self.mouse_pressed = (
+        self.mouse_pressed_primary = (
             self.mouse_down_primary and not self.mouse_down_primary_last_frame
         )
         scale_x = self.width / self._original_width
@@ -148,6 +148,7 @@ class App(Window):
     def update(self):
         self._update_state()
         self._update_current_screen()
+        self.mouse_down_primary_last_frame = self.mouse_down_primary
 
     def _draw_current_screen(self):
         if self.screen == Screen.CREDITS:
