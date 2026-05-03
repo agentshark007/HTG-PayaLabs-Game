@@ -6,12 +6,14 @@ from utility import *
 
 
 class Link:
+
     def __init__(self, target, label):
         self.target = target
         self.label = label
 
 
 class Scene:
+
     def __init__(self, encoded: str, scene_id: str = None):
         self.id = scene_id
         lines = split_nonempty_lines(encoded)
@@ -23,15 +25,13 @@ class Scene:
                 self.text = line[len("text: ") :].strip()
             elif line.startswith("image: "):
                 self.image = line[len("image: ") :].strip()
+            elif ": " in line:
+                target, _, link_text = line.partition(": ")
+                links.append(Link(target.strip(), link_text.strip()))
+            elif self.text:
+                self.text += "\n" + line.strip()
             else:
-                if ": " in line:
-                    target, _, link_text = line.partition(": ")
-                    links.append(Link(target.strip(), link_text.strip()))
-                else:
-                    if self.text:
-                        self.text += "\n" + line.strip()
-                    else:
-                        self.text = line.strip()
+                self.text = line.strip()
         self.links = links
         self.image = Image(
             get_absolute_path(os.path.join("assets/data/scenes", self.image + ".png"))
@@ -39,6 +39,7 @@ class Scene:
 
 
 class Tree:
+
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         scenes = []
@@ -70,6 +71,7 @@ class Tree:
 
 
 class God:
+
     def __init__(self, encoded: str):
         self.name: str = ""
         self.info: str = ""
@@ -89,6 +91,7 @@ class God:
 
 
 class Game:
+
     def __init__(
         self,
         god: God,
@@ -120,6 +123,6 @@ class Game:
             if (
                 previous_scene_index is not None
                 and 0 <= previous_scene_index < len(god.tree.scenes)
-                and previous_scene_index != self.current_scene_index
+                and (previous_scene_index != self.current_scene_index)
             ):
                 self.previous_scene_index = previous_scene_index

@@ -1,25 +1,10 @@
 from __future__ import annotations
-
 import math
 from enum import Enum
 from typing import Iterable, Optional, Tuple
-
 import pygame
-
-__version__ = "1.4"
-__all__ = [
-    "V",
-    "Key",
-    "Font",
-    "Color",
-    "Image",
-    "Sound",
-    "Origin",
-    "Resizable",
-    "Window",
-    "__version__",
-]
-
+__version__ = '1.4'
+__all__ = ['V', 'Key', 'Font', 'Color', 'Image', 'Sound', 'Origin', 'Resizable', 'Window', '__version__']
 
 class V:
 
@@ -38,7 +23,7 @@ class V:
 
     def __truediv__(self, scalar: float) -> V:
         if scalar == 0:
-            raise ZeroDivisionError("division by zero")
+            raise ZeroDivisionError('division by zero')
         return V(self.x / scalar, self.y / scalar)
 
     def __rmul__(self, scalar: float) -> V:
@@ -64,14 +49,12 @@ class V:
         if not isinstance(other, V):
             return False
         try:
-            return math.isclose(
-                self.x, other.x, rel_tol=1e-09, abs_tol=1e-09
-            ) and math.isclose(self.y, other.y, rel_tol=1e-09, abs_tol=1e-09)
+            return math.isclose(self.x, other.x, rel_tol=1e-09, abs_tol=1e-09) and math.isclose(self.y, other.y, rel_tol=1e-09, abs_tol=1e-09)
         except Exception:
             return self.x == other.x and self.y == other.y
 
     def __repr__(self) -> str:
-        return f"V({self.x}, {self.y})"
+        return f'V({self.x}, {self.y})'
 
     def distance_to(self, other: V) -> float:
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
@@ -82,7 +65,6 @@ class V:
     @staticmethod
     def distance(a: V, b: V) -> float:
         return a.distance_to(b)
-
 
 class Key(Enum):
     A = pygame.K_a
@@ -187,10 +169,9 @@ class Key(Enum):
     KP_ENTER = pygame.K_KP_ENTER
     KP_EQUALS = pygame.K_KP_EQUALS
 
-
 class Font:
 
-    def __init__(self, file: str = None, size: int = 24):
+    def __init__(self, file: str=None, size: int=24):
         pygame.font.init()
         self.size = size
         self.file = file
@@ -212,10 +193,9 @@ class Font:
     def new_size(self, size: int):
         return Font(self.file, int(size))
 
-
 class Color:
 
-    def __init__(self, r: int, g: int, b: int, a: int = 255):
+    def __init__(self, r: int, g: int, b: int, a: int=255):
         self.r = max(0, min(255, int(r)))
         self.g = max(0, min(255, int(g)))
         self.b = max(0, min(255, int(b)))
@@ -227,7 +207,7 @@ class Color:
     def rgb_tuple(self):
         return (self.r, self.g, self.b)
 
-    def mix(self, other: "Color", factor: float = 0.5):
+    def mix(self, other: 'Color', factor: float=0.5):
         factor = max(0.0, min(1.0, factor))
         r = int(round(self.r * (1 - factor) + other.r * factor))
         g = int(round(self.g * (1 - factor) + other.g * factor))
@@ -236,18 +216,12 @@ class Color:
         return Color(r, g, b, a)
 
     def __repr__(self) -> str:
-        return f"Color({self.r}, {self.g}, {self.b}, {self.a})"
+        return f'Color({self.r}, {self.g}, {self.b}, {self.a})'
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Color):
             return False
-        return (
-                self.r == other.r
-                and self.g == other.g
-                and (self.b == other.b)
-                and (self.a == other.a)
-        )
-
+        return self.r == other.r and self.g == other.g and (self.b == other.b) and (self.a == other.a)
 
 class Image:
 
@@ -267,7 +241,6 @@ class Image:
 
     def get_height(self):
         return self.surface.get_height()
-
 
 class Sound:
 
@@ -318,7 +291,6 @@ class Sound:
         else:
             return None
 
-
 class Origin(Enum):
     CENTER = (0, 0)
     TOP = (0, 1)
@@ -330,25 +302,16 @@ class Origin(Enum):
     BOTTOM_LEFT = (-1, -1)
     BOTTOM_RIGHT = (1, -1)
 
-
 class Resizable(Enum):
-    NONE = "none"
-    WIDTH = "width"
-    HEIGHT = "height"
-    BOTH = "both"
-    ASPECT = "aspect"
-
+    NONE = 'none'
+    WIDTH = 'width'
+    HEIGHT = 'height'
+    BOTH = 'both'
+    ASPECT = 'aspect'
 
 class Window:
 
-    def __init__(
-            self,
-            width: int = 800,
-            height: int = 600,
-            title: str = "PGIUD Window",
-            resizable: Resizable = Resizable.NONE,
-            origin: Origin = Origin.BOTTOM_LEFT,
-    ):
+    def __init__(self, width: int=800, height: int=600, title: str='PGIUD Window', resizable: Resizable=Resizable.NONE, origin: Origin=Origin.BOTTOM_LEFT):
         pygame.init()
         try:
             pygame.mixer.init()
@@ -367,7 +330,6 @@ class Window:
         self._running = False
         self._mouse_x = 0
         self._mouse_y = 0
-        # Per-frame scroll delta (x = horizontal, y = vertical). Reset each frame in start().
         self._scroll_x = 0
         self._scroll_y = 0
         self._deltatime = 0.0
@@ -500,11 +462,7 @@ class Window:
         elif self._resizable == Resizable.HEIGHT:
             w = self.width
         elif self._resizable == Resizable.ASPECT:
-            ratio = (
-                self._original_width / self._original_height
-                if self._original_height != 0
-                else 1
-            )
+            ratio = self._original_width / self._original_height if self._original_height != 0 else 1
             if w / h > ratio:
                 w = int(h * ratio)
             else:
@@ -517,7 +475,6 @@ class Window:
         self.initialize()
         while self._running:
             self._deltatime = self._clock.tick(60) / 1000.0
-            # reset per-frame scroll deltas
             self._scroll_x = 0
             self._scroll_y = 0
             for event in pygame.event.get():
@@ -528,10 +485,9 @@ class Window:
                     self._handle_resize(event.w, event.h)
                     self.on_resize(event.w, event.h)
                 elif event.type == pygame.MOUSEWHEEL:
-                    # pygame 2 MOUSEWHEEL event (attributes: x, y)
                     try:
-                        self._scroll_x += getattr(event, "x", 0)
-                        self._scroll_y += getattr(event, "y", 0)
+                        self._scroll_x += getattr(event, 'x', 0)
+                        self._scroll_y += getattr(event, 'y', 0)
                     except Exception:
                         pass
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -542,16 +498,12 @@ class Window:
                     elif event.button == 3:
                         self._mouse_down_secondary = True
                     elif event.button == 4:
-                        # legacy wheel up
                         self._scroll_y += 1
                     elif event.button == 5:
-                        # legacy wheel down
                         self._scroll_y -= 1
                     elif event.button == 6:
-                        # legacy wheel left
                         self._scroll_x -= 1
                     elif event.button == 7:
-                        # legacy wheel right
                         self._scroll_x += 1
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
@@ -561,7 +513,6 @@ class Window:
                     elif event.button == 3:
                         self._mouse_down_secondary = False
             self._mouse_x, self._mouse_y = self._pg_to_iud(*pygame.mouse.get_pos())
-            # If any scroll happened this frame, notify and leave deltas available
             if self._scroll_x != 0 or self._scroll_y != 0:
                 try:
                     self.on_scroll(self._scroll_x, self._scroll_y)
@@ -614,18 +565,11 @@ class Window:
         """Called when the window is resized."""
         pass
 
-    def clear(self, color: "Color"):
+    def clear(self, color: 'Color'):
         """Clear the screen to the given color."""
         self._screen.fill(color.rgb_tuple() if color.a == 255 else color.to_tuple())
 
-    def fill_rect(
-            self,
-            a: V,
-            b: V,
-            color: "Color",
-            outline_thickness: int = 0,
-            outline_color: "Color" = None,
-    ):
+    def fill_rect(self, a: V, b: V, color: 'Color', outline_thickness: int=0, outline_color: 'Color'=None):
         """Draw a filled rectangle from a to b in IUD coordinates."""
         outline_thickness = int(outline_thickness)
         ax, ay = a.to_tuple()
@@ -650,26 +594,10 @@ class Window:
             temp.fill(color.to_tuple())
             self._screen.blit(temp, (x, y))
         if outline_thickness > 0 and outline_color:
-            col = (
-                outline_color.rgb_tuple()
-                if outline_color.a == 255
-                else outline_color.to_tuple()
-            )
+            col = outline_color.rgb_tuple() if outline_color.a == 255 else outline_color.to_tuple()
             pygame.draw.rect(self._screen, col, rect, outline_thickness)
 
-    def fill_rounded_rect(
-            self,
-            a: V,
-            b: V,
-            color: Color,
-            outline_thickness: int = 0,
-            outline_color: Color = None,
-            top_left_roundness: float = 0.0,
-            top_right_roundness: float = 0.0,
-            bottom_left_roundness: float = 0.0,
-            bottom_right_roundness: float = 0.0,
-            steps: int = 10,
-    ):
+    def fill_rounded_rect(self, a: V, b: V, color: Color, outline_thickness: int=0, outline_color: Color=None, top_left_roundness: float=0.0, top_right_roundness: float=0.0, bottom_left_roundness: float=0.0, bottom_right_roundness: float=0.0, steps: int=10):
         """Draw a filled rounded rectangle with optional outline."""
         ax, ay = a.to_tuple()
         bx, by = b.to_tuple()
@@ -692,7 +620,6 @@ class Window:
                 theta = start_angle + (end_angle - start_angle) * t
                 pts.append((cx + r * math.cos(theta), cy + r * math.sin(theta)))
             return pts
-
         points = []
         if tl > 0:
             points.append((left + tl, top))
@@ -720,7 +647,7 @@ class Window:
             return
         self.fill_polygon(points, color, outline_thickness, outline_color)
 
-    def draw_line(self, a: V, b: V, color: "Color", width: int = 1):
+    def draw_line(self, a: V, b: V, color: 'Color', width: int=1):
         """Draw a line from (ax, ay) to (bx, by) in IUD coordinates."""
         ax, ay = a.to_tuple()
         bx, by = b.to_tuple()
@@ -741,13 +668,7 @@ class Window:
             pygame.draw.line(temp, color.to_tuple(), (sax, say), (sbx, sby), width)
             self._screen.blit(temp, (min_x, min_y))
 
-    def fill_polygon(
-            self,
-            points: Iterable[Tuple[float, float]],
-            color: "Color",
-            outline_thickness: int = 0,
-            outline_color: "Color" = None,
-    ):
+    def fill_polygon(self, points: Iterable[Tuple[float, float]], color: 'Color', outline_thickness: int=0, outline_color: 'Color'=None):
         """Draw a filled polygon. Points should be an iterable of (x, y) pairs."""
         pg_points = [self._iud_to_pg(int(round(x)), int(round(y))) for x, y in points]
         if color.a == 255:
@@ -767,9 +688,7 @@ class Window:
             tw = max(1, int(round(width)))
             th = max(1, int(round(height)))
             temp = pygame.Surface((tw, th), pygame.SRCALPHA)
-            shifted = [
-                (int(round(x - min_x)), int(round(y - min_y))) for x, y in pg_points
-            ]
+            shifted = [(int(round(x - min_x)), int(round(y - min_y))) for x, y in pg_points]
             try:
                 pygame.draw.polygon(temp, color.to_tuple(), shifted)
                 self._screen.blit(temp, (min_x, min_y))
@@ -777,23 +696,11 @@ class Window:
                 return
         if outline_thickness > 0 and outline_color is not None:
             try:
-                pygame.draw.polygon(
-                    self._screen,
-                    outline_color.rgb_tuple(),
-                    pg_points,
-                    outline_thickness,
-                )
+                pygame.draw.polygon(self._screen, outline_color.rgb_tuple(), pg_points, outline_thickness)
             except Exception:
                 pass
 
-    def fill_circle(
-            self,
-            center: V,
-            radius: float,
-            color: "Color",
-            outline_thickness: int = 0,
-            outline_color: "Color" = None,
-    ):
+    def fill_circle(self, center: V, radius: float, color: 'Color', outline_thickness: int=0, outline_color: 'Color'=None):
         """Draw a filled circle at center with the given radius in IUD coordinates."""
         cx, cy = center.to_tuple()
         px, py = self._iud_to_pg(int(cx), int(cy))
@@ -808,24 +715,10 @@ class Window:
             pygame.draw.circle(temp, color.to_tuple(), (r, r), r)
             self._screen.blit(temp, (px - r, py - r))
         if outline_thickness > 0 and outline_color is not None:
-            col = (
-                outline_color.rgb_tuple()
-                if outline_color.a == 255
-                else outline_color.to_tuple()
-            )
+            col = outline_color.rgb_tuple() if outline_color.a == 255 else outline_color.to_tuple()
             pygame.draw.circle(self._screen, col, (px, py), r, outline_thickness)
 
-    def draw_image(
-            self,
-            image: "Image",
-            pos: V,
-            origin: Origin = Origin.BOTTOM_LEFT,
-            image_filter: Optional["Color"] = None,
-            scale_x: float = 1.0,
-            scale_y: float = 1.0,
-            rotation: int = 0,
-            antialiasing: bool = True,
-    ):
+    def draw_image(self, image: 'Image', pos: V, origin: Origin=Origin.BOTTOM_LEFT, image_filter: Optional['Color']=None, scale_x: float=1.0, scale_y: float=1.0, rotation: int=0, antialiasing: bool=True):
         """Draw an image at (x, y) in IUD coordinates.
 
         Optional:
@@ -838,7 +731,7 @@ class Window:
         px, py = self._iud_to_pg(int(x), int(y))
         ox, oy = origin.value
         oy *= -1
-        surf = getattr(image, "surface", None)
+        surf = getattr(image, 'surface', None)
         if surf is None:
             return
         if scale_y is None:
@@ -847,7 +740,7 @@ class Window:
             if scale_x != 1.0 or scale_y != 1.0:
                 new_w = max(1, int(round(image.get_width() * scale_x)))
                 new_h = max(1, int(round(image.get_height() * scale_y)))
-                if antialiasing and hasattr(pygame.transform, "smoothscale"):
+                if antialiasing and hasattr(pygame.transform, 'smoothscale'):
                     surf = pygame.transform.smoothscale(surf, (new_w, new_h))
                 else:
                     surf = pygame.transform.scale(surf, (new_w, new_h))
@@ -869,27 +762,20 @@ class Window:
         py -= oy * surf.get_height() // 2
         self._screen.blit(surf, (px, py))
 
-    def draw_text(
-            self,
-            text: str,
-            pos: V,
-            font: "Font",
-            color: "Color",
-            origin: Origin = Origin.BOTTOM_LEFT,
-    ):
+    def draw_text(self, text: str, pos: V, font: 'Font', color: 'Color', origin: Origin=Origin.BOTTOM_LEFT):
         """Draw text at (x, y) in IUD coordinates. `origin` specifies the text anchor.
 
         Supports manual line breaks via \\n. Only Y changes between lines;
         X and origin/anchor stay fixed per line.
         """
         x, y = pos.to_tuple()
-        lines = text.split("\n")
+        lines = text.split('\n')
         if not lines:
             return
         rendered = []
         default_h = 0
         for ln in lines:
-            render_text = ln if ln != "" else " "
+            render_text = ln if ln != '' else ' '
             surf = font.font.render(render_text, True, color.rgb_tuple())
             try:
                 surf = surf.convert_alpha()
@@ -918,19 +804,7 @@ class Window:
                     pass
             self._screen.blit(surf, (px, py))
 
-    def draw_text_word_wrap(
-            self,
-            text: str,
-            pos: V,
-            font: "Font",
-            color: "Color",
-            origin: Origin = Origin.BOTTOM_LEFT,
-            wrap_distance: Optional[int] = None,
-            line_height: Optional[int] = None,
-            anchor_first_line: bool = False,
-            max_lines: Optional[int] = None,
-            max_line_ending: Optional[str] = None,
-    ):
+    def draw_text_word_wrap(self, text: str, pos: V, font: 'Font', color: 'Color', origin: Origin=Origin.BOTTOM_LEFT, wrap_distance: Optional[int]=None, line_height: Optional[int]=None, anchor_first_line: bool=False, max_lines: Optional[int]=None, max_line_ending: Optional[str]=None):
         """Draw word-wrapped text at (x, y) in IUD coordinates.
 
         Only Y changes between lines; X and origin/anchor stay fixed per line.
@@ -947,15 +821,15 @@ class Window:
         x, y = pos.to_tuple()
         lines = []
         if wrap_distance is not None and wrap_distance > 0:
-            paragraphs = text.split("\n")
+            paragraphs = text.split('\n')
             for para in paragraphs:
-                if para == "":
-                    lines.append("")
+                if para == '':
+                    lines.append('')
                     continue
-                words = para.split(" ")
-                cur = ""
+                words = para.split(' ')
+                cur = ''
                 for w in words:
-                    candidate = w if cur == "" else cur + " " + w
+                    candidate = w if cur == '' else cur + ' ' + w
                     try:
                         cand_w = font.font.size(candidate)[0]
                     except Exception:
@@ -963,7 +837,7 @@ class Window:
                     if cand_w <= wrap_distance:
                         cur = candidate
                     else:
-                        if cur != "":
+                        if cur != '':
                             lines.append(cur)
                         try:
                             word_w = font.font.size(w)[0]
@@ -972,7 +846,7 @@ class Window:
                         if word_w <= wrap_distance:
                             cur = w
                         else:
-                            part = ""
+                            part = ''
                             for ch in w:
                                 cand2 = part + ch
                                 try:
@@ -982,14 +856,14 @@ class Window:
                                 if cand2_w <= wrap_distance:
                                     part = cand2
                                 else:
-                                    if part != "":
+                                    if part != '':
                                         lines.append(part)
                                     part = ch
                             cur = part
-                if cur != "":
+                if cur != '':
                     lines.append(cur)
         else:
-            lines = text.split("\n")
+            lines = text.split('\n')
         if not lines:
             return
         truncated = False
@@ -1013,7 +887,7 @@ class Window:
         rendered = []
         default_h = 0
         for ln in lines:
-            render_text = ln if ln != "" else " "
+            render_text = ln if ln != '' else ' '
             surf = font.font.render(render_text, True, color.rgb_tuple())
             try:
                 surf = surf.convert_alpha()

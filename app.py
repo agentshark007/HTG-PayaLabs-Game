@@ -27,6 +27,7 @@ class State(Enum):
 
 
 class App(Window):
+
     def __init__(self):
         super().__init__(
             width=480,
@@ -278,21 +279,17 @@ class App(Window):
         return lines or [""]
 
     def _scene_text_scroll_metrics(
-        self,
-        text: str,
-        font,
-        wrap_distance: Optional[int],
-        visible_height: float,
+        self, text: str, font, wrap_distance: Optional[int], visible_height: float
     ):
         lines = self._wrap_scene_text_lines(text, font, wrap_distance)
         line_step = max(1, int(font.font.get_linesize()))
         line_height = max(1, int(font.font.get_height()))
         total_height = line_height + max(0, len(lines) - 1) * line_step
         max_scroll = max(0.0, float(total_height) - max(0.0, float(visible_height)))
-        return total_height, max_scroll
+        return (total_height, max_scroll)
 
     def _playing_scene_text_bottom_y(self):
-        pause_button_center_y = self.screen_bottom.y + (15 * self.scale)
+        pause_button_center_y = self.screen_bottom.y + 15 * self.scale
         pause_button_radius = 10 * self.scale
         padding_above_button = 10 * self.scale
         return pause_button_center_y + pause_button_radius + padding_above_button
@@ -301,8 +298,8 @@ class App(Window):
         return (
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (80 * self.scale),
-                self.screen_bottom.y + (26 * self.scale),
+                self.screen_right.x - 80 * self.scale,
+                self.screen_bottom.y + 26 * self.scale,
             ),
         )
 
@@ -311,7 +308,7 @@ class App(Window):
             return False
         if scene_index is None:
             return False
-        if not (0 <= scene_index < len(game.god.tree.scenes)):
+        if not 0 <= scene_index < len(game.god.tree.scenes):
             return False
         if scene_index == game.current_scene_index:
             return False
@@ -332,36 +329,33 @@ class App(Window):
     def _selection_item_rect(self, index: int):
         return (
             V(
-                self.screen_left.x + (1 * self.scale),
+                self.screen_left.x + 1 * self.scale,
                 self.screen_top.y
-                - (1 * self.scale)
-                - (index * 25 * self.scale)
-                - (30 * self.scale),
+                - 1 * self.scale
+                - index * 25 * self.scale
+                - 30 * self.scale,
             ),
             V(
-                self.screen_left.x + (149 * self.scale),
+                self.screen_left.x + 149 * self.scale,
                 self.screen_top.y
-                - (1 * self.scale)
-                - (index * 25 * self.scale)
-                - (25 * self.scale)
-                - (30 * self.scale),
+                - 1 * self.scale
+                - index * 25 * self.scale
+                - 25 * self.scale
+                - 30 * self.scale,
             ),
         )
 
     def _action_button_rect(self, index: int):
         button_width = 180 * self.scale
         button_height = 28 * self.scale
-        list_right_x = self.screen_left.x + (149 * self.scale)
-        x_center = list_right_x + (button_width / 2)
+        list_right_x = self.screen_left.x + 149 * self.scale
+        x_center = list_right_x + button_width / 2
         top_y = self.screen_top.y
         return (
+            V(x_center - button_width / 2, top_y - index * button_height),
             V(
-                x_center - (button_width / 2),
-                top_y - (index * button_height),
-            ),
-            V(
-                x_center + (button_width / 2),
-                top_y - (index * button_height) - button_height,
+                x_center + button_width / 2,
+                top_y - index * button_height - button_height,
             ),
         )
 
@@ -410,7 +404,7 @@ class App(Window):
     ):
         self.fill_rect(
             V(self.screen_left.x, self.screen_top.y),
-            V(self.screen_left.x + (150 * self.scale), self.screen_bottom.y),
+            V(self.screen_left.x + 150 * self.scale, self.screen_bottom.y),
             Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
@@ -418,8 +412,8 @@ class App(Window):
         self.draw_text(
             title,
             V(
-                self.screen_left.x + (75 * self.scale),
-                self.screen_top.y - (15 * self.scale),
+                self.screen_left.x + 75 * self.scale,
+                self.screen_top.y - 15 * self.scale,
             ),
             self.main_font.new_size(int(23 * self.scale)),
             Color(255, 255, 255),
@@ -429,8 +423,8 @@ class App(Window):
             self.draw_text(
                 empty_text,
                 V(
-                    self.screen_left.x + (75 * self.scale),
-                    self.screen_top.y - (55 * self.scale),
+                    self.screen_left.x + 75 * self.scale,
+                    self.screen_top.y - 55 * self.scale,
                 ),
                 self.main_font.new_size(int(18 * self.scale)),
                 Color(180, 180, 180),
@@ -452,8 +446,8 @@ class App(Window):
             self.draw_text(
                 item_label(item),
                 V(
-                    self.screen_left.x + (75 * self.scale),
-                    self.screen_top.y - (25 * self.scale * i) - (30 * self.scale),
+                    self.screen_left.x + 75 * self.scale,
+                    self.screen_top.y - 25 * self.scale * i - 30 * self.scale,
                 ),
                 self.main_font.new_size(int(23 * self.scale)),
                 Color(200, 220, 200),
@@ -555,7 +549,7 @@ class App(Window):
     def _selected_save_entry(self, save_entries):
         if self.load_game_selected_save is None:
             return None
-        if not (0 <= self.load_game_selected_save < len(save_entries)):
+        if not 0 <= self.load_game_selected_save < len(save_entries):
             return None
         return save_entries[self.load_game_selected_save]
 
@@ -701,8 +695,10 @@ class App(Window):
         except:
             pass
         enter_pressed = any(
-            self.keydown(key_enum) and key_enum not in self.keys_down_last_frame
-            for key_enum in enter_keys
+            (
+                self.keydown(key_enum) and key_enum not in self.keys_down_last_frame
+                for key_enum in enter_keys
+            )
         )
         if enter_pressed:
             self._commit_rename_mode(save_entries)
@@ -713,8 +709,10 @@ class App(Window):
         except:
             pass
         delete_pressed = any(
-            self.keydown(key_enum) and key_enum not in self.keys_down_last_frame
-            for key_enum in delete_keys
+            (
+                self.keydown(key_enum) and key_enum not in self.keys_down_last_frame
+                for key_enum in delete_keys
+            )
         )
         if delete_pressed:
             if self.load_game_rename_buffer:
@@ -786,25 +784,25 @@ class App(Window):
         self.fill_rect(
             V(self.screen_right.x, self.screen_top.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_top.y - (150 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_top.y - 150 * self.scale,
             ),
             Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
         )
         self.fill_rect(
-            V(self.screen_left.x + (150 * self.scale), self.screen_top.y),
+            V(self.screen_left.x + 150 * self.scale, self.screen_top.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_top.y - (150 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_top.y - 150 * self.scale,
             ),
             Color(0, 0, 0),
         )
         self.fill_rect(
             V(
-                self.screen_left.x + (150 * self.scale),
-                self.screen_top.y - (150 * self.scale),
+                self.screen_left.x + 150 * self.scale,
+                self.screen_top.y - 150 * self.scale,
             ),
             V(self.screen_right.x, self.screen_bottom.y),
             Color(0, 0, 0),
@@ -813,8 +811,8 @@ class App(Window):
             self.draw_image(
                 self.god_images[god.image],
                 V(
-                    self.screen_right.x - (65 * self.scale),
-                    self.screen_top.y - (75 * self.scale),
+                    self.screen_right.x - 65 * self.scale,
+                    self.screen_top.y - 75 * self.scale,
                 ),
                 origin=Origin.CENTER,
                 scale_x=self.scale
@@ -827,7 +825,7 @@ class App(Window):
         self.draw_text(
             god.name,
             V(
-                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
+                self.screen_left.x + 155 * self.scale + 3 * self.scale,
                 self.screen_top.y,
             ),
             self.heading_font.new_size(int(25 * self.scale)),
@@ -837,15 +835,15 @@ class App(Window):
         self.draw_text_word_wrap(
             god.info,
             V(
-                self.screen_left.x + (155 * self.scale) + (3 * self.scale),
-                self.screen_top.y - (155 * self.scale) + (3 * self.scale),
+                self.screen_left.x + 155 * self.scale + 3 * self.scale,
+                self.screen_top.y - 155 * self.scale + 3 * self.scale,
             ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.TOP_LEFT,
             wrap_distance=abs(
                 self.screen_left.x
-                - (self.screen_left.x + (155 * self.scale) + (3 * self.scale))
+                - (self.screen_left.x + 155 * self.scale + 3 * self.scale)
             )
             * 2,
         )
@@ -877,7 +875,7 @@ class App(Window):
         if not weighted_targets:
             return None
         current_game = getattr(self, "game", None)
-        total_weight = sum(weight for _, weight in weighted_targets)
+        total_weight = sum((weight for _, weight in weighted_targets))
         if total_weight <= 0:
             return None
         if current_game is not None:
@@ -897,8 +895,8 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
         if hover:
@@ -966,8 +964,8 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
         if hover:
@@ -1010,8 +1008,8 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
         if hover:
@@ -1034,17 +1032,10 @@ class App(Window):
             y = (
                 self.screen_top.y
                 - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
-                    )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
+                    self.button_list_button_top_offset
+                    + self.button_list_button_height / 2
+                    + i
+                    * (self.button_list_button_height + self.button_list_button_padding)
                 )
                 * self.scale
             )
@@ -1064,14 +1055,11 @@ class App(Window):
         self.new_game_selected_god = self._update_selection_list(
             self.gods, self.new_game_selected_god
         )
-        back_x = self.screen_left.x + (150 * self.scale)
+        back_x = self.screen_left.x + 150 * self.scale
         back_hover = is_point_in_rect(
             self.mouse_pos,
             V(back_x, self.screen_bottom.y),
-            V(
-                back_x + (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
-            ),
+            V(back_x + 130 * self.scale, self.screen_bottom.y + 40 * self.scale),
         )
         if back_hover and self.mouse_pressed:
             self.set_state(State.MAIN_MENU)
@@ -1080,11 +1068,11 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
-        if hover and self.mouse_pressed and self.new_game_selected_god is not None:
+        if hover and self.mouse_pressed and (self.new_game_selected_god is not None):
             self.game = Game(self.gods[self.new_game_selected_god])
             self._reset_scene_text_scroll()
             self.set_state(State.PLAYING)
@@ -1101,7 +1089,7 @@ class App(Window):
         back_enabled = (
             current_game is not None
             and getattr(current_game, "previous_scene_index", None) is not None
-            and current_game.previous_scene_index != current_game.current_scene_index
+            and (current_game.previous_scene_index != current_game.current_scene_index)
         )
         if back_enabled and is_point_in_rect(self.mouse_pos, back_a, back_b):
             if self.mouse_pressed and self._go_back_to_previous_scene():
@@ -1110,8 +1098,8 @@ class App(Window):
             distance(
                 self.mouse_pos,
                 V(
-                    self.screen_left.x + (15 * self.scale),
-                    self.screen_bottom.y + (15 * self.scale),
+                    self.screen_left.x + 15 * self.scale,
+                    self.screen_bottom.y + 15 * self.scale,
                 ),
             )
             < 10 * self.scale
@@ -1142,7 +1130,7 @@ class App(Window):
                     continue
                 pressed_now = self.keydown(key_enum)
                 was_pressed = key_enum in self.keys_down_last_frame
-                if pressed_now and not was_pressed:
+                if pressed_now and (not was_pressed):
                     target_id = self._choose_target_id(link.target)
                     if target_id is None:
                         continue
@@ -1168,17 +1156,10 @@ class App(Window):
             y = (
                 self.screen_top.y
                 - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
-                    )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
+                    self.button_list_button_top_offset
+                    + self.button_list_button_height / 2
+                    + i
+                    * (self.button_list_button_height + self.button_list_button_padding)
                 )
                 * self.scale
             )
@@ -1199,8 +1180,8 @@ class App(Window):
         self._update_settings(True)
 
     def update(self):
-        self.mouse_pressed = (
-            self.mouse_down_primary and not self.mouse_down_primary_last_frame
+        self.mouse_pressed = self.mouse_down_primary and (
+            not self.mouse_down_primary_last_frame
         )
         scale_x = self.width / self._original_width
         scale_y = self.height / self._original_height
@@ -1269,15 +1250,15 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(1 * self.scale),
@@ -1287,8 +1268,8 @@ class App(Window):
         self.draw_text(
             "Back",
             V(
-                self.screen_right.x - (65 * self.scale),
-                self.screen_bottom.y + (20 * self.scale),
+                self.screen_right.x - 65 * self.scale,
+                self.screen_bottom.y + 20 * self.scale,
             ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
@@ -1314,15 +1295,15 @@ class App(Window):
         if self.load_game_rename_mode:
             rename_y_offset = 10 * self.scale
             self.fill_rect(
-                V(self.screen_left.x, self.screen_top.y - (150 * self.scale)),
+                V(self.screen_left.x, self.screen_top.y - 150 * self.scale),
                 V(self.screen_right.x, self.screen_bottom.y),
                 Color(0, 0, 0),
             )
             self.draw_text(
                 "Rename Save",
                 V(
-                    self.screen_left.x + (10 * self.scale),
-                    self.screen_top.y - (170 * self.scale) + rename_y_offset,
+                    self.screen_left.x + 10 * self.scale,
+                    self.screen_top.y - 170 * self.scale + rename_y_offset,
                 ),
                 self.heading_font.new_size(int(28 * self.scale)),
                 Color(255, 255, 255),
@@ -1330,12 +1311,12 @@ class App(Window):
             )
             self.fill_rounded_rect(
                 V(
-                    self.screen_left.x + (10 * self.scale),
-                    self.screen_top.y - (210 * self.scale) + rename_y_offset,
+                    self.screen_left.x + 10 * self.scale,
+                    self.screen_top.y - 210 * self.scale + rename_y_offset,
                 ),
                 V(
-                    self.screen_right.x - (10 * self.scale),
-                    self.screen_top.y - (240 * self.scale) + rename_y_offset,
+                    self.screen_right.x - 10 * self.scale,
+                    self.screen_top.y - 240 * self.scale + rename_y_offset,
                 ),
                 Color(40, 40, 40),
                 int(1 * self.scale),
@@ -1349,8 +1330,8 @@ class App(Window):
             self.draw_text(
                 self.load_game_rename_buffer or "",
                 V(
-                    self.screen_left.x + (15 * self.scale),
-                    self.screen_top.y - (220 * self.scale) + rename_y_offset,
+                    self.screen_left.x + 15 * self.scale,
+                    self.screen_top.y - 220 * self.scale + rename_y_offset,
                 ),
                 self.main_font.new_size(int(20 * self.scale)),
                 Color(255, 255, 255),
@@ -1359,8 +1340,8 @@ class App(Window):
             self.draw_text(
                 "Enter to save, Esc to cancel",
                 V(
-                    self.screen_left.x + (10 * self.scale),
-                    self.screen_top.y - (255 * self.scale) + rename_y_offset,
+                    self.screen_left.x + 10 * self.scale,
+                    self.screen_top.y - 255 * self.scale + rename_y_offset,
                 ),
                 self.main_font.new_size(int(14 * self.scale)),
                 Color(180, 180, 180),
@@ -1384,11 +1365,7 @@ class App(Window):
                 else:
                     button_color = Color(30, 30, 30)
                 self.fill_rect(
-                    a,
-                    b,
-                    button_color,
-                    int(1 * self.scale),
-                    Color(50, 50, 50),
+                    a, b, button_color, int(1 * self.scale), Color(50, 50, 50)
                 )
                 self.draw_text(
                     label,
@@ -1402,15 +1379,15 @@ class App(Window):
                 self.mouse_pos,
                 V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_bottom.y + (40 * self.scale),
+                    self.screen_right.x - 130 * self.scale,
+                    self.screen_bottom.y + 40 * self.scale,
                 ),
             )
             self.fill_rounded_rect(
                 V(self.screen_right.x, self.screen_bottom.y),
                 V(
-                    self.screen_right.x - (130 * self.scale),
-                    self.screen_bottom.y + (40 * self.scale),
+                    self.screen_right.x - 130 * self.scale,
+                    self.screen_bottom.y + 40 * self.scale,
                 ),
                 Color(40, 40, 40) if hover else Color(30, 30, 30),
                 int(2 * self.scale),
@@ -1420,8 +1397,8 @@ class App(Window):
             self.draw_text(
                 "Back",
                 V(
-                    self.screen_right.x - (65 * self.scale),
-                    self.screen_bottom.y + (20 * self.scale),
+                    self.screen_right.x - 65 * self.scale,
+                    self.screen_bottom.y + 20 * self.scale,
                 ),
                 self.main_font.new_size(int(30 * self.scale)),
                 Color(255, 255, 255),
@@ -1461,14 +1438,14 @@ class App(Window):
     def _draw_credits(self):
         self.draw_text(
             "Credits",
-            V(self.screen_top.x, self.screen_top.y - (20 * self.scale)),
+            V(self.screen_top.x, self.screen_top.y - 20 * self.scale),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
         )
         self.draw_text(
             "Fate of the Gods\nLead Developer: Andru Cupala\nGame Designer and God Creator: Aislinn Haist\nArtist: Danielle Miless\n\nandrucupala.com/payalabs\n\nCreated with python using pygame and pgiud",
-            V(self.screen_top.x, self.screen_top.y - (40 * self.scale)),
+            V(self.screen_top.x, self.screen_top.y - 40 * self.scale),
             self.main_font.new_size(int(22 * self.scale)),
             Color(255, 255, 255),
             Origin.TOP,
@@ -1477,15 +1454,15 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
             Color(40, 40, 40) if hover else Color(30, 30, 30),
             int(1 * self.scale),
@@ -1495,8 +1472,8 @@ class App(Window):
         self.draw_text(
             "Back",
             V(
-                self.screen_right.x - (65 * self.scale),
-                self.screen_bottom.y + (20 * self.scale),
+                self.screen_right.x - 65 * self.scale,
+                self.screen_bottom.y + 20 * self.scale,
             ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
@@ -1513,17 +1490,10 @@ class App(Window):
             y = (
                 self.screen_top.y
                 - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
-                    )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
+                    self.button_list_button_top_offset
+                    + self.button_list_button_height / 2
+                    + i
+                    * (self.button_list_button_height + self.button_list_button_padding)
                 )
                 * self.scale
             )
@@ -1563,7 +1533,7 @@ class App(Window):
             "Fate of the Gods",
             V(
                 self.screen_center.x,
-                self.screen_top.y - (self.button_list_title_top_offset * self.scale),
+                self.screen_top.y - self.button_list_title_top_offset * self.scale,
             ),
             self.button_list_title_font.new_size(
                 self.button_list_title_font.size * self.scale
@@ -1583,21 +1553,15 @@ class App(Window):
         if self.new_game_selected_god is not None:
             selected_god: God = self.gods[self.new_game_selected_god]
             self._draw_god_detail_panel(selected_god)
-        back_x = self.screen_left.x + (150 * self.scale)
+        back_x = self.screen_left.x + 150 * self.scale
         back_hover = is_point_in_rect(
             self.mouse_pos,
             V(back_x, self.screen_bottom.y),
-            V(
-                back_x + (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
-            ),
+            V(back_x + 130 * self.scale, self.screen_bottom.y + 40 * self.scale),
         )
         self.fill_rounded_rect(
             V(back_x, self.screen_bottom.y),
-            V(
-                back_x + (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
-            ),
+            V(back_x + 130 * self.scale, self.screen_bottom.y + 40 * self.scale),
             Color(40, 40, 40) if back_hover else Color(30, 30, 30),
             int(2 * self.scale),
             Color(50, 50, 50),
@@ -1605,10 +1569,7 @@ class App(Window):
         )
         self.draw_text(
             "Back",
-            V(
-                back_x + (65 * self.scale),
-                self.screen_bottom.y + (20 * self.scale),
-            ),
+            V(back_x + 65 * self.scale, self.screen_bottom.y + 20 * self.scale),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255),
             Origin.CENTER,
@@ -1617,8 +1578,8 @@ class App(Window):
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
         )
         button_enabled = self.new_game_selected_god is not None
@@ -1630,8 +1591,8 @@ class App(Window):
         self.fill_rounded_rect(
             V(self.screen_right.x, self.screen_bottom.y),
             V(
-                self.screen_right.x - (130 * self.scale),
-                self.screen_bottom.y + (40 * self.scale),
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
             ),
             button_color,
             int(2 * self.scale),
@@ -1641,8 +1602,8 @@ class App(Window):
         self.draw_text(
             "Start Game",
             V(
-                self.screen_right.x - (65 * self.scale),
-                self.screen_bottom.y + (20 * self.scale),
+                self.screen_right.x - 65 * self.scale,
+                self.screen_bottom.y + 20 * self.scale,
             ),
             self.main_font.new_size(int(30 * self.scale)),
             Color(255, 255, 255) if button_enabled else Color(120, 120, 120),
@@ -1676,16 +1637,11 @@ class App(Window):
         text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
         text_x = -230 * self.scale
         text_y = 35 * self.scale
-        wrap_distance = max(
-            1, int(abs(self.screen_right.x - text_x - (10 * self.scale)))
-        )
+        wrap_distance = max(1, int(abs(self.screen_right.x - text_x - 10 * self.scale)))
         text_bottom_y = self._playing_scene_text_bottom_y()
         visible_height = max(1.0, abs(text_bottom_y - text_y))
         _, max_scroll = self._scene_text_scroll_metrics(
-            main_text,
-            text_font,
-            wrap_distance,
-            visible_height,
+            main_text, text_font, wrap_distance, visible_height
         )
         self.scene_text_scroll_y = max(0.0, min(self.scene_text_scroll_y, max_scroll))
         self.draw_text_word_wrap(
@@ -1734,40 +1690,40 @@ class App(Window):
             distance(
                 self.mouse_pos,
                 V(
-                    self.screen_left.x + (15 * self.scale),
-                    self.screen_bottom.y + (15 * self.scale),
+                    self.screen_left.x + 15 * self.scale,
+                    self.screen_bottom.y + 15 * self.scale,
                 ),
             )
             < 10 * self.scale
         )
         self.fill_circle(
             V(
-                self.screen_left.x + (15 * self.scale),
-                self.screen_bottom.y + (15 * self.scale),
+                self.screen_left.x + 15 * self.scale,
+                self.screen_bottom.y + 15 * self.scale,
             ),
             10 * self.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
         self.draw_line(
             V(
-                (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
-                (self.screen_bottom.y + (15 * self.scale)) + (-5 * self.scale),
+                self.screen_left.x + 15 * self.scale + -3 * self.scale,
+                self.screen_bottom.y + 15 * self.scale + -5 * self.scale,
             ),
             V(
-                (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
-                (self.screen_bottom.y + (15 * self.scale)) + (5 * self.scale),
+                self.screen_left.x + 15 * self.scale + -3 * self.scale,
+                self.screen_bottom.y + 15 * self.scale + 5 * self.scale,
             ),
             Color(255, 255, 255),
             int(2 * self.scale),
         )
         self.draw_line(
             V(
-                (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
-                (self.screen_bottom.y + (15 * self.scale)) + (-5 * self.scale),
+                self.screen_left.x + 15 * self.scale + 3 * self.scale,
+                self.screen_bottom.y + 15 * self.scale + -5 * self.scale,
             ),
             V(
-                (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
-                (self.screen_bottom.y + (15 * self.scale)) + (5 * self.scale),
+                self.screen_left.x + 15 * self.scale + 3 * self.scale,
+                self.screen_bottom.y + 15 * self.scale + 5 * self.scale,
             ),
             Color(255, 255, 255),
             int(2 * self.scale),
@@ -1791,24 +1747,18 @@ class App(Window):
         text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
         text_x = -230 * self.scale
         text_y = 35 * self.scale
-        wrap_distance = max(
-            1, int(abs(self.screen_right.x - text_x - (10 * self.scale)))
-        )
+        wrap_distance = max(1, int(abs(self.screen_right.x - text_x - 10 * self.scale)))
         text_bottom_y = self._playing_scene_text_bottom_y()
         visible_height = max(1.0, abs(text_bottom_y - text_y))
         _, max_scroll = self._scene_text_scroll_metrics(
-            main_text,
-            text_font,
-            wrap_distance,
-            visible_height,
+            main_text, text_font, wrap_distance, visible_height
         )
         if max_scroll <= 0:
             self.scene_text_scroll_y = 0.0
             return
         scroll_step = max(1.0, float(text_font.font.get_linesize()) * 0.2)
         self.scene_text_scroll_y = max(
-            0.0,
-            min(max_scroll, self.scene_text_scroll_y - (dy * scroll_step)),
+            0.0, min(max_scroll, self.scene_text_scroll_y - dy * scroll_step)
         )
 
     def _draw_paused(self):
@@ -1823,17 +1773,10 @@ class App(Window):
             y = (
                 self.screen_top.y
                 - (
-                    (
-                        self.button_list_button_top_offset
-                        + self.button_list_button_height / 2
-                    )
-                    + (
-                        i
-                        * (
-                            self.button_list_button_height
-                            + self.button_list_button_padding
-                        )
-                    )
+                    self.button_list_button_top_offset
+                    + self.button_list_button_height / 2
+                    + i
+                    * (self.button_list_button_height + self.button_list_button_padding)
                 )
                 * self.scale
             )
@@ -1873,7 +1816,7 @@ class App(Window):
             "Paused",
             V(
                 self.screen_center.x,
-                self.screen_top.y - (self.button_list_title_top_offset * self.scale),
+                self.screen_top.y - self.button_list_title_top_offset * self.scale,
             ),
             self.button_list_title_font.new_size(
                 self.button_list_title_font.size * self.scale

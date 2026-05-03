@@ -17,6 +17,7 @@ TARGET_FILES=(
 )
 
 # Enable/disable tools
+USE_RECOMPILE=true
 USE_ISORT=true
 USE_BLACK=true
 
@@ -73,7 +74,6 @@ resolve_files() {
   local resolved=()
 
   for pattern in "${TARGET_FILES[@]}"; do
-    # Expand glob relative to script directory
     for file in "$SCRIPT_DIR"/$pattern; do
       if [[ -f "$file" ]]; then
         resolved+=("$file")
@@ -84,7 +84,6 @@ resolve_files() {
     done
   done
 
-  # Sort files for deterministic order
   IFS=$'\n' resolved=($(sort <<<"${resolved[*]}"))
   unset IFS
 
@@ -106,6 +105,10 @@ fi
 
 for file in "${FILES[@]}"; do
   log_info "Processing: $file"
+
+  if [ "$USE_RECOMPILE" = true ]; then
+    run_command "recompile ($file)" python3 "$SCRIPT_DIR/recompile.py" "$file"
+  fi
 
   if [ "$USE_ISORT" = true ]; then
     run_command "isort ($file)" python3 -m isort --profile black "$file"
