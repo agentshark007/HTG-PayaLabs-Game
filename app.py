@@ -40,10 +40,6 @@ class App(Window):
     def set_state(self, new_state: State):
         self.state = new_state
 
-    def _find_arg_with_prefix(self, prefix):
-        result = next((s for s in self.argv if s.startswith(prefix)), None)
-        return result
-
     def _parse_argv(self):
         self.argv = sys.argv[1:]
 
@@ -86,65 +82,50 @@ class App(Window):
 
     def initialize(self):
         self._parse_argv()
-        try:
-            self.scale = 1.0
-            self._initialize_saving()
-            self._setup_state()
-            self._load_assets()
-            self._initialize_intro()
-            self._initialize_button_list_settings()
-            self._initialize_settings()
-            self._load_data()
-            self._initialize_new_game()
-            self._initialize_load_game()
-        except:
-            raise
-        finally:
-            pass
+        self.scale = 1.0
+        self._initialize_saving()
+        self._setup_state()
+        self._load_assets()
+        self._initialize_intro()
+        self._initialize_button_list_settings()
+        self._load_data()
+        self._initialize_new_game()
+        self._initialize_load_game()
 
     def _load_assets(self):
-        try:
-            file_names = os.listdir(get_absolute_path("assets/data/scenes"))
-            self.scene_images = {}
-            for file_name in file_names:
-                img_path = get_absolute_path(
-                    os.path.join("assets/data/scenes", file_name)
-                )
-                self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
-            file_names = os.listdir(get_absolute_path("assets/data/thumbnails"))
-            self.god_images = {}
-            for file_name in file_names:
-                img_path = get_absolute_path(
-                    os.path.join("assets/data/thumbnails", file_name)
-                )
-                self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
-            self.heading_font = Font(
-                get_absolute_path("assets/fonts/Silkscreen-Regular.ttf")
+        file_names = os.listdir(get_absolute_path("assets/data/scenes"))
+        self.scene_images = {}
+        for file_name in file_names:
+            img_path = get_absolute_path(os.path.join("assets/data/scenes", file_name))
+            self.scene_images[os.path.splitext(file_name)[0]] = Image(img_path)
+        file_names = os.listdir(get_absolute_path("assets/data/thumbnails"))
+        self.god_images = {}
+        for file_name in file_names:
+            img_path = get_absolute_path(
+                os.path.join("assets/data/thumbnails", file_name)
             )
-            self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
-            self.intro_payalabs_logo = Image(
-                get_absolute_path("assets/intro/payalabs.png")
+            self.god_images[os.path.splitext(file_name)[0]] = Image(img_path)
+        self.heading_font = Font(
+            get_absolute_path("assets/fonts/Silkscreen-Regular.ttf")
+        )
+        self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
+        self.intro_payalabs_logo = Image(get_absolute_path("assets/intro/payalabs.png"))
+        self.intro_pgiud_logo = Image(get_absolute_path("assets/intro/pgiud.png"))
+        self.intro_pygame_logo = Image(get_absolute_path("assets/intro/pygame.png"))
+        if "--disable-sound" not in self.argv:
+            self.intro_boom_sound = Sound(
+                get_absolute_path("assets/sounds/intro_boom.mp3")
             )
-            self.intro_pgiud_logo = Image(get_absolute_path("assets/intro/pgiud.png"))
-            self.intro_pygame_logo = Image(get_absolute_path("assets/intro/pygame.png"))
-            if "--disable-sound" not in self.argv:
-                self.intro_boom_sound = Sound(
-                    get_absolute_path("assets/sounds/intro_boom.mp3")
-                )
-        except:
-            raise
 
     def _load_data(self):
         gods_folder = get_absolute_path("assets/data/gods")
         self.gods_text: list[str] = []
-        god_files: list[str] = []
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
                 try:
                     with open(path, encoding="utf-8") as f:
                         self.gods_text.append(f.read())
-                        god_files.append(name)
                 except:
                     continue
         self.gods: list[God] = []
@@ -183,28 +164,8 @@ class App(Window):
             int(40 * self.scale)
         )
 
-    def _initialize_settings(self):
-        self.volume = 1
-        self.potato_mode = False
-        self.save_seed_enabled = True
-        settings_path = os.path.join(data_directory, "settings.txt")
-        try:
-            with open(settings_path, encoding="utf-8") as f:
-                for line in split_nonempty_lines(f.read()):
-                    if line.startswith("save-seed="):
-                        value = line.split("=", 1)[1].strip().lower()
-                        self.save_seed_enabled = value not in {
-                            "0",
-                            "false",
-                            "no",
-                            "off",
-                        }
-        except:
-            pass
-
     def _initialize_new_game(self):
         self.new_game_selected_god: Optional[int] = None
-        self.game: Optional[Game] = None
 
     def _initialize_load_game(self):
         self.load_game_selected_save: Optional[int] = None
