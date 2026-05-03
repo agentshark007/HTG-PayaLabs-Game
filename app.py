@@ -1,5 +1,6 @@
 import sys
 
+from game import *
 from path import *
 from pgiud import *
 from screens import Screen
@@ -66,9 +67,50 @@ class App(Window):
         )
         self.main_font = Font(get_absolute_path("assets/fonts/VT323-Regular.ttf"))
 
+    def _load_data(self):
+        # Load gods
+        gods_folder = get_absolute_path("assets/data/gods")
+        self.gods_text = []
+        god_files = []
+        for name in os.listdir(gods_folder):
+            path = os.path.join(gods_folder, name)
+            if os.path.isfile(path) and name.lower().endswith(".txt"):
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        self.gods_text.append(f.read())
+                        god_files.append(name)
+                except:
+                    continue
+
+        self.gods = []
+        for i, god_text in enumerate(self.gods_text):
+            try:
+                self.gods.append(God(god_text))
+            except:
+                continue
+
+        # Load scene images
+        file_names = os.listdir(get_absolute_path("assets/data/scenes"))
+        self.scene_images = {}
+        for file_name in file_names:
+            image_path = get_absolute_path(
+                os.path.join("assets/data/scenes", file_name)
+            )
+            self.scene_images[os.path.splitext(file_name)[0]] = Image(image_path)
+
+        # Load god thumbnails
+        file_names = os.listdir(get_absolute_path("assets/data/thumbnails"))
+        self.god_images = {}
+        for file_name in file_names:
+            image_path = get_absolute_path(
+                os.path.join("assets/data/thumbnails", file_name)
+            )
+            self.god_images[os.path.splitext(file_name)[0]] = Image(image_path)
+
     def initialize(self):
         self._parse_argv()
         self._load_fonts()
+        self._load_data()
         self._initialize_state()
         self.scale = 1.0
         self._create_screens()

@@ -42,7 +42,7 @@ class SelectionList:
     def draw(self, app):
         app.fill_rect(
             V(app.screen_left.x, app.screen_top.y),
-            V(app.screen_left.x + ((self.width) * app.scale), app.screen_bottom.y),
+            V(app.screen_left.x + (self.width * app.scale), app.screen_bottom.y),
             Color(30, 30, 30),
             int(2 * app.scale),
             Color(50, 50, 50),
