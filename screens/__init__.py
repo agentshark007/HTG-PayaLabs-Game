@@ -7,6 +7,7 @@ class Screen(Enum):
     LOAD_GAME = 2
     MAIN_MENU = 3
     NEW_GAME = 4
-    PLAYING = 5
-    QUIT = 6
-    SETTINGS = 7
+    PAUSED = 5
+    PLAYING = 6
+    QUIT = 7
+    SETTINGS = 8

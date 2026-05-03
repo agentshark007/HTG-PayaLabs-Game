@@ -18,6 +18,9 @@ class IntroScreen:
         self.current_logo_index = 0
         self.current_logo_time = 0
 
+    def load(self, app, args):
+        pass
+
     def update(self, app):
         self.current_logo_time += app.deltatime
         num_logos = len(self.logos)
@@ -35,7 +38,7 @@ class IntroScreen:
                     self.boom_sound.play()
         elif self.current_logo_index == num_logos + 1:
             if self.current_logo_time > self.post_delay:
-                app.screen = Screen.MAIN_MENU
+                app.set_screen(Screen.MAIN_MENU)
 
     def draw(self, app):
         num_logos = len(self.logos)

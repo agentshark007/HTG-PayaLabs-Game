@@ -13,8 +13,7 @@ TARGET_FILES=(
   "main.py"
   "utility.py"
   "screens/*.py"
-  # "another_file.py"
-  # "src/module/*.py"
+  "elements/*.py"
 )
 
 # Enable/disable tools

@@ -1,4 +1,4 @@
-class LoadGameScreen:
+class PausedScreen:
     def initialize(self, app):
         pass
 

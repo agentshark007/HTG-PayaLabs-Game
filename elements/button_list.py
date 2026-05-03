@@ -20,7 +20,25 @@ class ButtonList:
         self.title_text_color = Color(255, 255, 255)
 
     def update(self, app, buttons):
-        pass
+        if len(buttons) == 5:
+            for i, button in enumerate(buttons):
+                x = 0
+                y = app.screen_top.y - (
+                    (
+                        (self.button_top_offset + self.button_height / 2)
+                        + (i * (self.button_height + self.button_padding))
+                    )
+                    * app.scale
+                )
+                width = self.button_width * app.scale
+                height = self.button_height * app.scale
+                ax = x - width / 2
+                ay = y - height / 2
+                bx = x + width / 2
+                by = y + height / 2
+                hover = is_point_in_rect(app.mouse_pos, V(ax, ay), V(bx, by))
+                if hover and app.mouse_pressed:
+                    app.set_screen(button)
 
     def draw(self, app, title, buttons):
         if len(buttons) == 5:

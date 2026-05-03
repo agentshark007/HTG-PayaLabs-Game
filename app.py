@@ -3,12 +3,12 @@ import sys
 from path import *
 from pgiud import *
 from screens import Screen
-from screens.button_list import ButtonList
 from screens.credits import CreditsScreen
 from screens.intro import IntroScreen
 from screens.load_game import LoadGameScreen
 from screens.main_menu import MainMenuScreen
 from screens.new_game import NewGameScreen
+from screens.paused import PausedScreen
 from screens.playing import PlayingScreen
 from screens.quit import QuitScreen
 from screens.settings import SettingsScreen
@@ -35,6 +35,7 @@ class App(Window):
         self.load_screen = LoadGameScreen()
         self.main_menu_screen = MainMenuScreen()
         self.new_game_screen = NewGameScreen()
+        self.paused_screen = PausedScreen()
         self.playing_screen = PlayingScreen()
         self.quit_screen = QuitScreen()
         self.settings_screen = SettingsScreen()
@@ -45,6 +46,7 @@ class App(Window):
         self.load_screen.initialize(self)
         self.main_menu_screen.initialize(self)
         self.new_game_screen.initialize(self)
+        self.paused_screen.initialize(self)
         self.playing_screen.initialize(self)
         self.quit_screen.initialize(self)
         self.settings_screen.initialize(self)
@@ -83,6 +85,8 @@ class App(Window):
             self.main_menu_screen.update(self)
         elif self.screen == Screen.NEW_GAME:
             self.new_game_screen.update(self)
+        elif self.screen == Screen.PAUSED:
+            self.paused_screen.update(self)
         elif self.screen == Screen.PLAYING:
             self.playing_screen.update(self)
         elif self.screen == Screen.QUIT:
@@ -90,7 +94,17 @@ class App(Window):
         elif self.screen == Screen.SETTINGS:
             self.settings_screen.update(self)
 
+    def _update_state(self):
+        self.mouse_pressed = (
+            self.mouse_down_primary and not self.mouse_down_primary_last_frame
+        )
+        scale_x = self.width / self._original_width
+        scale_y = self.height / self._original_height
+        self.scale = (scale_x + scale_y) / 2.0
+        self.seconds_since_start += self.deltatime
+
     def update(self):
+        self._update_state()
         self._update_current_screen()
 
     def _draw_current_screen(self):
@@ -104,6 +118,8 @@ class App(Window):
             self.main_menu_screen.draw(self)
         elif self.screen == Screen.NEW_GAME:
             self.new_game_screen.draw(self)
+        elif self.screen == Screen.PAUSED:
+            self.paused_screen.draw(self)
         elif self.screen == Screen.PLAYING:
             self.playing_screen.draw(self)
         elif self.screen == Screen.QUIT:
@@ -114,6 +130,30 @@ class App(Window):
     def draw(self):
         self.clear(Color(0, 0, 0))
         self._draw_current_screen()
+
+    def _load_current_screen(self, args):
+        if self.screen == Screen.CREDITS:
+            self.credits_screen.load(self, args)
+        elif self.screen == Screen.INTRO:
+            self.intro_screen.load(self, args)
+        elif self.screen == Screen.LOAD_GAME:
+            self.load_screen.load(self, args)
+        elif self.screen == Screen.MAIN_MENU:
+            self.main_menu_screen.load(self, args)
+        elif self.screen == Screen.NEW_GAME:
+            self.new_game_screen.load(self, args)
+        elif self.screen == Screen.PAUSED:
+            self.paused_screen.load(self, args)
+        elif self.screen == Screen.PLAYING:
+            self.playing_screen.load(self, args)
+        elif self.screen == Screen.QUIT:
+            self.quit_screen.load(self, args)
+        elif self.screen == Screen.SETTINGS:
+            self.settings_screen.load(self, args)
+
+    def set_screen(self, screen, args=None):
+        self.screen = screen
+        self._load_current_screen(args)
 
 
 def main():
