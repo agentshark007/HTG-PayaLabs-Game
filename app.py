@@ -119,19 +119,21 @@ class App(Window):
 
     def _load_data(self):
         gods_folder = get_absolute_path("assets/data/gods")
-        self.gods_text: list[str] = []
+        self.god_texts: list[str] = []
+        self.god_file_names: list[str] = []
         for name in os.listdir(gods_folder):
             path = os.path.join(gods_folder, name)
             if os.path.isfile(path) and name.lower().endswith(".txt"):
                 try:
                     with open(path, encoding="utf-8") as f:
-                        self.gods_text.append(f.read())
+                        self.god_texts.append(f.read())
+                        self.god_file_names.append(os.path.splitext(name)[0])
                 except:
                     continue
         self.gods: list[God] = []
-        for i, god_text in enumerate(self.gods_text):
+        for i, god_text in enumerate(self.god_texts):
             try:
-                self.gods.append(God(god_text))
+                self.gods.append(God(god_text, self.god_file_names[i]))
             except:
                 continue
 
@@ -1504,13 +1506,22 @@ class App(Window):
         )
 
     def _draw_new_game(self):
-        self._draw_selection_list(
-            "Select Your God",
-            self.gods,
-            self.new_game_selected_god,
-            lambda god: god.name,
-            "No gods found",
-        )
+        if "--god-file" in self.argv:
+            self._draw_selection_list(
+                "Select Your God",
+                self.gods,
+                self.new_game_selected_god,
+                lambda god: god.file_name,
+                "No gods found",
+            )
+        else:
+            self._draw_selection_list(
+                "Select Your God",
+                self.gods,
+                self.new_game_selected_god,
+                lambda god: god.name,
+                "No gods found",
+            )
         if self.new_game_selected_god is not None:
             selected_god: God = self.gods[self.new_game_selected_god]
             self._draw_god_detail_panel(selected_god)

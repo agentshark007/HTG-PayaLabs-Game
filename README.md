@@ -21,6 +21,7 @@ Install dependencies with `pip install -r requirements.txt`.
 - `--skip-intro`: Skips the intro sequence and goes directly to the main menu
 - `--remove-transparency`: Removes transparency from certain UI overlays
 - `--disable-sound`: Disables all sound effects and music
+- `--god-file`: Displays the name of the god file rather than the name of the god in the new game screen.
 
 Example of using run arguments:
 Running the program with `python main.py --skip-intro` will skip the intro sequence.

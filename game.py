@@ -72,10 +72,11 @@ class Tree:
 
 class God:
 
-    def __init__(self, encoded: str):
+    def __init__(self, encoded: str, file_name: str):
         self.name: str = ""
         self.info: str = ""
         self.image: str = ""
+        self.file_name: str = file_name
         lines = split_nonempty_lines(encoded)
         for line in lines:
             if line.startswith("name: "):
