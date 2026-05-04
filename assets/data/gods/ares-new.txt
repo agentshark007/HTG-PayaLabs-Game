@@ -1,0 +1,66 @@
+#info
+name: Ares
+info: God of war, a fiery temper. Takes human human form all the time.
+image: ares
+
+#tree
+
+##a1
+text: You have decided to play as Ares, God of courage, strength, and the trial of battles. Are you ready to take on the challenges?
+image: 
+b1: Yes
+b2: No
+
+##b1
+text: Mount Olympus shines so brightly with the setting sun. You think to yourself about tomorrow when you'll...
+image: 
+c1: Travel to a village
+c2: See Hephaestus about thoes new weapons.
+
+##b2
+text: You do absolutely nothing.
+image: 
+
+##c1
+text: The next day, you decide to travel to a village, but you cannot decide which one. Eventually, you decide to go to...
+image: 
+d1: Bourorion
+
+##c2
+text: The next day, you go down to Hephaestus's forges where you ask him about your...
+image: 
+d2: New sword
+
+##d1
+text: You travel to the village of Bourorion. When you arrive, you see gigantic ships coming and going from the port. There you notice a fishing shack that is selling fishing gear. You also see a beautiful boat with a for-sale sign on it. You then decide to...
+image: 
+e1: Go fishing
+
+##d2
+text: He turns around and when he turns back, he hands you a most wonderful, excellent, sturdy, and beautyful sword made of silver and copper. What do you say?
+image: 
+e2: Thank you. This will do for slaying some great beast.
+
+##e1
+text: You decide to go fishing and take one of the fishing poles. You are about 10 feet away when someone yells at you. You hear them, and decide to...
+image: 
+f1: Listen to them
+
+##e2
+text: He nods and you leave. Where do you go next?
+image: 
+c1: Village
+
+##f1
+text: You turn around and listen to them. They say, "You need to pay for thoes fishing poles, they're not free." Just then, he realizes who you are and you see a look of terror on his face. He immediently bows down and apologizes and says that you can take his fishing pole. You tell him to rise, and he asks if you will do him a favor. You tell him...
+image: 
+g1: No, and punish him for trying to make you pay for the fishing pole
+g2: Yes, but somewhere down the line, he will have to give you a favor.
+
+##g1
+text: You decided to punish him. How shall you do so?
+image: 
+
+##g2
+text: He agrees and says, "Can you talk to Poseidon, the god of the sea, and tell him that we need fish?" You sigh and tell him that you'll talk to Poseidon. He then runs back to his fish shack. Shoud you go talk to Poseidon now? You think that he is currently in Lissinth. It will probabally be a lengthy journey.
+image:

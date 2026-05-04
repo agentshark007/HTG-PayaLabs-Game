@@ -280,6 +280,10 @@ class App(Window):
         self._reset_scene_text_scroll()
         return True
 
+    def _clear_previous_scene(self):
+        if self.game:
+            self.game.previous_scene_index = None
+
     def _go_back_to_previous_scene(self):
         current_game: Optional[Game] = self.game
         if current_game is None:
@@ -287,6 +291,7 @@ class App(Window):
         previous_scene_index = getattr(current_game, "previous_scene_index", None)
         if previous_scene_index is None:
             return False
+        self._clear_previous_scene()
         return self._set_game_scene(current_game, previous_scene_index)
 
     def _selection_item_rect(self, index: int):
@@ -1056,6 +1061,7 @@ class App(Window):
         )
         if back_enabled and is_point_in_rect(self.mouse_pos, back_a, back_b):
             if self.mouse_pressed and self._go_back_to_previous_scene():
+                current_game.previous_scene_index = None
                 return
         hover = (
             distance(
@@ -1668,38 +1674,44 @@ class App(Window):
             )
             < 10 * self.scale
         )
-        self.fill_circle(
-            V(
-                self.screen_left.x + 15 * self.scale,
-                self.screen_bottom.y + 15 * self.scale,
-            ),
-            10 * self.scale,
-            Color(50, 50, 50) if hover else Color(40, 40, 40),
-        )
-        self.draw_line(
-            V(
-                self.screen_left.x + 15 * self.scale + -3 * self.scale,
-                self.screen_bottom.y + 15 * self.scale + -5 * self.scale,
-            ),
-            V(
-                self.screen_left.x + 15 * self.scale + -3 * self.scale,
-                self.screen_bottom.y + 15 * self.scale + 5 * self.scale,
-            ),
-            Color(255, 255, 255),
-            int(2 * self.scale),
-        )
-        self.draw_line(
-            V(
-                self.screen_left.x + 15 * self.scale + 3 * self.scale,
-                self.screen_bottom.y + 15 * self.scale + -5 * self.scale,
-            ),
-            V(
-                self.screen_left.x + 15 * self.scale + 3 * self.scale,
-                self.screen_bottom.y + 15 * self.scale + 5 * self.scale,
-            ),
-            Color(255, 255, 255),
-            int(2 * self.scale),
-        )
+        if hover:
+            if self.mouse_pressed:
+                self.set_state(State.PAUSED)
+        current_game = self.game
+        if current_game is None:
+            return
+        try:
+            current_scene: Optional[Scene] = current_game.god.tree.scenes[
+                current_game.current_scene_index
+            ]
+        except:
+            current_scene = None
+        if current_scene is None:
+            self._reset_scene_text_scroll()
+            return
+        if current_scene is not None and current_scene.links:
+            for i, link in enumerate(current_scene.links):
+                if i >= 26:
+                    break
+                key_name = chr(ord("A") + i)
+                try:
+                    key_enum = Key[key_name]
+                except:
+                    continue
+                pressed_now = self.keydown(key_enum)
+                was_pressed = key_enum in self.keys_down_last_frame
+                if pressed_now and (not was_pressed):
+                    target_id = self._choose_target_id(link.target)
+                    if target_id is None:
+                        continue
+                    found_target = False
+                    for idx, scene in enumerate(current_game.god.tree.scenes):
+                        if scene.id == target_id:
+                            self._set_game_scene(current_game, idx)
+                            found_target = True
+                            break
+                    if not found_target:
+                        pass
 
     def on_scroll(self, dx: int, dy: int):
         if self.state != State.PLAYING or dy == 0:
@@ -1740,7 +1752,7 @@ class App(Window):
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
             )
         buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
-        for i, button in enumerate(buttons):
+        for i, (_action, target_state) in enumerate(buttons):
             x = 0
             y = (
                 self.screen_top.y
