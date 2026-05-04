@@ -1,10 +1,8 @@
 import argparse
 import copy
 import os
-import shutil
 import tkinter as tk
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox, simpledialog, ttk
 from typing import Any, cast
@@ -13,7 +11,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_GODS_DIR = os.path.join(BASE_DIR, "assets", "data", "gods")
 GOD_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "data", "thumbnails")
 SCENE_IMAGE_DIR = os.path.join(BASE_DIR, "assets", "data", "scenes")
-GOD_BACKUPS_DIR = os.path.join(BASE_DIR, "assets", "data", "god-backups")
 
 
 @dataclass
@@ -367,14 +364,6 @@ def validate_repaired_data(
     return (errors, warnings)
 
 
-def backup_file(path: Path) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    Path(GOD_BACKUPS_DIR).mkdir(parents=True, exist_ok=True)
-    backup_path = Path(GOD_BACKUPS_DIR) / f"{path.name}.bak-{stamp}"
-    shutil.copy2(path, backup_path)
-    return backup_path
-
-
 def repair_god_file(path: Path) -> tuple[int, RepairReport, str, str]:
     report = RepairReport()
     if not path.exists():
@@ -390,9 +379,8 @@ def repair_god_file(path: Path) -> tuple[int, RepairReport, str, str]:
     report.errors.extend(validation_errors)
     report.warnings.extend(validation_warnings)
     if original_text != repaired_text:
-        backup = backup_file(path)
         path.write_text(repaired_text, encoding="utf-8")
-        report.fixes.append(f"Wrote repaired file and backup {backup.name}.")
+        report.fixes.append(f"Wrote repaired file.")
     return (0 if not report.errors else 1, report, original_text, repaired_text)
 
 
@@ -1320,7 +1308,6 @@ class GodEditor:
                 return False
             if disk_text != repaired_text:
                 try:
-                    backup_file(repaired_path)
                     repaired_path.write_text(repaired_text, encoding="utf-8")
                 except Exception as exc:
                     messagebox.showerror("Repair Failed", str(exc))
