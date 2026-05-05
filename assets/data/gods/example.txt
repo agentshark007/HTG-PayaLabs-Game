@@ -1,6 +1,6 @@
 #info
-name: Ares
-info: Command Ares to win the Potato Wars!
+name: Example
+info: Description
 image: ares
 
 #tree
