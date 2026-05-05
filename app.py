@@ -41,7 +41,18 @@ class App(Window):
         self.state = new_state
 
     def _parse_argv(self):
-        self.argv = sys.argv[1:]
+        raw_args = sys.argv[1:]
+        self.flags = []
+        self.options = {}
+        for arg in raw_args:
+            if arg.startswith("--"):
+                if "=" in arg:
+                    key, value = arg.split("=", 1)
+                    self.options[key] = value
+                else:
+                    self.flags.append(arg)
+            else:
+                self.flags.append(arg)
 
     def _initialize_saving(self):
         expected_entries = {"saves", "settings.txt"}
@@ -71,7 +82,7 @@ class App(Window):
             dst.write(src.read())
 
     def _setup_state(self):
-        if "--skip-intro" in self.argv:
+        if "--skip-intro" in self.flags:
             self.state = State.MAIN_MENU
         else:
             self.state = State.INTRO
@@ -112,7 +123,7 @@ class App(Window):
         self.intro_payalabs_logo = Image(get_absolute_path("assets/intro/payalabs.png"))
         self.intro_pgiud_logo = Image(get_absolute_path("assets/intro/pgiud.png"))
         self.intro_pygame_logo = Image(get_absolute_path("assets/intro/pygame.png"))
-        if "--disable-sound" not in self.argv:
+        if "--disable-sound" not in self.flags:
             self.intro_boom_sound = Sound(
                 get_absolute_path("assets/sounds/intro_boom.mp3")
             )
@@ -950,7 +961,7 @@ class App(Window):
             if self.intro_current_logo_time > self.intro_pre_delay:
                 self.intro_current_logo_index = 1
                 self.intro_current_logo_time = 0
-                if "--disable-sound" not in self.argv:
+                if "--disable-sound" not in self.flags:
                     try:
                         if self.intro_boom_sound:
                             self.intro_boom_sound.play()
@@ -961,7 +972,7 @@ class App(Window):
                 self.intro_current_logo_index += 1
                 self.intro_current_logo_time = 0
                 if 1 <= self.intro_current_logo_index <= num_logos:
-                    if "--disable-sound" not in self.argv:
+                    if "--disable-sound" not in self.flags:
                         try:
                             if self.intro_boom_sound:
                                 self.intro_boom_sound.play()
@@ -1203,7 +1214,7 @@ class App(Window):
 
     def _draw_settings(self, from_game: bool):
         if from_game:
-            if "--remove-transparency" not in self.argv:
+            if "--remove-transparency" not in self.flags:
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -1247,7 +1258,7 @@ class App(Window):
 
     def _draw_load_game(self, from_game: bool):
         if from_game:
-            if "--remove-transparency" not in self.argv:
+            if "--remove-transparency" not in self.flags:
                 self._draw_playing()
                 self.fill_rect(
                     self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -1512,7 +1523,7 @@ class App(Window):
         )
 
     def _draw_new_game(self):
-        if "--god-file" in self.argv:
+        if "--god-file" in self.flags:
             self._draw_selection_list(
                 "Select Your God",
                 self.gods,
@@ -1746,7 +1757,7 @@ class App(Window):
         )
 
     def _draw_paused(self):
-        if "--remove-transparency" not in self.argv:
+        if "--remove-transparency" not in self.flags:
             self._draw_playing()
             self.fill_rect(
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
@@ -1846,7 +1857,7 @@ class App(Window):
             pass
 
     def on_quit(self):
-        if "--disable-sound" not in self.argv:
+        if "--disable-sound" not in self.flags:
             try:
                 self.intro_boom_sound.stop()
             except:

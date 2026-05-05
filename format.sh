@@ -14,6 +14,7 @@ TARGET_FILES=(
   "main.py"
   "path.py"
   "utility.py"
+  "recompile.py"
 )
 
 # Enable/disable tools
