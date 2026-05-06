@@ -1,12 +1,13 @@
-import ast
 import os
 import sys
 from pathlib import Path
 
+import libcst as cst
+
 
 def recompile_code(source: str) -> str:
-    tree = ast.parse(source)
-    return ast.unparse(tree)
+    module = cst.parse_module(source)
+    return module.code
 
 
 def process_file(path: Path) -> bool:
@@ -16,9 +17,6 @@ def process_file(path: Path) -> bool:
         if new != original:
             path.write_text(new, encoding="utf-8")
             return True
-        return False
-    except SyntaxError as e:
-        print(f"error: cannot parse {path}: {e}", file=sys.stderr)
         return False
     except Exception as e:
         print(f"error: {path}: {e}", file=sys.stderr)
@@ -49,15 +47,20 @@ def main():
     if len(sys.argv) < 2:
         print("usage: python recompile.py [files or directories or -]", file=sys.stderr)
         sys.exit(1)
+
     targets = sys.argv[1:]
     files = list(collect_files(targets))
+
     if not files:
         print("No Python files found.", file=sys.stderr)
         return
+
     changed = 0
     total = 0
+
     for f in files:
         total += 1
+
         if f == "-":
             try:
                 source = sys.stdin.read()
@@ -66,11 +69,13 @@ def main():
             except Exception as e:
                 print(f"error: stdin: {e}", file=sys.stderr)
             continue
+
         if process_file(f):
             changed += 1
             print(f"recompiled {f}")
         else:
             print(f"unchanged {f}")
+
     print(f"\n{changed} file(s) reformatted, {total - changed} unchanged.")
 
 

@@ -37,9 +37,6 @@ class App(Window):
             origin=Origin.CENTER,
         )
 
-    def set_state(self, new_state: State):
-        self.state = new_state
-
     def _parse_argv(self):
         raw_args = sys.argv[1:]
         self.flags = []
@@ -53,6 +50,11 @@ class App(Window):
                     self.flags.append(arg)
             else:
                 self.flags.append(arg)
+
+    def set_state(self, new_state: State):
+        self.state = new_state
+
+    # region initialization
 
     def _initialize_saving(self):
         expected_entries = {"saves", "settings.txt"}
@@ -91,18 +93,6 @@ class App(Window):
         self.keys_down_last_frame = set()
         self.scene_text_scroll_y = 0.0
 
-    def initialize(self):
-        self._parse_argv()
-        self.scale = 1.0
-        self._initialize_saving()
-        self._setup_state()
-        self._load_assets()
-        self._initialize_intro()
-        self._initialize_button_list_settings()
-        self._load_data()
-        self._initialize_new_game()
-        self._initialize_load_game()
-
     def _load_assets(self):
         file_names = os.listdir(get_absolute_path("assets/data/scenes"))
         self.scene_images = {}
@@ -127,26 +117,6 @@ class App(Window):
             self.intro_boom_sound = Sound(
                 get_absolute_path("assets/sounds/intro_boom.mp3")
             )
-
-    def _load_data(self):
-        gods_folder = get_absolute_path("assets/data/gods")
-        self.god_texts: list[str] = []
-        self.god_file_names: list[str] = []
-        for name in os.listdir(gods_folder):
-            path = os.path.join(gods_folder, name)
-            if os.path.isfile(path) and name.lower().endswith(".txt"):
-                try:
-                    with open(path, encoding="utf-8") as f:
-                        self.god_texts.append(f.read())
-                        self.god_file_names.append(os.path.splitext(name)[0])
-                except:
-                    continue
-        self.gods: list[God] = []
-        for i, god_text in enumerate(self.god_texts):
-            try:
-                self.gods.append(God(god_text, self.god_file_names[i]))
-            except:
-                continue
 
     def _initialize_intro(self):
         self.intro_pre_delay = 1.5
@@ -177,6 +147,26 @@ class App(Window):
             int(40 * self.scale)
         )
 
+    def _load_data(self):
+        gods_folder = get_absolute_path("assets/data/gods")
+        self.god_texts: list[str] = []
+        self.god_file_names: list[str] = []
+        for name in os.listdir(gods_folder):
+            path = os.path.join(gods_folder, name)
+            if os.path.isfile(path) and name.lower().endswith(".txt"):
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        self.god_texts.append(f.read())
+                        self.god_file_names.append(os.path.splitext(name)[0])
+                except:
+                    continue
+        self.gods: list[God] = []
+        for i, god_text in enumerate(self.god_texts):
+            try:
+                self.gods.append(God(god_text, self.god_file_names[i]))
+            except:
+                continue
+
     def _initialize_new_game(self):
         self.new_game_selected_god: Optional[int] = None
 
@@ -186,6 +176,22 @@ class App(Window):
         self.load_game_rename_buffer = ""
         self.load_game_rename_index: Optional[int] = None
         self.load_game_rename_path: Optional[str] = None
+
+    def initialize(self):
+        self._parse_argv()
+        self.scale = 1.0
+        self._initialize_saving()
+        self._setup_state()
+        self._load_assets()
+        self._initialize_intro()
+        self._initialize_button_list_settings()
+        self._load_data()
+        self._initialize_new_game()
+        self._initialize_load_game()
+
+    # endregion
+
+    # region utilities
 
     def _reset_scene_text_scroll(self):
         self.scene_text_scroll_y = 0.0
@@ -869,21 +875,9 @@ class App(Window):
                 return target_id
         return weighted_targets[-1][0]
 
-    def _update_settings(self, from_game: bool):
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(self.screen_right.x, self.screen_bottom.y),
-            V(
-                self.screen_right.x - 130 * self.scale,
-                self.screen_bottom.y + 40 * self.scale,
-            ),
-        )
-        if hover:
-            if self.mouse_pressed:
-                if from_game:
-                    self.set_state(State.PAUSED)
-                else:
-                    self.set_state(State.MAIN_MENU)
+    # endregion
+
+    # region update
 
     def _update_load_game(self, from_game: bool):
         save_entries = self._load_save_entries()
@@ -939,6 +933,22 @@ class App(Window):
                 save_entries = self._load_save_entries()
                 self._clamp_load_selection(save_entries)
                 return
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
+            ),
+        )
+        if hover:
+            if self.mouse_pressed:
+                if from_game:
+                    self.set_state(State.PAUSED)
+                else:
+                    self.set_state(State.MAIN_MENU)
+
+    def _update_settings(self, from_game: bool):
         hover = is_point_in_rect(
             self.mouse_pos,
             V(self.screen_right.x, self.screen_bottom.y),
@@ -1212,49 +1222,9 @@ class App(Window):
                     new_keys.add(key_enum)
             self.keys_down_last_frame = new_keys
 
-    def _draw_settings(self, from_game: bool):
-        if from_game:
-            if "--remove-transparency" not in self.flags:
-                self._draw_playing()
-                self.fill_rect(
-                    self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
-                )
-        self.draw_text(
-            "No settings yet...",
-            self.screen_center,
-            self.main_font.new_size(int(22 * self.scale)),
-            Color(220, 220, 220),
-            Origin.CENTER,
-        )
-        hover = is_point_in_rect(
-            self.mouse_pos,
-            V(self.screen_right.x, self.screen_bottom.y),
-            V(
-                self.screen_right.x - 130 * self.scale,
-                self.screen_bottom.y + 40 * self.scale,
-            ),
-        )
-        self.fill_rounded_rect(
-            V(self.screen_right.x, self.screen_bottom.y),
-            V(
-                self.screen_right.x - 130 * self.scale,
-                self.screen_bottom.y + 40 * self.scale,
-            ),
-            Color(40, 40, 40) if hover else Color(30, 30, 30),
-            int(1 * self.scale),
-            Color(50, 50, 50),
-            top_left_roundness=10 * self.scale,
-        )
-        self.draw_text(
-            "Back",
-            V(
-                self.screen_right.x - 65 * self.scale,
-                self.screen_bottom.y + 20 * self.scale,
-            ),
-            self.main_font.new_size(int(30 * self.scale)),
-            Color(255, 255, 255),
-            Origin.CENTER,
-        )
+    # endregion
+
+    # region draw
 
     def _draw_load_game(self, from_game: bool):
         if from_game:
@@ -1384,6 +1354,50 @@ class App(Window):
                 Color(255, 255, 255),
                 Origin.CENTER,
             )
+
+    def _draw_settings(self, from_game: bool):
+        if from_game:
+            if "--remove-transparency" not in self.flags:
+                self._draw_playing()
+                self.fill_rect(
+                    self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
+                )
+        self.draw_text(
+            "No settings yet...",
+            self.screen_center,
+            self.main_font.new_size(int(22 * self.scale)),
+            Color(220, 220, 220),
+            Origin.CENTER,
+        )
+        hover = is_point_in_rect(
+            self.mouse_pos,
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
+            ),
+        )
+        self.fill_rounded_rect(
+            V(self.screen_right.x, self.screen_bottom.y),
+            V(
+                self.screen_right.x - 130 * self.scale,
+                self.screen_bottom.y + 40 * self.scale,
+            ),
+            Color(40, 40, 40) if hover else Color(30, 30, 30),
+            int(1 * self.scale),
+            Color(50, 50, 50),
+            top_left_roundness=10 * self.scale,
+        )
+        self.draw_text(
+            "Back",
+            V(
+                self.screen_right.x - 65 * self.scale,
+                self.screen_bottom.y + 20 * self.scale,
+            ),
+            self.main_font.new_size(int(30 * self.scale)),
+            Color(255, 255, 255),
+            Origin.CENTER,
+        )
 
     def _draw_intro(self):
         num_logos = len(self.intro_logos)
@@ -1724,37 +1738,8 @@ class App(Window):
                     if not found_target:
                         pass
 
-    def on_scroll(self, dx: int, dy: int):
-        if self.state != State.PLAYING or dy == 0:
-            return
-        current_game: Optional[Game] = self.game
-        if current_game is None:
-            return
-        try:
-            current_scene: Optional[Scene] = current_game.god.tree.scenes[
-                current_game.current_scene_index
-            ]
-        except:
-            current_scene = None
-        if current_scene is None:
-            return
-        main_text = self._scene_text_content(current_scene)
-        text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
-        text_x = -230 * self.scale
-        text_y = 35 * self.scale
-        wrap_distance = max(1, int(abs(self.screen_right.x - text_x - 10 * self.scale)))
-        text_bottom_y = self._playing_scene_text_bottom_y()
-        visible_height = max(1.0, abs(text_bottom_y - text_y))
-        _, max_scroll = self._scene_text_scroll_metrics(
-            main_text, text_font, wrap_distance, visible_height
-        )
-        if max_scroll <= 0:
-            self.scene_text_scroll_y = 0.0
-            return
-        scroll_step = max(1.0, float(text_font.font.get_linesize()) * 0.2)
-        self.scene_text_scroll_y = max(
-            0.0, min(max_scroll, self.scene_text_scroll_y - dy * scroll_step)
-        )
+    def _draw_settings_playing(self):
+        self._draw_settings(True)
 
     def _draw_paused(self):
         if "--remove-transparency" not in self.flags:
@@ -1823,9 +1808,6 @@ class App(Window):
     def _draw_load_game_playing(self):
         self._draw_load_game(True)
 
-    def _draw_settings_playing(self):
-        self._draw_settings(True)
-
     def draw(self):
         self.clear(Color(0, 0, 0))
         try:
@@ -1856,12 +1838,7 @@ class App(Window):
         except:
             pass
 
-    def on_quit(self):
-        if "--disable-sound" not in self.flags:
-            try:
-                self.intro_boom_sound.stop()
-            except:
-                pass
+    # endregion
 
 
 def main():
