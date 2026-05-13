@@ -13,6 +13,18 @@ from pgiud import *
 data_directory = get_absolute_path("data/")
 
 
+class InitializationError(Exception):
+    pass
+
+
+class UpdateError(Exception):
+    pass
+
+
+class DrawError(Exception):
+    pass
+
+
 class State(Enum):
     INTRO = 1
     CREDITS = 2
@@ -26,8 +38,8 @@ class State(Enum):
     LOAD_GAME_PLAYING = 10
     SETTINGS_PLAYING = 11
 
-class App(Window):
 
+class App(Window):
     def __init__(self):
         super().__init__(
             width=480,
@@ -55,7 +67,6 @@ class App(Window):
         self.state = new_state
 
     # region initialization
-
     def _initialize_saving(self):
         expected_entries = {"saves", "settings.txt"}
         data_dir_exists = os.path.isdir(data_directory)
@@ -158,13 +169,13 @@ class App(Window):
                     with open(path, encoding="utf-8") as f:
                         self.god_texts.append(f.read())
                         self.god_file_names.append(os.path.splitext(name)[0])
-                except:
+                except Exception:
                     continue
         self.gods: list[God] = []
         for i, god_text in enumerate(self.god_texts):
             try:
                 self.gods.append(God(god_text, self.god_file_names[i]))
-            except:
+            except Exception:
                 continue
 
     def _initialize_new_game(self):
@@ -178,21 +189,22 @@ class App(Window):
         self.load_game_rename_path: Optional[str] = None
 
     def initialize(self):
-        self._parse_argv()
-        self.scale = 1.0
-        self._initialize_saving()
-        self._setup_state()
-        self._load_assets()
-        self._initialize_intro()
-        self._initialize_button_list_settings()
-        self._load_data()
-        self._initialize_new_game()
-        self._initialize_load_game()
+        try:
+            self._parse_argv()
+            self.scale = 1.0
+            self._initialize_saving()
+            self._setup_state()
+            self._load_assets()
+            self._initialize_intro()
+            self._initialize_button_list_settings()
+            self._load_data()
+            self._initialize_new_game()
+            self._initialize_load_game()
+        except Exception:
+            raise InitializationError("Error while initializing")
 
     # endregion
-
     # region utilities
-
     def _reset_scene_text_scroll(self):
         self.scene_text_scroll_y = 0.0
 
@@ -226,7 +238,7 @@ class App(Window):
                 candidate = word if cur == "" else cur + " " + word
                 try:
                     candidate_width = font.font.size(candidate)[0]
-                except:
+                except Exception:
                     candidate_width = 0
                 if candidate_width <= wrap_distance:
                     cur = candidate
@@ -235,7 +247,7 @@ class App(Window):
                     lines.append(cur)
                 try:
                     word_width = font.font.size(word)[0]
-                except:
+                except Exception:
                     word_width = 0
                 if word_width <= wrap_distance:
                     cur = word
@@ -245,7 +257,7 @@ class App(Window):
                         next_chunk = chunk + ch
                         try:
                             next_width = font.font.size(next_chunk)[0]
-                        except:
+                        except Exception:
                             next_width = 0
                         if next_width <= wrap_distance:
                             chunk = next_chunk
@@ -459,7 +471,7 @@ class App(Window):
             try:
                 with open(path, encoding="utf-8") as f:
                     lines = split_nonempty_lines(f.read())
-            except:
+            except Exception:
                 continue
             god_name = ""
             save_name = ""
@@ -481,19 +493,19 @@ class App(Window):
                     seed_value = line.removeprefix("seed: ").strip()
                     try:
                         save_seed = int(seed_value)
-                    except:
+                    except Exception:
                         save_seed = None
                 elif line.startswith("rng_draws: "):
                     draws_value = line.removeprefix("rng_draws: ").strip()
                     try:
                         save_rng_draws = int(draws_value)
-                    except:
+                    except Exception:
                         save_rng_draws = 0
                 elif line.startswith("previous_scene: "):
                     previous_value = line.removeprefix("previous_scene: ").strip()
                     try:
                         save_previous_scene = int(previous_value)
-                    except:
+                    except Exception:
                         save_previous_scene = None
             if not god_name:
                 continue
@@ -563,7 +575,7 @@ class App(Window):
     def _create_save_entry_from_game(self, game: Game, display_name: str = None):
         try:
             current_scene = game.god.tree.scenes[game.current_scene_index]
-        except:
+        except Exception:
             current_scene = None
         date_string = self._current_date_string()
         if display_name is None:
@@ -603,7 +615,7 @@ class App(Window):
     def _delete_save_entry(self, save_entry: dict):
         try:
             os.remove(save_entry["path"])
-        except:
+        except Exception:
             pass
 
     def _begin_rename_mode(self, save_entry: dict):
@@ -677,7 +689,7 @@ class App(Window):
         enter_keys = [Key.ENTER]
         try:
             enter_keys.append(Key.KP_ENTER)
-        except:
+        except Exception:
             pass
         enter_pressed = any(
             (
@@ -691,7 +703,7 @@ class App(Window):
         delete_keys = [Key.BACKSPACE]
         try:
             delete_keys.append(Key.DELETE)
-        except:
+        except Exception:
             pass
         delete_pressed = any(
             (
@@ -727,7 +739,7 @@ class App(Window):
         for i in range(26):
             try:
                 keys.append(Key[chr(ord("A") + i)])
-            except:
+            except Exception:
                 pass
         for name in [
             "NUM_0",
@@ -761,7 +773,7 @@ class App(Window):
         ]:
             try:
                 keys.append(Key[name])
-            except:
+            except Exception:
                 pass
         return keys
 
@@ -805,7 +817,7 @@ class App(Window):
                 * (math.sin(self.seconds_since_start * 2) * 0.1 + 0.9),
                 scale_y=self.scale * 1.5,
             )
-        except:
+        except Exception:
             pass
         self.draw_text(
             god.name,
@@ -876,9 +888,7 @@ class App(Window):
         return weighted_targets[-1][0]
 
     # endregion
-
     # region update
-
     def _update_load_game(self, from_game: bool):
         save_entries = self._load_save_entries()
         if self.load_game_rename_mode:
@@ -975,7 +985,7 @@ class App(Window):
                     try:
                         if self.intro_boom_sound:
                             self.intro_boom_sound.play()
-                    except:
+                    except Exception:
                         pass
         elif 1 <= self.intro_current_logo_index <= num_logos:
             if self.intro_current_logo_time > self.intro_logo_time:
@@ -986,7 +996,7 @@ class App(Window):
                         try:
                             if self.intro_boom_sound:
                                 self.intro_boom_sound.play()
-                        except:
+                        except Exception:
                             pass
         elif self.intro_current_logo_index == num_logos + 1:
             if self.intro_current_logo_time > self.intro_post_delay:
@@ -1104,7 +1114,7 @@ class App(Window):
             current_scene: Optional[Scene] = current_game.god.tree.scenes[
                 current_game.current_scene_index
             ]
-        except:
+        except Exception:
             current_scene = None
         if current_scene is None:
             self._reset_scene_text_scroll()
@@ -1116,7 +1126,7 @@ class App(Window):
                 key_name = chr(ord("A") + i)
                 try:
                     key_enum = Key[key_name]
-                except:
+                except Exception:
                     continue
                 pressed_now = self.keydown(key_enum)
                 was_pressed = key_enum in self.keys_down_last_frame
@@ -1202,14 +1212,14 @@ class App(Window):
                 self._update_settings_playing()
             else:
                 raise Exception(f"Unknown state: {self.state}")
-        except:
-            pass
+        except Exception:
+            raise UpdateError("Error while updating state: " + str(self.state))
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
             try:
                 key_enum = Key[key_name]
-            except:
+            except Exception:
                 continue
             if self.keydown(key_enum):
                 new_keys.add(key_enum)
@@ -1223,9 +1233,7 @@ class App(Window):
             self.keys_down_last_frame = new_keys
 
     # endregion
-
     # region draw
-
     def _draw_load_game(self, from_game: bool):
         if from_game:
             if "--remove-transparency" not in self.flags:
@@ -1426,7 +1434,7 @@ class App(Window):
                     scale_x=logo_scale,
                     scale_y=logo_scale,
                 )
-            except:
+            except Exception:
                 pass
 
     def _draw_credits(self):
@@ -1627,7 +1635,7 @@ class App(Window):
             current_scene: Optional[Scene] = current_game.god.tree.scenes[
                 current_game.current_scene_index
             ]
-        except:
+        except Exception:
             current_scene = None
         main_text = "*No scene data*"
         scene_img = None
@@ -1829,8 +1837,8 @@ class App(Window):
                 self._draw_settings_playing()
             else:
                 raise Exception(f"Unknown state: {self.state} in draw")
-        except:
-            pass
+        except Exception:
+            raise DrawError("Error while drawing state: " + str(self.state))
 
     # endregion
 
@@ -1838,5 +1846,5 @@ class App(Window):
 def main():
     try:
         App().start()
-    except:
+    except Exception:
         raise
