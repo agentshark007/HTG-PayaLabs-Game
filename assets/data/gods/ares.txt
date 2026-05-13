@@ -1,6 +1,6 @@
 #info
 name: Ares
-info: Ares has a firey temper, if mad will burn the world.
+info: Ares has a fiery temper, if mad will burn the world.
 image: ares
 
 #tree
@@ -37,7 +37,7 @@ d6: Bourorion
 d7: Ephystus
 
 ##d1
-text: He turns around and when he turns back, he hand you a most wonderful, excellent sturdy, beautiful sword made of silver and copper what do you say?
+text: He turns around and when he turns back, he hands you a most wonderful, excellent sturdy, beautiful sword made of silver and copper what do you say?
 image: 
 e1: Thank you. This will do for slaying some great beast.
 e2: Turn away and leave.
@@ -150,7 +150,7 @@ text: He knows and you leave.
 image: 
 
 ##f6
-text: You turn around and listen to them.  They say “you gotta pay for those fishing poles. They’re not free you know, at least not with the fish."  Just then he realizes who you are.  You see a look of other terror on his face.  He immediately bows down and apologizes.  He says "you can take the fishing pole."  You tell him to rise, and he asks if you will do him a favor.
+text: You turn around and listen to them.  They say "you have to pay for those fishing poles. They’re not free you know, at least not with the fish."  Just then he realizes who you are.  You see a look of other terror on his face.  He immediately bows down and apologizes.  He says "you can take the fishing pole."  You tell him to rise, and he asks if you will do him a favor.
 image: 
 g4: tell him no
 g5: tell him yes
@@ -192,7 +192,7 @@ h5: rob him
 h6: burn down his house
 
 ##g7
-text: He agrees and says, "can you talk to Poseidon and tell him that we need fish?"  You sigh and tell him that you’ll talk to Poseidon.  He then runs back to his fish shack. Should you go talk to Poseidon?  You think that he’s currently in Lissinth but it will probably be a lengthy journey.
+text: He agrees and says, "can you talk to Poseidon and tell him that we need fish?"  You sigh and tell him that you’ll talk to Poseidon.  He then runs back to his fish shack. Should you go talk to Poseidon?  You think that he’s currently in Lissinth, but it will probably be a lengthy journey.
 image: 
 h7: go to see Poseidon now
 h8: see him later
@@ -244,10 +244,10 @@ image:
 
 ##i1
 text: 
-image: 
+image:
 
 ##i2
-text: As you’re fishing, you catch a trout, two pike, and a old boot that has a potato in it.  When you try to grab the potato from out of the boot, it falls back into the water.  It’s getting late and you should probably find somewhere to rest for the night. Where would you like to stay?
+text: As you’re fishing, you catch a trout, two pike, and an old boot that has a potato in it.  When you try to grab the potato from out of the boot, it falls back into the water.  It’s getting late, and you should probably find somewhere to rest for the night. Where would you like to stay?
 image: 
 j1: the lazy river sleeping shack
 j2: the elite Mount Olympus resort hotel
@@ -294,7 +294,7 @@ text:
 image: 
 
 ##i11
-text: As you walk through the town, you notice a a small restaurant.  Would you like to go there?
+text: As you walk through the town, you notice a small restaurant.  Would you like to go there?
 image: 
 j12: yes
 j13: no

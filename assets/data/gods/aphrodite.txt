@@ -12,7 +12,7 @@ b1: Go to a village
 b2: Visit a god
 
 ##b1
-text: When you arrive at the village, would you like to match lovers to each other or visit a library?
+text: You arrive in the village. Would you like to match lovers to each other or visit a library?
 image: 
 c1: Match lovers
 c2: Visit a library
@@ -104,11 +104,11 @@ text: You successfully go fishing and catch a huge fish which will feed the vill
 image: 
 
 ##e3
-text: You talk to some locals and you become their favorite Goddess. Congratulations!
+text: You talk to some locals, and you become their favorite Goddess. Congratulations!
 image: 
 
 ##e4
-text: Even though you did not talk to many villagers, the word spreads that you matched lovers and you become liked, but not loved.
+text: Even though you did not talk to many villagers, the word spreads that you matched lovers, and you become liked, but not loved.
 image: 
 
 ##e5
@@ -124,7 +124,7 @@ text: The townspeople are charmed.  You are the most popular Goddess in this vil
 image: 
 
 ##e8
-text: You charm Zeus, and take over Mount Olympus.  Unfortunately, Mount Olympus has a lot of bureacracy, so it's a pyhrric victory.
+text: You charm Zeus, and take over Mount Olympus.  Unfortunately, Mount Olympus has a lot of bureaucracy, so it's a pyrrhic victory.
 image: 
 
 ##e9

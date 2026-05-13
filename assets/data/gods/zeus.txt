@@ -1,6 +1,6 @@
 #info
 name: Zeus
-info: God of Thuder, Ruler of Mount Olympus
+info: God of thunder, Ruler of Mount Olympus
 image: 
 
 #tree
@@ -72,7 +72,7 @@ e7: yes
 e8: no
 
 ##d5
-text: Athena gives you knowledge about strategy for battles.  Wwould you like to test out your knowledge and start a war?
+text: Athena gives you knowledge about strategy for battles.  Would you like to test out your knowledge and start a war?
 image: 
 e9: yes
 e10: no
@@ -152,7 +152,7 @@ text: You stay out of the war, and you die of old age.  However, no one remember
 image: 
 
 ##e15
-text: You joined the war and die.  You lose, but for millenia, people talk about your courage.
+text: You joined the war and die.  You lose, but for millennia, people talk about your courage.
 image: 
 
 ##e16

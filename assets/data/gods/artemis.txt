@@ -116,7 +116,7 @@ text: You get stuck in blackberry thorns.  You lose.
 image: 
 
 ##e6
-text: You find blueberries and they are easy to pick because they don't have thorns.  You win!
+text: You find blueberries, and they are easy to pick because they don't have thorns.  You win!
 image: 
 
 ##e7
@@ -156,5 +156,5 @@ text: You do not find the book, but Athena decides to give you wisdom anyway.  C
 image: 
 
 ##e16
-text: You find and read 10,000 books.  You give the right one Athena and she gives you wisdom.  However, you were already wise from reading all the books.  You now are the wisest Goddess!
+text: You find and read 10,000 books.  You give the right one Athena, and she gives you wisdom.  However, you were already wise from reading all the books.  You now are the wisest Goddess!
 image:

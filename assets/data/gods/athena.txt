@@ -12,7 +12,7 @@ b1: to a village
 b2: see a God
 
 ##b1
-text: You arrive at the village.  The villagers are not very wise.  Would you like to build a school or build a library?
+text: You arrive in the village.  The villagers are not very wise.  Would you like to build a school or build a library?
 image: 
 c1: build a school
 c2: build a library
@@ -60,7 +60,7 @@ e3: yes
 e4: no
 
 ##d3
-text: Nobody comes to your library.  Would you like to stock the book shelves with more books?
+text: Nobody comes to your library.  Would you like to stock the bookshelves with more books?
 image: 
 e5: yes, I will get 2 million books
 e6: no, but instead, I invite philosophers to give talks to patrons
@@ -72,7 +72,7 @@ e7: books that entertain people
 e8: a smattering of different types
 
 ##d5
-text: He tells you you need to get the thunder amulet.  Would you like to get the thunder amulet, even though it may be difficult and you may die?
+text: He tells you need to get the thunder amulet.  Would you like to get the thunder amulet, even though it may be difficult and you may die?
 image: 
 e9: yes
 e10: no
@@ -132,11 +132,11 @@ text: You successfully find the thunder ambulance and Zeus brings prosperity to 
 image: 
 
 ##e10
-text: As you leave, the thunder amulet falls on your head.  You give it to Zeus and he brings prosperity to the world.  You win!
+text: As you leave, the thunder amulet falls on your head.  You give it to Zeus, and he brings prosperity to the world.  You win!
 image: 
 
 ##e11
-text: You bribed Zeus, but using the wisdom he gave you, he realizes you will overthrow him and he banishes you to the world, taking away your powers.
+text: You bribed Zeus, but using the wisdom he gave you, he realizes you will overthrow him, and he banishes you to the world, taking away your powers.
 image: 
 
 ##e12
@@ -148,7 +148,7 @@ text: You join and win the war because you had magical armor.  Congratulations, 
 image: 
 
 ##e14
-text: You stay out of the war and you die from old age.  But no one knows who you are.
+text: You stay out of the war, and you die from old age.  But no one knows who you are.
 image: 
 
 ##e15

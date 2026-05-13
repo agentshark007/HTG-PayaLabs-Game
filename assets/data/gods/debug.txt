@@ -6,13 +6,17 @@ image: zeus
 #tree
 
 ##a1
-text: first scene
+text: This is the first scene. What scene would you like to go to?
 image: 
-b1: large scene
+b1: Large scene
+b2: Last scene
 
 ##b1
-text: THIS IISSSSLSL LO00OTS OFFF LONNGGFG TEEEXXTXT!!!1!1?1! BLAHBLAHBLAHBLAHBLJDKLJAFIOEMKOFMDKOPAJKFEM;KGOJEOIJAGKLD;JAKG;JEKLA;JGKDL;JAKGEL;JKAGL;JKDL;AJGKL;EJKAGJ;DKAJ;ELJGKDAfdjkaf;jdkla;jlkf;djakl;jfkdl;aTHIS IISSSSLSL LO00OTS OFFF LONNGGFG TEEEXXTXT!!!1!1?1! BLAHBLAHBLAHBLAHBLJDKLJAFIOEMKOFMDKOPAJKFEM;KGOJEOIJAGKLD;JAKG;JEKLA;JGKDL;JAKGEL;JKAGL;JKDL;AJGKL;EJKAGJ;DKAJ;ELJGKDAfdjkaf;jdkla;jlkf;djakl;jfkdl;a
-THIS IISSSSLSL LO00OTS OFFF LONNGGFG TEEEXXTXT!!!1!1?1! BLAHBLAHBLAHBLAHBLJDKLJAFIOEMKOFMDKOPAJKFEM;KGOJEOIJAGKLD;JAKG;JEKLA;JGKDL;JAKGEL;JKAGL;JKDL;AJGKL;EJKAGJ;DKAJ;ELJGKDAfdjkaf;jdkla;jlkf;djakl;jfkdl;a
-THIS IISSSSLSL LO00OTS OFFF LONNGGFG TEEEXXTXT!!!1!1?1! BLAHBLAHBLAHBLAHBLJDKLJAFIOEMKOFMDKOPAJKFEM;KGOJEOIJAGKLD;JAKG;JEKLA;JGKDL;JAKGEL;JKAGL;JKDL;AJGKL;EJKAGJ;DKAJ;ELJGKDAfdjkaf;jdkla;jlkf;djakl;jfkdl;a
-THIS IISSSSLSL LO00OTS OFFF LONNGGFG TEEEXXTXT!!!1!1?1! BLAHBLAHBLAHBLAHBLJDKLJAFIOEMKOFMDKOPAJKFEM;KGOJEOIJAGKLD;JAKG;JEKLA;JGKDL;JAKGEL;JKAGL;JKDL;AJGKL;EJKAGJ;DKAJ;ELJGKDAfdjkaf;jdkla;jlkf;djakl;jfkdl;a
-image:
+text: The quick brown fox jumps over the lazy dog. This is a classic pangram, perfect for testing fonts and character sets. Let's see how smoothly the text scrolls. It’s important to have a consistent reading experience, regardless of the amount of content. This paragraph contains a wide variety of letters, ensuring a thorough visual assessment. We’ll be observing the responsiveness and the overall flow as you navigate down this lengthy block of text. Don’t hesitate to scroll! This simple text is ideal for initial testing phases.
+image: 
+b2: Last scene
+
+##b2
+text: This is the final scene
+image: 
+a1: Back to start

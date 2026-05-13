@@ -60,13 +60,13 @@ e3: a townperson
 e4: Zeus
 
 ##d3
-text: You create a iron sword.  Would you like to sell it?
+text: You create an iron sword.  Would you like to sell it?
 image: 
 e5: yes
 e6: no
 
 ##d4
-text: You create a obsidian hammer.  Who would you like to sell it to?
+text: You create an obsidian hammer.  Who would you like to sell it to?
 image: 
 e7: a townsperson
 e8: Zeus
@@ -75,10 +75,10 @@ e8: Zeus
 text: You were not charming--you are a bit ornery.  But, he says that if you get him the amulet of thunder he will turn over Mount Olympus to you.  It will be dangerous.  Do you:
 image: 
 e9: get him the amulet of thunder
-e10: leave without getting the amulet.
+e10: leave without getting the amulet
 
 ##d6
-text: He does not agreen unless you bribe him. What do you want to bribe him with?
+text: He does not agree unless you bribe him. What do you want to bribe him with?
 image: 
 e11: love
 e12: beauty
@@ -120,7 +120,7 @@ text: You get into a fight.  Because you kept your sword, you were able to win! 
 image: 
 
 ##e7
-text: The townsperspn refuses to buy it because they know it will shatter even though it is sharp.  You lose.
+text: The townsperson refuses to buy it because they know it will shatter even though it is sharp.  You lose.
 image: 
 
 ##e8
@@ -156,5 +156,5 @@ text: You do not find a book, but Athena feels sorry for you and gives you wisdo
 image: 
 
 ##e16
-text: You find and read 10,000 books and give the the correct one to Athena.  She gives you wisdom, but because you read all of the books, you are now wiser than Athena.  You win!
+text: You find and read 10,000 books and give the correct one to Athena.  She gives you wisdom, but because you read all the books, you are now wiser than Athena.  You win!
 image:
