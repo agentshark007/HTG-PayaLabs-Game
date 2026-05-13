@@ -1,0 +1,160 @@
+#info
+name: Aphrodite
+info: Goddess of Love
+image: 
+
+#tree
+
+##a1
+text: What would you like to do?
+image: 
+b1: Go to a village
+b2: Visit a god
+
+##b1
+text: When you arrive at the village, would you like to match lovers to each other or visit a library?
+image: 
+c1: Match lovers
+c2: Visit a library
+
+##b2
+text: Which god would you like to visit?
+image: 
+c3: Zeus
+c4: Athena
+
+##c1
+text: You successfully match lovers to each other. Would you like to match lovers again or talk with a local villager?
+image: 
+d1: Match lovers again
+d2: Talk with a villager
+
+##c2
+text: What type of book would you like to look for?
+image: 
+d3: A book about fighting
+d4: A book about how to influence people
+
+##c3
+text: What would you like to do to Zeus?
+image: 
+d5: Tell him to turn over Mount Olympus to you using your charm
+d6: Force him to turn over Mount Olympus using your strength
+
+##c4
+text: What would you like to do to Athena?
+image: 
+d7: Ask her for battle strategy
+d8: Ask her for wisdom
+
+##d1
+text: You successfully match lovers. Would you like to match lovers a third time or would you like to go fishing?
+image: 
+e1: Match lovers again
+e2: Go fishing
+
+##d2
+text: You talk to some local villagers. Would you like to talk to some more villagers?
+image: 
+e3: Yes
+e4: No
+
+##d3
+text: You learn how to fight like a real god. Would you like to try to overthrow Zeus?
+image: 
+e5: Yes
+e6: No
+
+##d4
+text: You learn how to influence people and become more charismatic. Would you like to charm townspeople?  Or would you rather charm Zeus and try to get him to handover Mount Olympus?
+image: 
+e7: Charm townspeople
+e8: Charm Zeus
+
+##d5
+text: He is not convinced by your charm. But he says that if you get him the amulet of thunder, he will turn Mount Olympus over to you.
+image: 
+e9: Get him the amulet of thunder
+e10: Decide that it is too hard for the Goddes of Love to do and leave
+
+##d6
+text: He laughs and does not agree. He says you will have to bribe him. What do you want to bribe him with?
+image: 
+e11: Love
+e12: Beauty
+
+##d7
+text: Athena gives you immense knowledge of strategy for all types of battles. Would you like to start a war?
+image: 
+e13: Yes
+e14: No
+
+##d8
+text: Athena does not agree and says you must bring her a book first. Where would you like to search?
+image: 
+e15: Search the nearby palace
+e16: Search the library
+
+##e1
+text: You successfully match lovers and win!
+image: 
+
+##e2
+text: You successfully go fishing and catch a huge fish which will feed the village for 10 years.
+image: 
+
+##e3
+text: You talk to some locals and you become their favorite Goddess. Congratulations!
+image: 
+
+##e4
+text: Even though you did not talk to many villagers, the word spreads that you matched lovers and you become liked, but not loved.
+image: 
+
+##e5
+text: You successfully defeat Zeus!  You win!
+image: 
+
+##e6
+text: You decide not to overthrow Zeus, but a war breaks out anyway.  Fortunately, because you have battle knowledge, you are able to win the war! You win, but do not rule over the other Gods and Goddesses.
+image: 
+
+##e7
+text: The townspeople are charmed.  You are the most popular Goddess in this village!  You win!
+image: 
+
+##e8
+text: You charm Zeus, and take over Mount Olympus.  Unfortunately, Mount Olympus has a lot of bureacracy, so it's a pyhrric victory.
+image: 
+
+##e9
+text: It takes you two days, but you find the amulet of thunder and bring it back to Zeus. He is happy and brings prosperity to you and your followers.  Congratulations!
+image: 
+
+##e10
+text: You leave, and as you leave, the amulet of thunder falls on your head. You give it to Zeus, and he brings positivity to the world, and you become the most popular God.  Congratulations!
+image: 
+
+##e11
+text: He takes the bribe and falls in love with many mortals.  He hands over Mount Olympus to you. However, Mount Olympus is hard to rule and not as fun as it seemed.
+image: 
+
+##e12
+text: He does not agree and you lose.
+image: 
+
+##e13
+text: You start a battle and win! Congratulations!
+image: 
+
+##e14
+text: All of a sudden, Athena attacks you.  Luckily, she was not as wise as legends say; because she taught you battle strategy before she attacked, you were able to counter her attacks and win!  Congratulations!
+image: 
+
+##e15
+text: You do not find a book, but Athena decides to give you wisdom anyway, because she is the Goddess of Wisdom.  Congratulations!
+image: 
+
+##e16
+text: You find and read 10,000 books and give them to Athena.  She gives you wisdom, although you already became wise from reading the books.
+image:

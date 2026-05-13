@@ -1,0 +1,160 @@
+#info
+name: Hephaestus
+info: God of the Forge
+image: 
+
+#tree
+
+##a1
+text: Where would you like to go?
+image: 
+b1: to your forge
+b2: to visit a God or Goddess
+
+##b1
+text: You go to your forge.  What would you like to create?
+image: 
+c1: armor
+c2: a weapon
+
+##b2
+text: What God would you like to visit?
+image: 
+c3: Zeus
+c4: Athena
+
+##c1
+text: What type of armor would you like to create?
+image: 
+d1: a helmet
+d2: a chest plate
+
+##c2
+text: What weapon would you like to create?
+image: 
+d3: a sword
+d4: a hammer
+
+##c3
+text: What would you like to say to Zeus?
+image: 
+d5: tell him something charming to convince him to turn over Mount Olympus to you
+d6: persuade him to bring prosperity to the world
+
+##c4
+text: What would you like to say to Athena?
+image: 
+d7: ask to learn battle strategy from her
+d8: ask her for wisdom
+
+##d1
+text: You create a bronze helmet.  Would you like to sell it?
+image: 
+e1: yes
+e2: no
+
+##d2
+text: You create a gold chest plate.  Who would you like to sell it to?
+image: 
+e3: a townperson
+e4: Zeus
+
+##d3
+text: You create a iron sword.  Would you like to sell it?
+image: 
+e5: yes
+e6: no
+
+##d4
+text: You create a obsidian hammer.  Who would you like to sell it to?
+image: 
+e7: a townsperson
+e8: Zeus
+
+##d5
+text: You were not charming--you are a bit ornery.  But, he says that if you get him the amulet of thunder he will turn over Mount Olympus to you.  It will be dangerous.  Do you:
+image: 
+e9: get him the amulet of thunder
+e10: leave without getting the amulet.
+
+##d6
+text: He does not agreen unless you bribe him. What do you want to bribe him with?
+image: 
+e11: love
+e12: beauty
+
+##d7
+text: Athena teaches you winning battle strategies.  Would you like to start a war?
+image: 
+e13: yes
+e14: no
+
+##d8
+text: Athena does not agree and says you must bring her a certain book first.  Where would you like to search?
+image: 
+e15: the palace
+e16: a library
+
+##e1
+text: You sell it to a town person for 10 million drachmas. You win!
+image: 
+
+##e2
+text: You decided to keep it for yourself and you get into a fight.  The helmet breaks.  You lose.
+image: 
+
+##e3
+text: They buy it for 10 million drachmas.  You win!
+image: 
+
+##e4
+text: Zeus refuses to buy it because he thinks it will break like the helmet you made him last year.  You lose.
+image: 
+
+##e5
+text: You sell the sword for 10 million drachmas.  However, someone tries to steal your drachmas and you get into a fight.  Unfortunately, you don’t have any weapons.  You lose.
+image: 
+
+##e6
+text: You get into a fight.  Because you kept your sword, you were able to win!  Congratulations!
+image: 
+
+##e7
+text: The townsperspn refuses to buy it because they know it will shatter even though it is sharp.  You lose.
+image: 
+
+##e8
+text: Zeus buys it.  He appreciates its beauty and you win his favor.  He does not use it in battle, which is fortunate because it could shatter.  You win!
+image: 
+
+##e9
+text: It takes you two days, but you find the amulet of thunder and bring it back to Zeus. He is happy and agrees to let you rule Mount Olympus while he charms humans on Earth.  You win!
+image: 
+
+##e10
+text: You leave, and as you leave, the amulet of thunder falls on your head. You give it to Zeus, and he brings prosperity to the world.  You win and become the most popular God or Goddess.
+image: 
+
+##e11
+text: He likes love and leaves to romance a human.  He hands over Mount Olympus to you.  You win, although running Mount Olympus is hard work.
+image: 
+
+##e12
+text: He does not agree because he says he is already the most beautiful God.  You lose!
+image: 
+
+##e13
+text: You start a battle and win with the strategies Athena taught you. Congratulations!
+image: 
+
+##e14
+text: All of a sudden, Athena attacks you.  However, she did not act wisely.  Luckily, because she taught you strategy before she attacked you, you win!  Congratulations!
+image: 
+
+##e15
+text: You do not find a book, but Athena feels sorry for you and gives you wisdom anyway.  Congratulations!
+image: 
+
+##e16
+text: You find and read 10,000 books and give the the correct one to Athena.  She gives you wisdom, but because you read all of the books, you are now wiser than Athena.  You win!
+image:

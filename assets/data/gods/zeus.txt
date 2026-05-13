@@ -1,0 +1,160 @@
+#info
+name: Zeus
+info: God of Thuder, Ruler of Mount Olympus
+image: 
+
+#tree
+
+##a1
+text: Where would you like to go?
+image: 
+b1: to a village
+b2: to see a God or Goddess
+
+##b1
+text: You arrive at a village what would you like to do?
+image: 
+c1: spread rumor about a different God
+c2: use your thunderbolt to burn it down
+
+##b2
+text: What god would you like to see?
+image: 
+c3: Athena
+c4: Hephaestus
+
+##c1
+text: What God would you like to spread a rumor about?
+image: 
+d1: Athena
+d2: all of them
+
+##c2
+text: What would you like to burn down first?
+image: 
+d3: a woodmill
+d4: a library
+
+##c3
+text: What would you like to say to Athena?
+image: 
+d5: ask for knowledge about battle strategy
+d6: ask for wisdom
+
+##c4
+text: Would you like to get armor from Hephaestus?  It will take a long time.
+image: 
+d7: yes
+d8: no
+
+##d1
+text: You spread rumors about Athena.  Would you like to tell it to the local gossip mouth or a random person on the street?
+image: 
+e1: the local gossip
+e2: a random person
+
+##d2
+text: Who would you like to spread the rumor to?
+image: 
+e3: a little child
+e4: the town crier
+
+##d3
+text: You send a lightning bolt that hits the woodmill, but the wood is dense and it doesn’t catch on fire right away. Would you like to take some of the books from the town's library to help with the fire?
+image: 
+e5: yes
+e6: no
+
+##d4
+text: You set the library on fire. It goes up in a blaze, but doesn’t catch anything else on fire. Would you like to try again?
+image: 
+e7: yes
+e8: no
+
+##d5
+text: Athena gives you knowledge about strategy for battles.  Wwould you like to test out your knowledge and start a war?
+image: 
+e9: yes
+e10: no
+
+##d6
+text: Athena does not agree and says you must bring her a book first. Where would you like to search?
+image: 
+e11: the palace
+e12: a library
+
+##d7
+text: Although it takes a long time, you get armor from Hephaestus and then a war breaks out. Would you like to join the war?
+image: 
+e13: yes
+e14: no
+
+##d8
+text: You decide not to get armor from Hephaestus but a war breaks out. Would you like to join?
+image: 
+e15: yes
+e16: no
+
+##e1
+text: Your rumor spreads!  You weaken Athena showing that you are wiser than her.  You win!
+image: 
+
+##e2
+text: You tell it to someone from Athens, so your rumor does not spread, and worse, Athena now hates you.  You lose.
+image: 
+
+##e3
+text: The little child doesn’t spread a rumor and no one hears about it.  You lose, but the rest of the Gods and Goddesses do not hate you.
+image: 
+
+##e4
+text: Your rumors spread like wildfire and everyone thinks you are the best God because there isn’t a rumor about you.  You win, but the rest of the Gods and Goddesses hate you.
+image: 
+
+##e5
+text: Using the books as fire starters, you start a humongous fire which burns down the village.  However, Athena is not happy and makes life difficult for you.
+image: 
+
+##e6
+text: You try to burn down the woodmill again, but it doesn’t catch on fire.  You have done enough mischief for the day, and return to Mount Olympus to live the rest of your life.
+image: 
+
+##e7
+text: You successfully start a fire and burn down the village.  You win, but lose followers.
+image: 
+
+##e8
+text: You do not burn down the village, but the other Gods and Goddesses think you don't have any power.  You lose, but the village loves you.
+image: 
+
+##e9
+text: You start a battle and win!  Congratulations!
+image: 
+
+##e10
+text: All of a sudden, Athena attacks you.  Uncharacteristically, she did not act wisely.  Luckily, because she taught you strategy before she attacked you, you win!
+image: 
+
+##e11
+text: You do not find a book, but Athena decides to give you wisdom anyway.  Congratulations!
+image: 
+
+##e12
+text: You find and read 10,000 books and give them to Athena.  She gives you wisdom, and now you are wiser than her because you read the books.  Congratulations on being wiser than Athena!
+image: 
+
+##e13
+text: You join and win the war with the magical armor you received.  Congratulations!
+image: 
+
+##e14
+text: You stay out of the war, and you die of old age.  However, no one remembers you.
+image: 
+
+##e15
+text: You joined the war and die.  You lose, but for millenia, people talk about your courage.
+image: 
+
+##e16
+text: You stay out of the war and survive. Congratulations!  However, no one remembers you.
+image:

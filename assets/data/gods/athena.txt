@@ -1,0 +1,160 @@
+#info
+name: Athena
+info: Goddess of Wisdom
+image: 
+
+#tree
+
+##a1
+text: Where would you like to go?
+image: 
+b1: to a village
+b2: see a God
+
+##b1
+text: You arrive at the village.  The villagers are not very wise.  Would you like to build a school or build a library?
+image: 
+c1: build a school
+c2: build a library
+
+##b2
+text: What god would you like to see?
+image: 
+c3: Zeus
+c4: Hephaestus
+
+##c1
+text: You build a school.  How much will it cost for people to go there?
+image: 
+d1: it will be free
+d2: students must pay 10,00 drachmas
+
+##c2
+text: How many books would you like to have in the library?
+image: 
+d3: 100
+d4: 1 million
+
+##c3
+text: What would you like to say to Zeus?
+image: 
+d5: tell him to make the world prosper
+d6: tell him to give you Mount Olympus
+
+##c4
+text: Would you like Hephaestus to make you some armor?
+image: 
+d7: yes
+d8: no
+
+##d1
+text: Everybody goes to your school.  Would you like to improve your school and make it a world-renown university?
+image: 
+e1: yes
+e2: no
+
+##d2
+text: Only the immensely rich can afford to go to your school.  Would you like to lower the price?
+image: 
+e3: yes
+e4: no
+
+##d3
+text: Nobody comes to your library.  Would you like to stock the book shelves with more books?
+image: 
+e5: yes, I will get 2 million books
+e6: no, but instead, I invite philosophers to give talks to patrons
+
+##d4
+text: What type of books would you like to stock in the library?
+image: 
+e7: books that entertain people
+e8: a smattering of different types
+
+##d5
+text: He tells you you need to get the thunder amulet.  Would you like to get the thunder amulet, even though it may be difficult and you may die?
+image: 
+e9: yes
+e10: no
+
+##d6
+text: Zeus tells you to bribe him.  What would you like to bribe him with?
+image: 
+e11: wisdom
+e12: money
+
+##d7
+text: You get armor from Hephaestus and then a war breaks out. Would you like to join the war?
+image: 
+e13: yes
+e14: no
+
+##d8
+text: You decide not to get armor from Hephaestus but a war breaks out. Would you like to join?
+image: 
+e15: yes
+e16: no
+
+##e1
+text: Everyone goes to your school and gets a good education, showing you are the Goddess of Wisdom.  You win!
+image: 
+
+##e2
+text: Everyone goes to your school, but no one becomes wise.  You lose.
+image: 
+
+##e3
+text: You lower the price so everyone goes to school and receives an education.  You win!
+image: 
+
+##e4
+text: Only the wealthy go to your school.  Because you are rich, you win but most of your followers lose.
+image: 
+
+##e5
+text: You stock the shelves with lots of books. Everyone comes to your library and learns many things.  You win!
+image: 
+
+##e6
+text: Nobody comes to your library.  You lose.
+image: 
+
+##e7
+text: Only goofballs and jokesters go to your library.  You lose.
+image: 
+
+##e8
+text: Everyone goes to the library and reads the type of book they like.  You are a popular God!
+image: 
+
+##e9
+text: You successfully find the thunder ambulance and Zeus brings prosperity to the world and everybody likes you.  You win!
+image: 
+
+##e10
+text: As you leave, the thunder amulet falls on your head.  You give it to Zeus and he brings prosperity to the world.  You win!
+image: 
+
+##e11
+text: You bribed Zeus, but using the wisdom he gave you, he realizes you will overthrow him and he banishes you to the world, taking away your powers.
+image: 
+
+##e12
+text: You successfully bribed Zeus.  While he swims through his money like Scrooge McDuck, you take control of Mount Olympus.  Congratulations!
+image: 
+
+##e13
+text: You join and win the war because you had magical armor.  Congratulations, you were wise!
+image: 
+
+##e14
+text: You stay out of the war and you die from old age.  But no one knows who you are.
+image: 
+
+##e15
+text: You joined the war but die because you do not have any armor.  You lose.
+image: 
+
+##e16
+text: You stay out of the war and survive.  Congratulations!
+image:

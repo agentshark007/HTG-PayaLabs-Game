@@ -1,0 +1,160 @@
+#info
+name: Artemis
+info: Goddess of the Hunt and the Wilderness
+image: 
+
+#tree
+
+##a1
+text: Where would you like to go?
+image: 
+b1: the forest
+b2: to visit a Good or Goddess
+
+##b1
+text: Would you like to go hunting or foraging?
+image: 
+c1: go hunting
+c2: go foraging
+
+##b2
+text: What God would you like to visit?
+image: 
+c3: Zeus
+c4: Athena
+
+##c1
+text: What would you like to hunt?
+image: 
+d1: rabbits
+d2: deer
+
+##c2
+text: What would you like to forage for?
+image: 
+d3: berries
+d4: herbs
+
+##c3
+text: What would you like to say to Zeus?
+image: 
+d5: try to charm him into bringing prosperity to the world
+d6: persuade him to turn Mount Olympus over to you
+
+##c4
+text: What would you like to say to Athena?
+image: 
+d7: ask her to teach you battle strategy
+d8: ask her for wisdom
+
+##d1
+text: How would you like to hunt them?
+image: 
+e1: with bows and arrows
+e2: with a knife
+
+##d2
+text: How would you like to hunt them?
+image: 
+e3: with a sword
+e4: with a bow and arrow
+
+##d3
+text: Would you like to look for blackberries or blueberries?
+image: 
+e5: look for blackberries
+e6: look for blueberries
+
+##d4
+text: What type of herb would you like to look for?
+image: 
+e7: look for seasoning herbs
+e8: look for healing herbs
+
+##d5
+text: You do not fully charm him, but he says that if you get him the amulet of thunder, he will bring prosperity to the world.  It will take a long time to find it.  Do you:
+image: 
+e9: look for the amulet of thunder
+e10: leave without looking for the amulet of thunder
+
+##d6
+text: He does not agree to turn over Mount Olympus without more. He says you will have to bribe him. What do you want to bribe him with?
+image: 
+e11: love
+e12: beauty
+
+##d7
+text: Athena teaches you winning strategies for battles.  Would you like to start a battle?
+image: 
+e13: yes
+e14: no
+
+##d8
+text: Athena does not agree and says you must bring her a certain book first. Where would you like to search?
+image: 
+e15: the palace
+e16: the library
+
+##e1
+text: You unsuccessfully hunt the rabbits because they are too small to hunt using arrows.  You lose.
+image: 
+
+##e2
+text: You successfully hunt a rabbit because you can move faster than them.  You win!
+image: 
+
+##e3
+text: You unsuccessfully hunt the deer because a sword is too hard to swing when you are chasing deer.  You lose.
+image: 
+
+##e4
+text: You successfully hunt the deer because the arrows travel faster than deer.  You win!
+image: 
+
+##e5
+text: You get stuck in blackberry thorns.  You lose.
+image: 
+
+##e6
+text: You find blueberries and they are easy to pick because they don't have thorns.  You win!
+image: 
+
+##e7
+text: You find a new type of herb and everyone likes it.  You become everyone’s favorite Goddess!
+image: 
+
+##e8
+text: You find a cure to a sickness that would have wiped out the population without this herb.  You win!
+image: 
+
+##e9
+text: It takes you two days, but you find the amulet of thunder and bring it back to Zeus. He is happy and brings prosperity to world.  You win, and are also popular for helping Zeus.
+image: 
+
+##e10
+text: You leave, and as you leave, the amulet of thunder falls on your head. You give it to Zeus, and he brings prosperity to the world.  You become the most popular Goddess, second to Zeus.
+image: 
+
+##e11
+text: He agrees because he loves to romance humans.  He leaves for Earth and hands over Mount Olympus to you.  You win, although running Mount Olympus keeps you from the forest so it is not enjoyable to you.
+image: 
+
+##e12
+text: He does not agree because he thinks he already is the most beautify God on Mount Olympus.  You lose.
+image: 
+
+##e13
+text: You start a battle and win because you learned winning strategies.  Congratulations!
+image: 
+
+##e14
+text: All of a sudden, Athena attacks you.  However, she did not act wisely.  Luckily because she taught you strategy before she attacked you, you win!  Congratulations!
+image: 
+
+##e15
+text: You do not find the book, but Athena decides to give you wisdom anyway.  Congratulations!
+image: 
+
+##e16
+text: You find and read 10,000 books.  You give the right one Athena and she gives you wisdom.  However, you were already wise from reading all the books.  You now are the wisest Goddess!
+image:

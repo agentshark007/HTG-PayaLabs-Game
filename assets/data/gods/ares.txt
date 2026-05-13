@@ -1,0 +1,560 @@
+#info
+name: Ares
+info: Ares has a firey temper, if mad will burn the world.
+image: ares
+
+#tree
+
+##a1
+text: You have decided to play as Ares, God of courage, strength, and the trial of battles. Are you ready to take on the challenges?
+image: 
+b1: Yes
+b2: No
+
+##b1
+text: Mount Olympus shines so brightly with the setting sun you think to yourself you think about tomorrow when you’ll…
+image: 
+c1: See Hephaestus about those new weapons
+c2: Go down to a village.
+
+##b2
+text: The end
+image: skull
+
+##c1
+text: You go to sleep for the night when you wake up you go down to Festus’s forges where you ask him about your
+image: 
+d1: new sword
+d2: new chest plate
+d3: new helm
+d4: new shield
+
+##c2
+text: Where would you like to go?
+image: 
+d5: Lissinth
+d6: Bourorion
+d7: Ephystus
+
+##d1
+text: He turns around and when he turns back, he hand you a most wonderful, excellent sturdy, beautiful sword made of silver and copper what do you say?
+image: 
+e1: Thank you. This will do for slaying some great beast.
+e2: Turn away and leave.
+
+##d2
+text: He turns around and when he turns back, he hands you a piece of utter trash that is in the rough shape of a chest plate. What do you say?
+image: 
+e3: "Is this supposed to be some sick joke?"
+e4: "This will be useless. This won’t even stand up to a bird."
+
+##d3
+text: He says that it will be a couple more days before it’s finished and that he’ll send it to you when it’s made, and to stop pestering him about it.
+image: 
+
+##d4
+text: He turns around and when he turns back, he hands you a well-made shield out of gold. What do you say?
+image: 
+e5: Thank you.
+e6: turn away and leave
+e7: nod and leave
+
+##d5
+text: 
+image: 
+
+##d6
+text: You head to Bourorion.  The trip is long so you go to sleep.  When you wake up, you continue to Bourorion.  When you arrive there you see enormous ships coming and going from the port.  You notice a fishing shack that is selling fishing gear.  You also noticed a beautiful boat with a for sale sign on it. Would you like to buy the boat or go fishing?
+image: test-scene
+e8: buy the boat
+e9: go fishing
+
+##d7
+text: You go to sleep and when you wake up, you travel to Ephystus.  When you arrive, you can barely see anything. There’s huge black clouds of coal everywhere. What would you like to try to find?
+image: 
+e10: blacksmith
+e11: mine
+
+##e1
+text: He nods and you leave.  Where do you go next?
+image: 
+f1: village
+f2: forest
+
+##e2
+text: 
+image: 
+
+##e3
+text: 
+image: 
+
+##e4
+text: He shrugs and says "maybe if you hadn’t asked for it to be done so quickly it would’ve been made to stand up to 1000 blows."  Would you like to declare war on him or fight him right here?
+image: 
+f3: declare war on him
+f4: fight him right here
+
+##e5
+text: 
+image: 
+f5: Go to f1
+
+##e6
+text: 
+image: 
+
+##e7
+text: 
+image: 
+
+##e8
+text: 
+image: 
+
+##e9
+text: You go and take one of the fishing poles. You’re about 10 feet away when someone yells at you.  Do you ignore them or do you listen to what they’re saying?
+image: 
+f6: listen to them
+f7: ignore them
+
+##e10
+text: 
+image: 
+
+##e11
+text: 
+image: 
+
+##f1
+text: Which village would you like to go to?
+image: 
+g1: Bourorion
+g2: Magnacuse
+g3: Amphaizi
+
+##f2
+text: 
+image: 
+
+##f3
+text: 
+image: 
+
+##f4
+text: 
+image: 
+
+##f5
+text: He knows and you leave.
+image: 
+
+##f6
+text: You turn around and listen to them.  They say “you gotta pay for those fishing poles. They’re not free you know, at least not with the fish."  Just then he realizes who you are.  You see a look of other terror on his face.  He immediately bows down and apologizes.  He says "you can take the fishing pole."  You tell him to rise, and he asks if you will do him a favor.
+image: 
+g4: tell him no
+g5: tell him yes
+g6: tell him no and punish him for trying to make you pay for that fishing pole
+g7: Tell them yes, but someday, and that day may never come, you will call upon them to do a favor for you
+
+##f7
+text: 
+image: 
+
+##g1
+text: You go to sleep.  When you wake up, you continue to the town.  When you arrive there you see ginormous ships coming and going from the port.  You notice a fishing shack that is selling fishing gear.  You also notice a beautiful boat with a for sale sign on it. Would you like to buy the boat or go fishing?
+image: 
+h1: buy the boat
+h2: go fishing
+
+##g2
+text: 
+image: 
+
+##g3
+text: When you get to Amphaizi there are many schools and libraries.  Almost everybody has their nose in a book.  They obviously worship Athena.  Should you get revenge?
+image: 
+h3: no
+h4: yes
+
+##g4
+text: 
+image: 
+
+##g5
+text: 
+image: 
+
+##g6
+text: How should you punish them?
+image: 
+h5: rob him
+h6: burn down his house
+
+##g7
+text: He agrees and says, "can you talk to Poseidon and tell him that we need fish?"  You sigh and tell him that you’ll talk to Poseidon.  He then runs back to his fish shack. Should you go talk to Poseidon?  You think that he’s currently in Lissinth but it will probably be a lengthy journey.
+image: 
+h7: go to see Poseidon now
+h8: see him later
+
+##h1
+text: 
+image: 
+
+##h2
+text: You go and take one of the fishing poles. You’re about 10 feet away when someone yells at yo.  Do you ignore them or do you listen to what they’re saying?
+image: 
+i1: listen to them
+i2: ignore them
+
+##h3
+text: You decide you do not feel like getting revenge today.  As you walk through the town, you notice a tavern, a school and a library.  Which one do you want to go into?
+image: 
+i3: a tavern
+i4: a school
+i5: a library
+
+##h4
+text: How should you do it--with fire or with your new sword?
+image: 
+i6: new sword
+i7: fire
+
+##h5
+text: You walk away with 1000 gold pieces in your hand.  Suddenly you feel a blow to your shoulder.  When you turn around, you see a warrior.  Would you like to attack or walk away?
+image: 
+i8: attack
+i9: walk away
+
+##h6
+text: You light a torch and as you walk away, flames engulf the house.  What would you like to do now?
+image: 
+i10: continue exploring
+i11: go to a different town
+
+##h7
+text: As you’re traveling along the road, you run into a broken caravan. It looks like it has some supplies in it. It also looks like an animal might’ve made it its home. Would you like to investigate it but risk facing a potentially dangerous animal or would you like to leave it be and continue on the road?
+image: 
+i12: investigate the caravan
+i13: continue on the road
+
+##h8
+text: 
+image: 
+
+##i1
+text: 
+image: 
+
+##i2
+text: As you’re fishing, you catch a trout, two pike, and a old boot that has a potato in it.  When you try to grab the potato from out of the boot, it falls back into the water.  It’s getting late and you should probably find somewhere to rest for the night. Where would you like to stay?
+image: 
+j1: the lazy river sleeping shack
+j2: the elite Mount Olympus resort hotel
+
+##i3
+text: 
+image: 
+
+##i4
+text: 
+image: 
+
+##i5
+text: When you walk in, you see that the walls are lined with floor to ceiling bookshelves. There must be 10,000 books. Do you look for a specific book or just explore the aisles?
+image: 
+j3: explore the aisles
+j4: look for a specific book
+
+##i6
+text: With 1000 blows from your sword, the town is gone.  Nobody remains. What should you do now?
+image: 
+j5: Go to a different town
+j6: loot houses
+
+##i7
+text: As the town is set ablaze, you hear many people screaming.  Just like that, your job is done.  What should you do now?
+image: 
+j7: visit a God
+j8: go to a different town
+j9: go to a forest
+
+##i8
+text: How would you like to attack?
+image: 
+j10: with a sword
+j11: with a hammer
+
+##i9
+text: 
+image: 
+
+##i10
+text: 
+image: 
+
+##i11
+text: As you walk through the town, you notice a a small restaurant.  Would you like to go there?
+image: 
+j12: yes
+j13: no
+
+##i12
+text: As you draw near the caravan, you see something that looks like furball.  On further inspection, it’s a cat. What should you do about the cat?
+image: 
+j14: leave it be
+j15: befriend it
+
+##i13
+text: Continuing on the road, you find a small library. It is rather odd because you’re not particularly close to anything. It is just in the middle of this path and there is no town nearby. Would you like to investigate the library?
+image: 
+j16: investigate
+j17: continue on
+
+##j1
+text: What room would you like?
+image: 
+k1: pool room
+k2: sauna room
+k3: potato room
+
+##j2
+text: What room do you want?
+image: 
+k4: the sleepy traveler room
+k5: elite sleeping plus room
+k6: the Gods elite plus sleeping room
+
+##j3
+text: 
+image: 
+
+##j4
+text: What book would you like to look for?
+image: 
+k7: book on fishing
+k8: book on persuasion
+
+##j5
+text: What town do you want to go to?
+image: 
+k9: Go to k3
+k10: Go to k4
+
+##j6
+text: 
+image: 
+
+##j7
+text: Who would you like to visit?
+image: 
+k11: Zeus
+k12: Demeter
+
+##j8
+text: 
+image: 
+
+##j9
+text: 
+image: 
+
+##j10
+text: 
+image: 
+
+##j11
+text: 
+image: 
+
+##j12
+text: 
+image: 
+
+##j13
+text: 
+image: 
+
+##j14
+text: As you continue on, you find the town of Akrarae.  Would you like to head into town?
+image: 
+k13: yes
+k14: no
+
+##j15
+text: The cat looks at you rather happy.  After petting it for an embarrassing long time, you continue on your journey.  You run into the town of Akrarae.  Would you like to head into town?
+image: 
+k15: yes
+k16: no
+
+##j16
+text: When you enter the library and take 20 steps in, the door is immediately locked from the outside and Athena comes out from behind a bookshelf.  Before you have time to say anything, she attacks.  Would you like to attack her or retreat?
+image: 
+k17: retreat
+k18: attack her
+
+##j17
+text: 
+image: 
+
+##k1
+text: 
+image: 
+
+##k2
+text: 
+image: 
+
+##k3
+text: when you get to your room, you notice that the bedsheets have a potato design on them.  So does the wallpaper, the couch cushions, and the curtains on the window.  Even the stationary has potatoes on them. You also notice a note on the pillow. Do you want to read it?
+image: 
+l1: read the note
+l2: leave the note be
+
+##k4
+text: 
+image: 
+
+##k5
+text: 
+image: 
+
+##k6
+text: 
+image: 
+
+##k7
+text: 
+image: 
+
+##k8
+text: 
+image: 
+
+##k9
+text: [new town]
+image: 
+
+##k10
+text: [new town]
+image: 
+
+##k11
+text: 
+image: 
+
+##k12
+text: 
+image: 
+
+##k13
+text: 
+image: 
+
+##k14
+text: 
+image: 
+
+##k15
+text: As you enter the town, you notice a store a library and a store.  Which one would you like to go into?
+image: 
+l3: library
+l4: store
+
+##k16
+text: 
+image: 
+
+##k17
+text: When you try to retreat, the door is boarded up. You frantically look around for any windows or doors, but there is none.  You’re locked inside this building.  Before you can think, Athena strikes you with a fatal blow and you die.
+image: 
+
+##k18
+text: As you raise your sword and strike her, she falls down and the door opens.  You leave but when you get outside, it is night. Should you set up camp at the library or continue on a little further in hopes of finding a town?
+image: 
+l5: set up camp
+l6: continue on
+
+##l1
+text: The note says "Start a war. Find a potato, win the war and be worshiped forever more." After you read the note, you see on the potato clock that it is nearly midnight. You decide to go to sleep.  When you wake up, you decide to:
+image: 
+m1: visit another town
+m2: destroy the town
+
+##l2
+text: When you wake up, you decide to:
+image: 
+m3: convince the towns folk to worship you
+m4: destroy the town
+
+##l3
+text: 
+image: 
+
+##l4
+text: What would you like to buy?
+image: 
+m5: a cart
+m6: armor
+m7: a leash
+m8: cat food
+
+##l5
+text: 
+image: 
+
+##l6
+text: You continue on a little further and find a town. Would you like to break into a house or find an open inn?
+image: 
+m9: find an open inn
+m10: break into a house
+
+##m1
+text: 
+image: 
+
+##m2
+text: 
+image: 
+
+##m3
+text: 
+image: 
+
+##m4
+text: 
+image: 
+
+##m5
+text: 
+image: 
+
+##m6
+text: 
+image: 
+
+##m7
+text: When you go to the counter and buy the leash, the cat starts growling.  Do you try to put the leash on?
+image: 
+n1: yes
+n2: no
+
+##m8
+text: 
+image: 
+
+##m9
+text: 
+image: 
+
+##m10
+text: 
+image: 
+
+##n1
+text: 
+image: 
+
+##n2
+text: 
+image:
