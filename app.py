@@ -103,6 +103,14 @@ class App(Window):
         self.mouse_down_primary_last_frame = False
         self.keys_down_last_frame = set()
         self.scene_text_scroll_y = 0.0
+        self.scroll_velocity = 0.0
+
+    def _initialize_scroll_settings(self):
+        self.scroll_velocity = 0.0
+        self.scroll_friction = 0.85
+        self.scroll_speed = -40.0
+        self.scroll_min = 0.0
+        self.scroll_max = 0.0
 
     def _load_assets(self):
         file_names = os.listdir(get_absolute_path("assets/data/scenes"))
@@ -194,6 +202,7 @@ class App(Window):
             self.scale = 1.0
             self._initialize_saving()
             self._setup_state()
+            self._initialize_scroll_settings()
             self._load_assets()
             self._initialize_intro()
             self._initialize_button_list_settings()
@@ -207,6 +216,7 @@ class App(Window):
     # region utilities
     def _reset_scene_text_scroll(self):
         self.scene_text_scroll_y = 0.0
+        self.scroll_velocity = 0.0
 
     def _scene_text_content(self, scene: Scene):
         lines = [scene.text.strip()] if scene.text.strip() else ["*No scene data*"]
@@ -1084,16 +1094,21 @@ class App(Window):
 
     def _update_playing(self):
         current_game: Optional[Game] = self.game
+
+        # back button (scene history)
         back_a, back_b = self._playing_back_button_rect()
         back_enabled = (
             current_game is not None
             and getattr(current_game, "previous_scene_index", None) is not None
             and (current_game.previous_scene_index != current_game.current_scene_index)
         )
+
         if back_enabled and is_point_in_rect(self.mouse_pos, back_a, back_b):
             if self.mouse_pressed and self._go_back_to_previous_scene():
                 current_game.previous_scene_index = None
                 return
+
+        # pause button
         hover = (
             distance(
                 self.mouse_pos,
@@ -1104,44 +1119,62 @@ class App(Window):
             )
             < 10 * self.scale
         )
-        if hover:
-            if self.mouse_pressed:
-                self.set_state(State.PAUSED)
-        current_game = self.game
+        if hover and self.mouse_pressed:
+            self.set_state(State.PAUSED)
+
         if current_game is None:
             return
+
         try:
             current_scene: Optional[Scene] = current_game.god.tree.scenes[
                 current_game.current_scene_index
             ]
         except Exception:
             current_scene = None
+
         if current_scene is None:
             self._reset_scene_text_scroll()
             return
-        if current_scene is not None and current_scene.links:
+
+        # LINK INPUT
+        if current_scene.links:
             for i, link in enumerate(current_scene.links):
                 if i >= 26:
                     break
+
                 key_name = chr(ord("A") + i)
                 try:
                     key_enum = Key[key_name]
                 except Exception:
                     continue
+
                 pressed_now = self.keydown(key_enum)
                 was_pressed = key_enum in self.keys_down_last_frame
+
                 if pressed_now and (not was_pressed):
                     target_id = self._choose_target_id(link.target)
                     if target_id is None:
                         continue
-                    found_target = False
+
                     for idx, scene in enumerate(current_game.god.tree.scenes):
                         if scene.id == target_id:
                             self._set_game_scene(current_game, idx)
-                            found_target = True
                             break
-                    if not found_target:
-                        pass
+
+        # SCROLL PHYSICS
+        self.scene_text_scroll_y += self.scroll_velocity * self.deltatime
+        self.scroll_velocity *= self.scroll_friction
+
+        # clamp using computed max
+        self.scene_text_scroll_y = max(
+            0.0, min(self.scene_text_scroll_y, self.scroll_max)
+        )
+
+        if (
+            self.scene_text_scroll_y <= 0.0
+            or self.scene_text_scroll_y >= self.scroll_max
+        ):
+            self.scroll_velocity = 0.0
 
     def _update_paused(self):
         actions = [
@@ -1187,6 +1220,10 @@ class App(Window):
         scale_y = self.height / self._original_height
         self.scale = (scale_x + scale_y) / 2.0
         self.seconds_since_start += self.deltatime
+
+        # ADD: scroll input -> velocity
+        self.scroll_velocity += self.mouse_scroll_y * self.scroll_speed
+
         try:
             if self.state == State.INTRO:
                 self._update_intro()
@@ -1214,6 +1251,7 @@ class App(Window):
                 raise Exception(f"Unknown state: {self.state}")
         except Exception:
             raise UpdateError("Error while updating state: " + str(self.state))
+
         new_keys = set()
         for i in range(26):
             key_name = chr(ord("A") + i)
@@ -1223,8 +1261,10 @@ class App(Window):
                 continue
             if self.keydown(key_enum):
                 new_keys.add(key_enum)
+
         self.keys_down_last_frame = new_keys
         self.mouse_down_primary_last_frame = self.mouse_down_primary
+
         if self.load_game_rename_mode:
             all_rename_keys = self._tracked_keys()
             for key_enum in all_rename_keys:
@@ -1631,30 +1671,39 @@ class App(Window):
         current_game: Optional[Game] = self.game
         if current_game is None:
             return
+
         try:
             current_scene: Optional[Scene] = current_game.god.tree.scenes[
                 current_game.current_scene_index
             ]
         except Exception:
             current_scene = None
+
         main_text = "*No scene data*"
         scene_img = None
+
         if current_scene is not None:
             image_name = current_scene.image
             scene_img = self.scene_images.get(image_name)
             if scene_img is None:
                 scene_img = self.scene_images.get("test-scene")
             main_text = self._scene_text_content(current_scene)
+
         text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
         text_x = -230 * self.scale
         text_y = 35 * self.scale
         wrap_distance = max(1, int(abs(self.screen_right.x - text_x - 10 * self.scale)))
+
         text_bottom_y = self._playing_scene_text_bottom_y()
         visible_height = max(1.0, abs(text_bottom_y - text_y))
+
         _, max_scroll = self._scene_text_scroll_metrics(
             main_text, text_font, wrap_distance, visible_height
         )
-        self.scene_text_scroll_y = max(0.0, min(self.scene_text_scroll_y, max_scroll))
+
+        # ONLY store max scroll; do not clamp here
+        self.scroll_max = max_scroll
+
         self.draw_text_word_wrap(
             main_text,
             V(text_x, text_y + self.scene_text_scroll_y),
@@ -1663,6 +1712,7 @@ class App(Window):
             Origin.TOP_LEFT,
             wrap_distance=wrap_distance,
         )
+
         if scene_img is not None:
             self.draw_image(
                 scene_img,
@@ -1672,12 +1722,15 @@ class App(Window):
                 scale_y=self.scale,
                 antialiasing=False,
             )
+
         back_a, back_b = self._playing_back_button_rect()
         back_enabled = (
             getattr(current_game, "previous_scene_index", None) is not None
             and current_game.previous_scene_index != current_game.current_scene_index
         )
+
         back_hover = back_enabled and is_point_in_rect(self.mouse_pos, back_a, back_b)
+
         self.fill_rounded_rect(
             back_a,
             back_b,
@@ -1690,6 +1743,7 @@ class App(Window):
             Color(50, 50, 50),
             top_left_roundness=8 * self.scale,
         )
+
         self.draw_text(
             "Back",
             V((back_a.x + back_b.x) / 2, (back_a.y + back_b.y) / 2),
@@ -1697,6 +1751,7 @@ class App(Window):
             Color(255, 255, 255) if back_enabled else Color(120, 120, 120),
             Origin.CENTER,
         )
+
         hover = (
             distance(
                 self.mouse_pos,
@@ -1707,6 +1762,7 @@ class App(Window):
             )
             < 10 * self.scale
         )
+
         self.fill_circle(
             V(
                 self.screen_left.x + (15 * self.scale),
@@ -1715,6 +1771,7 @@ class App(Window):
             10 * self.scale,
             Color(50, 50, 50) if hover else Color(40, 40, 40),
         )
+
         self.draw_line(
             V(
                 (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
@@ -1727,6 +1784,7 @@ class App(Window):
             Color(255, 255, 255),
             int(2 * self.scale),
         )
+
         self.draw_line(
             V(
                 (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
