@@ -19,10 +19,10 @@ class Scene:
         self.text = ""
         self.image = ""
         for line in lines:
-            if line.startswith("text: "):
-                self.text = line[len("text: ") :].strip()
-            elif line.startswith("image: "):
-                self.image = line[len("image: ") :].strip()
+            if line.startswith("text:"):
+                self.text = line[len("text:") :].lstrip()
+            elif line.startswith("image:"):
+                self.image = line[len("image:") :].lstrip()
             elif ": " in line:
                 target, _, link_text = line.partition(": ")
                 links.append(Link(target.strip(), link_text.strip()))
