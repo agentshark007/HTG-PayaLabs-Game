@@ -6,14 +6,12 @@ from utility import *
 
 
 class Link:
-
     def __init__(self, target, label):
         self.target = target
         self.label = label
 
 
 class Scene:
-
     def __init__(self, encoded: str, scene_id: str = None):
         self.id = scene_id
         lines = split_nonempty_lines(encoded)
@@ -39,7 +37,6 @@ class Scene:
 
 
 class Tree:
-
     def __init__(self, encoded):
         lines = split_nonempty_lines(encoded)
         scenes = []
@@ -71,7 +68,6 @@ class Tree:
 
 
 class God:
-
     def __init__(self, encoded: str, file_name: str):
         self.name: str = ""
         self.info: str = ""
@@ -92,7 +88,6 @@ class God:
 
 
 class Game:
-
     def __init__(
         self,
         god: God,

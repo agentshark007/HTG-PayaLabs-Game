@@ -333,7 +333,6 @@ def validate_repaired_data(
 
 
 class GodEditor:
-
     def __init__(self, root):
         self.root = root
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
