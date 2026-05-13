@@ -1,5 +1,6 @@
 import copy
 import os
+import re
 import tkinter as tk
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -47,8 +48,8 @@ def split_weighted_target(token: str) -> tuple[str, str | None]:
     token = token.strip()
     if "*" in token:
         base, weight = token.rsplit("*", 1)
-        return (base.strip(), weight.strip())
-    return (token, None)
+        return base.strip(), weight.strip()
+    return token, None
 
 
 def depth_prefix(depth: int) -> str:
@@ -139,7 +140,7 @@ def normalize_god(
 ) -> tuple[dict[str, str], list[tuple[str, SceneBlock]]]:
     if not parsed.scenes:
         report.errors.append("No scenes were found in the file.")
-        return (parsed.info, [])
+        return parsed.info, []
     if not parsed.seen_info_header:
         report.fixes.append("Added missing #info section header.")
     if not parsed.seen_tree_header:
@@ -261,7 +262,7 @@ def normalize_god(
         "info": parsed.info.get("info", "").strip(),
         "image": parsed.info.get("image", "").strip(),
     }
-    return (normalized_info, repaired_scenes)
+    return normalized_info, repaired_scenes
 
 
 def export_god_text(info: dict[str, str], scenes: list[tuple[str, SceneBlock]]) -> str:
@@ -299,7 +300,7 @@ def validate_repaired_data(
         errors.append("Missing god image key.")
     if not scenes:
         errors.append("No scenes defined.")
-        return (errors, warnings)
+        return errors, warnings
     scene_map = {scene_id: scene for scene_id, scene in scenes}
     if scenes[0][0] != "a1":
         warnings.append(f"First scene is '{scenes[0][0]}', not 'a1'.")
@@ -329,7 +330,7 @@ def validate_repaired_data(
                         errors.append(
                             f"Scene '{scene_id}' choice #{choice_idx} has invalid weight in '{token}'."
                         )
-    return (errors, warnings)
+    return errors, warnings
 
 
 class GodEditor:
@@ -345,7 +346,6 @@ class GodEditor:
         self._selection_guard_enabled = True
         self._suspend_dirty_tracking = False
         self.scene_summary_var = tk.StringVar(value="Scenes: 0 total · 0 shown")
-        self.scene_search_var = tk.StringVar(value="")
         self.scene_issues_only_var = tk.BooleanVar(value=False)
         self.god_image_keys = self._list_image_keys(GOD_IMAGE_DIR)
         self.scene_image_keys = self._list_image_keys(SCENE_IMAGE_DIR)
@@ -395,24 +395,11 @@ class GodEditor:
         tk.Label(left, textvariable=self.scene_summary_var, anchor="w").pack(
             fill="x", pady=(0, 6)
         )
-        scene_search = tk.Frame(left)
-        scene_search.pack(fill="x", pady=(0, 6))
-        tk.Label(scene_search, text="Find").pack(side="left")
-        self.scene_search_entry = tk.Entry(
-            scene_search, textvariable=self.scene_search_var, width=14
-        )
-        self.scene_search_entry.pack(side="left", fill="x", expand=True, padx=(6, 0))
-        self.scene_search_entry.bind("<KeyRelease>", self.on_scene_search_changed)
-        self.scene_search_entry.bind("<Return>", self.open_first_scene_match)
-        self.scene_search_entry.bind("<Escape>", self.clear_scene_search)
-        tk.Button(
-            scene_search, text="X", width=2, command=self.clear_scene_search
-        ).pack(side="left", padx=(4, 0))
         scene_filters = tk.Frame(left)
-        scene_filters.pack(fill="x", pady=(0, 4))
+        scene_filters.pack(fill="x", pady=(0, 6))
         tk.Checkbutton(
             scene_filters,
-            text="Show only scenes with errors",
+            text="Show only scenes with warnings/errors",
             variable=self.scene_issues_only_var,
             command=self.on_scene_filter_changed,
         ).pack(side="left")
@@ -424,8 +411,6 @@ class GodEditor:
         scene_scroll.pack(side="right", fill="y")
         self.scene_list.configure(yscrollcommand=scene_scroll.set)
         self.scene_list.bind("<<ListboxSelect>>", self.on_scene_selected)
-        self.root.bind_all("<Command-f>", self.focus_scene_search)
-        self.root.bind_all("<Control-f>", self.focus_scene_search)
         scene_actions = tk.LabelFrame(left, text="Scene Actions", padx=6, pady=6)
         scene_actions.pack(fill="x", pady=(8, 0))
         create_buttons = tk.Frame(scene_actions)
@@ -592,98 +577,17 @@ class GodEditor:
         self.dirty = dirty
         self._update_title()
 
-    def _filtered_scene_ids(self):
-        query = self.scene_search_var.get().strip().lower()
-        scene_ids = list(self.data["scene_order"])
-        if query:
-            scene_ids = [
-                scene_id for scene_id in scene_ids if query in scene_id.lower()
-            ]
-        if self.scene_issues_only_var.get():
-            issue_map = self._scene_issue_map()
-            scene_ids = [scene_id for scene_id in scene_ids if issue_map.get(scene_id)]
-        return scene_ids
-
-    def _scene_issue_map(self):
-        _errors, _warnings, scene_errors = self._validate_data_details()
-        return scene_errors
-
-    def _set_console_text(self, widget, text):
-        widget.configure(state="normal")
-        widget.delete("1.0", tk.END)
-        widget.insert("1.0", text)
-        widget.configure(state="disabled")
-
-    def _refresh_error_consoles(self):
-        errors, warnings, scene_errors = self._validate_data_details()
-        self.validation_summary_var.set(
-            f"Validation: {len(errors)} error(s), {len(warnings)} warning(s)"
-        )
-        chunks = []
-        if errors:
-            chunks.append("Errors:\n- " + "\n- ".join(errors))
-        if warnings:
-            chunks.append("Warnings:\n- " + "\n- ".join(warnings))
-        if not chunks:
-            chunks.append("No issues found.")
-        self._set_console_text(self.project_console, "\n\n".join(chunks))
-        selected_scene_id = self.scene_id_entry.get().strip() or self.current_scene
-        if not selected_scene_id:
-            self._set_console_text(
-                self.scene_console, "Select a scene to see scene-specific errors."
-            )
-            return
-        current_scene_errors = scene_errors.get(selected_scene_id, [])
-        if current_scene_errors:
-            self._set_console_text(
-                self.scene_console,
-                f"Errors for {selected_scene_id}:\n- "
-                + "\n- ".join(current_scene_errors),
-            )
-        else:
-            self._set_console_text(
-                self.scene_console,
-                f"No errors in selected scene ({selected_scene_id}).",
-            )
+    def _scene_issue_ids(self) -> set[str]:
+        _errors, warnings, scene_errors = self._validate_data_details()
+        issue_ids = {scene_id for scene_id, items in scene_errors.items() if items}
+        for message in warnings:
+            match = re.search(r"Scene '(?P<scene_id>[^']+)'", message)
+            if match:
+                issue_ids.add(match.group("scene_id"))
+        return issue_ids
 
     def on_scene_filter_changed(self):
-        matching_ids = self._filtered_scene_ids()
-        select_id = self.current_scene if self.current_scene in matching_ids else None
-        self.refresh_scene_list(select_id=select_id, load_editor=False)
-        if self.scene_issues_only_var.get():
-            self.set_status(f"Showing {len(matching_ids)} scene(s) with errors")
-        else:
-            self.set_status("Showing all scenes")
-
-    def focus_scene_search(self, _event=None):
-        self.scene_search_entry.focus_set()
-        self.scene_search_entry.selection_range(0, tk.END)
-        return "break"
-
-    def clear_scene_search(self, _event=None):
-        had_query = bool(self.scene_search_var.get().strip())
-        self.scene_search_var.set("")
-        self.refresh_scene_list(select_id=self.current_scene, load_editor=False)
-        if had_query:
-            self.set_status("Scene search cleared")
-        if _event is not None:
-            return "break"
-        return None
-
-    def on_scene_search_changed(self, _event=None):
-        matching_ids = self._filtered_scene_ids()
-        select_id = self.current_scene if self.current_scene in matching_ids else None
-        self.refresh_scene_list(select_id=select_id, load_editor=False)
-        if self.scene_search_var.get().strip():
-            self.set_status(f"Found {len(matching_ids)} matching scene(s)")
-
-    def open_first_scene_match(self, _event=None):
-        matching_ids = self._filtered_scene_ids()
-        if not matching_ids:
-            self.set_status("No scenes match the current search")
-            return "break"
-        self.refresh_scene_list(select_id=matching_ids[0])
-        return "break"
+        self.refresh_scene_list(select_id=self.current_scene)
 
     def on_field_edited(self, _event=None):
         if self._suspend_dirty_tracking:
@@ -726,7 +630,6 @@ class GodEditor:
         self.current_scene = None
         self.current_choices = []
         self.selected_choice_index = None
-        self.scene_search_var.set("")
         self.scene_issues_only_var.set(False)
         self.load_info_from_data()
         self.refresh_scene_list()
@@ -830,8 +733,8 @@ class GodEditor:
         token = token.strip()
         if "*" in token:
             base, weight = token.rsplit("*", 1)
-            return (base.strip(), weight.strip())
-        return (token, None)
+            return base.strip(), weight.strip()
+        return token, None
 
     def _replace_scene_target(self, token, old_id, new_id):
         base, weight = self._split_weighted_target(token)
@@ -929,16 +832,13 @@ class GodEditor:
         self.set_dirty()
         self._refresh_error_consoles()
 
-    def refresh_scene_list(self, select_id=None, load_editor=True):
+    def refresh_scene_list(self, select_id=None):
+        """Refresh the scene list, applying the issues-only filter when enabled."""
         self._selection_guard_enabled = False
-        scene_ids = self._filtered_scene_ids()
-        if (
-            select_id
-            and select_id not in scene_ids
-            and self.scene_search_var.get().strip()
-        ):
-            self.scene_search_var.set("")
-            scene_ids = list(self.data["scene_order"])
+        scene_ids = list(self.data["scene_order"])
+        if self.scene_issues_only_var.get():
+            issues = self._scene_issue_ids()
+            scene_ids = [scene_id for scene_id in scene_ids if scene_id in issues]
         self.scene_summary_var.set(
             f"Scenes: {len(self.data['scenes'])} total · {len(scene_ids)} shown"
         )
@@ -946,12 +846,7 @@ class GodEditor:
         for scene_id in scene_ids:
             self.scene_list.insert(tk.END, scene_id)
         if select_id and select_id in scene_ids:
-            idx = scene_ids.index(select_id)
-            self.scene_list.selection_set(idx)
-            self.scene_list.activate(idx)
-            self.scene_list.see(idx)
-            if load_editor:
-                self.on_scene_selected(None)
+            self.scene_list.select_set(scene_ids.index(select_id))
         self._selection_guard_enabled = True
 
     def clear_scene_editor(self):
@@ -989,7 +884,7 @@ class GodEditor:
         sid = self.scene_list.get(sel[0])
         if self._selection_guard_enabled and sid != self.current_scene:
             if not self._ensure_current_scene_saved():
-                self.refresh_scene_list(select_id=self.current_scene, load_editor=False)
+                self.refresh_scene_list(select_id=self.current_scene)
                 return
         self.load_scene_into_editor(sid)
         self._refresh_error_consoles()
@@ -1105,7 +1000,7 @@ class GodEditor:
         text = self.scene_text.get("1.0", tk.END).rstrip("\n")
         image = self.scene_image_entry.get().strip()
         choices = copy.deepcopy(self.current_choices)
-        return (scene_id, {"text": text, "image": image, "choices": choices})
+        return scene_id, {"text": text, "image": image, "choices": choices}
 
     def save_scene(self):
         if self.current_scene is None and (not self.scene_id_entry.get().strip()):
@@ -1159,7 +1054,6 @@ class GodEditor:
         self.current_scene = None
         self.current_choices = []
         self.selected_choice_index = None
-        self.scene_search_var.set("")
         self.scene_issues_only_var.set(False)
         self.load_info_from_data()
         self.refresh_scene_list()
@@ -1399,7 +1293,7 @@ class GodEditor:
 
     def validate_data(self):
         errors, warnings, _scene_errors = self._validate_data_details()
-        return (errors, warnings)
+        return errors, warnings
 
     def _validation_snapshot_data(self):
         data: dict[str, Any] = copy.deepcopy(self.data)
@@ -1441,7 +1335,7 @@ class GodEditor:
             )
         if not data["scene_order"]:
             errors.append("No scenes defined.")
-            return (errors, warnings, scene_errors)
+            return errors, warnings, scene_errors
         if data["scene_order"][0] != "a1":
             warnings.append(
                 f"First scene is '{data['scene_order'][0]}', not 'a1'. The first listed scene is the start scene."
@@ -1507,7 +1401,46 @@ class GodEditor:
             warnings.append(
                 "Loop detected in scene graph (allowed, but verify it is intentional)."
             )
-        return (errors, warnings, scene_errors)
+        return errors, warnings, scene_errors
+
+    def _refresh_error_consoles(self):
+        errors, warnings, scene_errors = self._validate_data_details()
+        self.validation_summary_var.set(
+            f"Validation: {len(errors)} error(s), {len(warnings)} warning(s)"
+        )
+
+        def write_console(console, text):
+            console.configure(state="normal")
+            console.delete("1.0", tk.END)
+            console.insert("1.0", text)
+            console.configure(state="disabled")
+
+        project_lines = []
+        if errors:
+            project_lines.append("Errors:")
+            project_lines.extend(f"- {message}" for message in errors)
+        if warnings:
+            if project_lines:
+                project_lines.append("")
+            project_lines.append("Warnings:")
+            project_lines.extend(f"- {message}" for message in warnings)
+        if not project_lines:
+            project_lines.append("No validation issues found.")
+        write_console(self.project_console, "\n".join(project_lines))
+
+        scene_id = self.scene_id_entry.get().strip() or self.current_scene
+        scene_lines = []
+        if scene_id:
+            for message in scene_errors.get(scene_id, []):
+                scene_lines.append(f"ERROR: {message}")
+            for message in warnings:
+                if f"Scene '{scene_id}'" in message:
+                    scene_lines.append(f"WARNING: {message}")
+            if not scene_lines:
+                scene_lines.append(f"No issues for scene '{scene_id}'.")
+        else:
+            scene_lines.append("No scene selected.")
+        write_console(self.scene_console, "\n".join(scene_lines))
 
     def validate_and_show(self):
         errors, warnings = self.validate_data()

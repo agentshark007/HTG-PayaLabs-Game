@@ -1,4 +1,4 @@
-import os
+import os.path
 import shutil
 import string
 import sys
@@ -278,7 +278,7 @@ class App(Window):
         line_height = max(1, int(font.font.get_height()))
         total_height = line_height + max(0, len(lines) - 1) * line_step
         max_scroll = max(0.0, float(total_height) - max(0.0, float(visible_height)))
-        return (total_height, max_scroll)
+        return total_height, max_scroll
 
     def _playing_scene_text_bottom_y(self):
         pause_button_center_y = self.screen_bottom.y + 15 * self.scale
