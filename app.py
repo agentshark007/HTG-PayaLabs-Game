@@ -13,7 +13,7 @@ from pgiud import *
 data_directory = get_absolute_path("data/")
 
 
-class InitializationError(Exception):
+class InitializeError(Exception):
     pass
 
 
@@ -201,7 +201,7 @@ class App(Window):
             self._initialize_new_game()
             self._initialize_load_game()
         except Exception:
-            raise InitializationError("Error while initializing")
+            raise InitializeError("Error while initializing")
 
     # endregion
     # region utilities

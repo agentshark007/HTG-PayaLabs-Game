@@ -1,4 +1,3 @@
-import argparse
 import copy
 import os
 import tkinter as tk
@@ -44,43 +43,12 @@ class RepairReport:
     errors: list[str] = field(default_factory=list)
 
 
-def clean_god_name(raw: str) -> str:
-    name = raw.strip()
-    if name.lower().endswith(".txt"):
-        name = name[:-4]
-    return name.strip()
-
-
-def resolve_god_file(name: str) -> Path:
-    clean_name = clean_god_name(name)
-    if not clean_name:
-        raise ValueError("God name cannot be empty.")
-    gods_dir = Path(BASE_DIR) / "assets" / "data" / "gods"
-    exact = gods_dir / f"{clean_name}.txt"
-    if exact.exists():
-        return exact
-    lower = clean_name.lower()
-    for candidate in gods_dir.glob("*.txt"):
-        if candidate.stem.lower() == lower:
-            return candidate
-    return exact
-
-
 def split_weighted_target(token: str) -> tuple[str, str | None]:
     token = token.strip()
     if "*" in token:
         base, weight = token.rsplit("*", 1)
         return (base.strip(), weight.strip())
     return (token, None)
-
-
-def replace_scene_target(token: str, old_id: str, new_id: str) -> str:
-    base, weight = split_weighted_target(token)
-    if base != old_id:
-        return token
-    if weight is None or weight == "":
-        return new_id
-    return f"{new_id}*{weight}"
 
 
 def depth_prefix(depth: int) -> str:
@@ -362,66 +330,6 @@ def validate_repaired_data(
                             f"Scene '{scene_id}' choice #{choice_idx} has invalid weight in '{token}'."
                         )
     return (errors, warnings)
-
-
-def repair_god_file(path: Path) -> tuple[int, RepairReport, str, str]:
-    report = RepairReport()
-    if not path.exists():
-        report.errors.append(f"File not found: {path}")
-        return (1, report, "", "")
-    original_text = path.read_text(encoding="utf-8")
-    parsed = parse_god_text(original_text, report)
-    info, scenes = normalize_god(parsed, report)
-    if report.errors:
-        return (1, report, original_text, original_text)
-    repaired_text = export_god_text(info, scenes)
-    validation_errors, validation_warnings = validate_repaired_data(info, scenes)
-    report.errors.extend(validation_errors)
-    report.warnings.extend(validation_warnings)
-    if original_text != repaired_text:
-        path.write_text(repaired_text, encoding="utf-8")
-        report.fixes.append(f"Wrote repaired file.")
-    return (0 if not report.errors else 1, report, original_text, repaired_text)
-
-
-def prompt_for_god_name() -> str:
-    try:
-        return input("Which god do you want to repair? (no .txt needed): ")
-    except EOFError:
-        return ""
-
-
-def repair_main() -> int:
-    parser = argparse.ArgumentParser(description="Repair a god story text file.")
-    parser.add_argument("god", nargs="?", help="God file name without .txt")
-    args = parser.parse_args()
-    god_name = clean_god_name(args.god or prompt_for_god_name())
-    if not god_name:
-        print("No god name provided.")
-        return 1
-    path = resolve_god_file(god_name)
-    code, report, original_text, repaired_text = repair_god_file(path)
-    if code != 0 and (not path.exists()):
-        for err in report.errors:
-            print(err)
-        return 1
-    if report.errors:
-        print("Repair finished with unresolved errors:")
-        for err in report.errors:
-            print(f"- {err}")
-    if original_text == repaired_text:
-        print(f"No changes needed for {path.name}.")
-    else:
-        print(f"Repaired {path.name}.")
-    if report.fixes:
-        print("Fixes applied:")
-        for fix in report.fixes:
-            print(f"- {fix}")
-    if report.warnings:
-        print("Warnings:")
-        for warning in report.warnings:
-            print(f"- {warning}")
-    return code
 
 
 class GodEditor:
