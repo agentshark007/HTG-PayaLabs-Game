@@ -1,3 +1,4 @@
+import os
 import shutil
 import string
 import sys
@@ -24,7 +25,6 @@ class State(Enum):
     PAUSED = 9
     LOAD_GAME_PLAYING = 10
     SETTINGS_PLAYING = 11
-
 
 class App(Window):
 
@@ -1006,7 +1006,7 @@ class App(Window):
                 self.set_state(State.MAIN_MENU)
 
     def _update_quit(self):
-        quit()
+        self._running = False
 
     def _update_main_menu(self):
         buttons = [
@@ -1699,44 +1699,38 @@ class App(Window):
             )
             < 10 * self.scale
         )
-        if hover:
-            if self.mouse_pressed:
-                self.set_state(State.PAUSED)
-        current_game = self.game
-        if current_game is None:
-            return
-        try:
-            current_scene: Optional[Scene] = current_game.god.tree.scenes[
-                current_game.current_scene_index
-            ]
-        except:
-            current_scene = None
-        if current_scene is None:
-            self._reset_scene_text_scroll()
-            return
-        if current_scene is not None and current_scene.links:
-            for i, link in enumerate(current_scene.links):
-                if i >= 26:
-                    break
-                key_name = chr(ord("A") + i)
-                try:
-                    key_enum = Key[key_name]
-                except:
-                    continue
-                pressed_now = self.keydown(key_enum)
-                was_pressed = key_enum in self.keys_down_last_frame
-                if pressed_now and (not was_pressed):
-                    target_id = self._choose_target_id(link.target)
-                    if target_id is None:
-                        continue
-                    found_target = False
-                    for idx, scene in enumerate(current_game.god.tree.scenes):
-                        if scene.id == target_id:
-                            self._set_game_scene(current_game, idx)
-                            found_target = True
-                            break
-                    if not found_target:
-                        pass
+        self.fill_circle(
+            V(
+                self.screen_left.x + (15 * self.scale),
+                self.screen_bottom.y + (15 * self.scale),
+            ),
+            10 * self.scale,
+            Color(50, 50, 50) if hover else Color(40, 40, 40),
+        )
+        self.draw_line(
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (-5 * self.scale),
+            ),
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (-3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (5 * self.scale),
+            ),
+            Color(255, 255, 255),
+            int(2 * self.scale),
+        )
+        self.draw_line(
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (-5 * self.scale),
+            ),
+            V(
+                (self.screen_left.x + (15 * self.scale)) + (3 * self.scale),
+                (self.screen_bottom.y + (15 * self.scale)) + (5 * self.scale),
+            ),
+            Color(255, 255, 255),
+            int(2 * self.scale),
+        )
 
     def _draw_settings_playing(self):
         self._draw_settings(True)
@@ -1748,7 +1742,7 @@ class App(Window):
                 self.screen_bottom_left, self.screen_top_right, Color(0, 0, 0, 150)
             )
         buttons = ["Resume", "Load Game", "Save Game", "Settings", "Exit Game"]
-        for i, (_action, target_state) in enumerate(buttons):
+        for i, button in enumerate(buttons):
             x = 0
             y = (
                 self.screen_top.y
