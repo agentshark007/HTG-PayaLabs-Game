@@ -1643,7 +1643,7 @@ class App(Window):
             image_name = current_scene.image
             scene_img = self.scene_images.get(image_name)
             if scene_img is None:
-                scene_img = next(iter(self.scene_images.values()), None)
+                scene_img = self.scene_images.get("test-scene")
             main_text = self._scene_text_content(current_scene)
         text_font = self.main_font.new_size(int(self.main_font.size * self.scale))
         text_x = -230 * self.scale
